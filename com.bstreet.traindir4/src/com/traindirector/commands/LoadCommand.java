@@ -3,12 +3,12 @@ package com.traindirector.commands;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
+import com.traindirector.files.PthFile;
 import com.traindirector.files.SchFile;
 import com.traindirector.files.TrkFile;
 import com.traindirector.model.EntryExitPath;
@@ -34,21 +34,47 @@ public class LoadCommand extends SimulatorCommand {
 		CGEventDispatcher.getInstance().postEvent(loadEvent);
 		_territory = _simulator._territory;
 		_territory.removeAllElements();
+		
+		_simulator.setNewProject(_fname);
+
 		File dir = new File(_fname);
 		_simulator.setBaseDirectory(dir.getParent());	// make relative file names from the location of the .trk file
-		TrkFile trkFile = new TrkFile(_simulator, _territory, _fname);
-		trkFile.load();
+
+		BufferedReader rdr = _simulator.getReaderFor(".trk");
+		if (rdr == null) {
+			return;
+		}
+		TrkFile trkFile = new TrkFile(_simulator, _territory, _fname, rdr);
+		trkFile.loadTracks(rdr);
 		_territory.linkSignals();
 		_territory.loadSignalAspects(_simulator._scriptFactory);
 		_schedule = _simulator._schedule;
-		_schedule._trains.clear();
 		loadSchedule();
-		resolvePaths();
+		loadPaths();
+		_schedule.sortByEntryTime();
+		// parse programs from schedule
 		LoadEndEvent endLoadEvent = new LoadEndEvent(_simulator);
 		CGEventDispatcher.getInstance().postEvent(endLoadEvent);
 		_simulator.restartSimulation();
 	}
 	
+	private void loadPaths() {
+		_territory._paths.clear();
+		try {
+			BufferedReader input = _simulator._fileManager.getReaderFor(".pth");
+			if (input == null)
+				return;
+			PthFile pthFile = new PthFile(_simulator, _territory, _fname);
+			pthFile.readFile(input);
+			input.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		resolvePaths();
+	}
+
 	public String asExtension(String ext) {
 		if(ext.charAt(0) == '.')
 			ext = ext.substring(1);
@@ -61,11 +87,9 @@ public class LoadCommand extends SimulatorCommand {
 	}
 
 	public void loadSchedule() {
-		String schName = asExtension("sch");
-		BufferedReader input = null;
+		_simulator._schedule.clear();
 		try {
-			_simulator._schedule.clear();
-			input = new BufferedReader(new FileReader(schName));
+			BufferedReader input = _simulator._fileManager.getReaderFor(".sch");
 			SchFile schFile = new SchFile(_simulator);
 			schFile.readFile(input);
 			input.close();
@@ -91,6 +115,14 @@ public class LoadCommand extends SimulatorCommand {
 		int	f1;
 		boolean found = false;
 
+		if (t._entrance == null) {
+			System.out.println("No entrance for " + t._name);
+			return;
+		}
+		if (t._exit == null) {
+			System.out.println("No exit for " + t._name);
+			return;
+		}
 		if(_territory.findStationNamed(t._entrance) != null) {
 		    f1 = 1;
 		} else {

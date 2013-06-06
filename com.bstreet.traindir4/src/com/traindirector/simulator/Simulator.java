@@ -1,5 +1,6 @@
 package com.traindirector.simulator;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -8,17 +9,14 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.eclipse.ui.IWorkbench;
-
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
-import com.traindirector.commands.DoCommand;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.files.BooleanOption;
+import com.traindirector.files.FileManager;
 import com.traindirector.files.IntegerOption;
 import com.traindirector.model.Alert;
-import com.traindirector.model.Direction;
 import com.traindirector.model.OptionsManager;
 import com.traindirector.model.PerformanceCounters;
 import com.traindirector.model.Schedule;
@@ -28,7 +26,6 @@ import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
-import com.traindirector.model.TriggerTrack;
 import com.traindirector.scripts.ScriptFactory;
 
 public class Simulator {
@@ -47,6 +44,7 @@ public class Simulator {
 	public SignalFactory _signalFactory;
 	public ColorFactory _colorFactory;
 	public ScriptFactory _scriptFactory;
+	public FileManager _fileManager;
 
 	public static int VGRID = 9;
 	public static int HGRID = 9;
@@ -391,6 +389,22 @@ public class Simulator {
 		_drawTrainNames = new BooleanOption("TrainNames", "Show train names instead of train icons");
 		_optionsManager = new OptionsManager();
 		_optionsManager.add(_terseStatus);
+	}
+
+	public void setNewProject(String fname) {
+		if (_fileManager != null) {
+			_fileManager.close();
+			_fileManager = null;
+		}
+		_fileManager = new FileManager(fname);
+	}
+
+	public BufferedReader getReaderFor(String extension) {
+		return _fileManager.getReaderFor(extension);
+	}
+
+	public BufferedReader getReaderForFile(String fname) {
+		return _fileManager.getReaderForFile(fname);
 	}
 	
 }

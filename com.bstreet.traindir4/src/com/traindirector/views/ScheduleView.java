@@ -180,8 +180,8 @@ public class ScheduleView extends ViewPart {
 				item.setData("train", train);
 				String tim = TDTime.toString(train._timeIn);
 				item.setText(tim);
-				item.setText(1, train._entrance);
-				item.setText(2, train._exit);
+				item.setText(1, train._entrance != null ? train._entrance : "?");
+				item.setText(2, train._exit != null ? train._exit : "?");
 				tim = TDTime.toString(train._timeOut);
 				item.setText(3, tim);
 				item.setText(4, train._name);

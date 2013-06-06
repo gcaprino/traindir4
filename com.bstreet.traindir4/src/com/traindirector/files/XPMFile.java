@@ -26,26 +26,14 @@ public class XPMFile {
 		if (!f.canRead())
 			return false;
 		
-		List<String> lines = new ArrayList<String>();
 		BufferedReader input = null;
 		try {
 			input = new BufferedReader(new FileReader(f));
-			String line = null;
-			while((line = input.readLine()) != null) {
-				int j;
-				for (j = 0; j < line.length() && line.charAt(j) != '"'; ++j);
-				if (++j >= line.length())
-					continue;
-				int k = j;
-				while(k < line.length() && line.charAt(k) != '"')
-					++k;
-				lines.add(line.substring(j, k));
-			}
+			if(!load(input))
+				return false;
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			try {
 				if (input != null)
@@ -54,8 +42,6 @@ public class XPMFile {
 				e.printStackTrace();
 			}
 		}
-		_lines = new String[lines.size()];
-		lines.toArray(_lines);
 		return true;
 
 		/*
@@ -113,5 +99,29 @@ public class XPMFile {
 		free(pattern);
 		return (void *)img;
 */
+	}
+	
+	public boolean load(BufferedReader input) {
+		List<String> lines = new ArrayList<String>();
+		String line = null;
+		try {
+			while((line = input.readLine()) != null) {
+				int j;
+				for (j = 0; j < line.length() && line.charAt(j) != '"'; ++j);
+				if (++j >= line.length())
+					continue;
+				int k = j;
+				while(k < line.length() && line.charAt(k) != '"')
+					++k;
+				lines.add(line.substring(j, k));
+			}
+			_lines = new String[lines.size()];
+			lines.toArray(_lines);
+		} catch (IOException e) {
+			e.printStackTrace();
+			_lines = new String[0];
+			return false;
+		}
+		return true;
 	}
 }

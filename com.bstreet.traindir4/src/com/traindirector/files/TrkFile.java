@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 
 import com.traindirector.model.ImageTrack;
 import com.traindirector.model.Itinerary;
@@ -27,20 +28,32 @@ public class TrkFile {
 	Simulator _simulator;
 	Territory _territory;
 	String _fname;
+	BufferedReader _reader;
 	
-	public TrkFile(Simulator simulator, Territory territory, String fname) {
+	public TrkFile(Simulator simulator, Territory territory, String fname, BufferedReader rdr) {
 		_simulator = simulator;
 		_territory = territory;
 		_fname = fname;
+		_reader = rdr;
 	}
 
 	public void load() {
 		BufferedReader input = null;
+		try {
+			_reader = new BufferedReader(new FileReader(_fname));
+			loadTracks(_reader);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void loadTracks(BufferedReader input) {
 		String line;
 		int	i;
 		int x, y;
 		try {
-			input = new BufferedReader(new FileReader(_fname));
 			while((line = input.readLine()) != null) {
 				Track trk = null;
 				if(line.startsWith("(script ")) {
@@ -171,13 +184,19 @@ public class TrkFile {
 					_territory.add(trk);
 					trk._position = new TDPosition(x, y);
 					trk._station = elements[4];
+					if(elements.length > 9 && elements[9].charAt(0) == '>') {
+						trk.parseMilepost(elements[9].substring(1));
+					} else {
+						int indx = elements[8].indexOf('>');
+						if(indx > 0) {
+							trk.parseMilepost(elements[8].substring(indx + 1));
+							elements[8] = elements[8].substring(0, indx);
+						}
+					}
 					trk._wlink = new TDPosition(Integer.parseInt(elements[5]),
 												Integer.parseInt(elements[6]));
 					trk._elink = new TDPosition(Integer.parseInt(elements[7]),
 												Integer.parseInt(elements[8]));
-					if(elements.length > 9 && elements[9].charAt(0) == '>') {
-						trk.parseMilepost(elements[9].substring(1));
-					}
 					break;
 
 				case '5':		// IMAGE
@@ -286,19 +305,7 @@ public class TrkFile {
 					break;
 				}
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			if (input != null) {
-				try {
-					input.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-			return;
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 import com.traindirector.model.TDIcon;
 import com.traindirector.model.Track;
@@ -25,6 +26,7 @@ public class SchFile extends TextFile {
 	private TDIcon[] eastIcon;
 	private TDIcon[] westCarIcon;
 	private TDIcon[] eastCarIcon;
+	int currentType = 0;
 
 	public static char DELAY_CHAR = '!';
 	
@@ -51,7 +53,6 @@ public class SchFile extends TextFile {
 	public void readFile(BufferedReader input) {
 		String	line;
 		TrainStop lastStop = null;
-		int currentType = 0;
 		try {
 			Train	train = null;
 			while((line = input.readLine()) != null) {
@@ -69,7 +70,11 @@ public class SchFile extends TextFile {
 					i = skipBlanks(line, i + 9);
 					if(i < 0)
 						continue;
-					readFile(line.substring(i));
+					BufferedReader includeReader = _simulator._fileManager.getReaderForFile(line.substring(i));
+					if(includeReader != null) {
+						readFile(includeReader);
+						includeReader.close();
+					}
 					continue;
 				}
 				if(line.startsWith("Routes:", i)) {
@@ -77,7 +82,7 @@ public class SchFile extends TextFile {
 					continue;
 				}
 				if(line.startsWith("GTFS:", i)) {
-					// TODO: GTFS
+					readGTFS(line.substring(i + 5).trim());
 					continue;
 				}
 				if(line.startsWith("Cancel:", i)) {
@@ -109,10 +114,13 @@ public class SchFile extends TextFile {
 				}
 				if(line.startsWith("Train:", i)) {
 					i = skipBlanks(line, 6);
-					train = new Train(line.substring(i));
+					train = _simulator._schedule.findTrainNamed(line.substring(i));
+					if (train == null) {
+						train = new Train(line.substring(i));
+						train._type = currentType;
+						_simulator._schedule.add(train);
+					}
 					train._status = TrainStatus.READY;
-					train._type = currentType;
-					_simulator._schedule.add(train);
 					continue;
 				}
 				if(train == null) {
@@ -368,6 +376,99 @@ public class SchFile extends TextFile {
 		}
 	}
 	
+	private void readGTFS(String dirName) {
+		GTFS gtfs = new GTFS(_simulator, dirName);
+		gtfs.load();
+
+		List<GTFS_StopTime> stops = gtfs._stopTimes;
+		for (GTFS_StopTime st : stops) {
+			Train train = _simulator._schedule.findTrainNamed(st._tripId);
+			if (train == null) {
+				train = new Train(st._tripId);
+				train._type = currentType;
+				//train._epix = train.wpix = -1;
+				//train._ecarpix = train.wcarpix = -1;
+				_simulator._schedule.add(train);
+			}
+			TrainStop stop = new TrainStop();
+			stop._minstop = 30;
+			stop._arrival = parseTime(st._arrivalTime, 0);
+			stop._departure = parseTime(st._departureTime, 0);
+			if(stop._departure == stop._arrival) {
+				stop._departure = stop._arrival + stop._minstop;
+			} else if(stop._minstop > stop._departure - stop._arrival)
+				stop._minstop = stop._departure - stop._arrival;
+			stop._station = st._stopId;
+			train._stops.add(stop);
+		}
+		
+		for (Train train : _simulator._schedule._trains) {
+			if(train._entrance == null && train._exit == null && !train._stops.isEmpty()) {
+				TrainStop stop = train._stops.get(0);
+				train._stops.remove(0);
+				train._entrance = stop._station;
+				train._timeIn = stop._departure;
+				
+				stop = train._stops.get(train._stops.size() - 1);
+				train._stops.remove(train._stops.size() - 1);
+				train._exit = stop._station;
+				train._timeOut = stop._arrival;
+			}
+		}
+		/*
+
+        GTFS_Route *selected[NTTYPES];
+        int nSelected = 0;
+        GTFS_Route *route;
+        int s, r;
+
+        GTFS_Trip *trip;
+        int x;
+
+        // find the subset of routes used in the schedule
+        // and with different colors
+        for(x = 0; x < gtfs->_trips.Length(); ++x) {
+            trip = gtfs->_trips.At(x);
+            if(gtfs->IgnoreRoute(trip->_routeId))
+                continue;
+            route = gtfs->FindRouteById(trip->_routeId);
+            if(!route)
+                continue;
+            for(s = 0; s < nSelected; ++s)
+                if(selected[s]->_routeColor == route->_routeColor)
+                    break;
+            if(s >= nSelected && nSelected < NTTYPES) {
+                selected[nSelected++] = route;
+            }
+        }
+
+        for(x = 0; x < gtfs->_trips.Length(); ++x) {
+            trip = gtfs->_trips.At(x);
+            tr = find_train(sched, trip->_tripId);
+            if(!tr)             // impossible
+                continue;
+            if(gtfs->IgnoreRoute(trip->_routeId)) {
+                tr->isExternal = 1;
+                continue;
+            }
+            GTFS_Calendar *calEntry = gtfs->FindCalendarByService(trip->_serviceId);
+            if(calEntry)
+                tr->days = calEntry->GetMask();
+            // set type based on routeId
+            route = gtfs->FindRouteById(trip->_routeId);
+            if(!route)
+                continue;
+            for(r = 0; r < nSelected; ++r) {
+                if(selected[r]->_routeColor == route->_routeColor) {
+                    tr->type = r;
+                    break;
+                }
+            }
+        }
+	return sched;
+*/
+	}
+
 	private TDIcon createIcon(String iconFile, int type, String defaultName) {
 		TDIcon icon = null;
 		

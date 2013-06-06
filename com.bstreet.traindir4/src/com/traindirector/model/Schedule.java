@@ -134,4 +134,22 @@ public class Schedule {
 		// TODO: stranded trains
 		return departingTrains;
 	}
+
+	public void sortByEntryTime() {
+		List<Train> sorted = new ArrayList<Train>(_trains.size());
+		while(_trains.size() > 0) {
+			Train lowest = null;
+			for (Train train : _trains) {
+				if (lowest == null)
+					lowest = train;
+				else if(train._timeIn < lowest._timeIn)
+					lowest = train;
+			}
+			if(!_trains.remove(lowest)) {
+				System.out.println("Failed remove of " + lowest._name);
+			}
+			sorted.add(lowest);
+		}
+		_trains = sorted;
+	}
 }

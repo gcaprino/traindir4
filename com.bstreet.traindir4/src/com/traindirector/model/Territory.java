@@ -254,7 +254,7 @@ public class Territory {
 		int i = 0;
 		char ch = ' ';
 		while (i < st1.length() && (ch = st1.charAt(i)) != PLATFORM_SEP
-				&& ch == st2.charAt(i))
+				&& i < st2.length() && ch == st2.charAt(i))
 			++i;
 		if (i >= st1.length() || ch == PLATFORM_SEP) { // end of first station name
 			if (i >= st2.length() || st2.charAt(i) == PLATFORM_SEP) // and end of second station name

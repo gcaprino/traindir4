@@ -1,7 +1,6 @@
 package com.traindirector.files;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,6 +17,8 @@ public class PthFile extends TextFile {
 
 	public PthFile(Simulator simulator, Territory territory, String fname) {
 		setFileName(fname, "pth");
+		_simulator = simulator;
+		_territory = territory;
 	}
 	
 	public boolean load() {
@@ -34,7 +35,7 @@ public class PthFile extends TextFile {
 		}
 		return true;
 	}
-	
+
 	public void readFile(BufferedReader input) {
 		String	line;
 		EntryExitPath path = null;
@@ -42,23 +43,21 @@ public class PthFile extends TextFile {
 			while((line = input.readLine()) != null) {
 				int i;
 				char ch;
-				line = line.replace("\t", " ");
+				line = line.replace("\t", " ").trim();
 				i = skipBlanks(line, 0);
 				if(i < 0 || line.charAt(i) == '#')
 					continue;
 				if(line.startsWith("Path:", i)) {
 					i = skipBlanks(line, i + 5);
-					if(i < 0)
-						continue;
 					if (path != null) {
 						if (path._from == null || path._to == null || path._enter == null) {
 							// TODO: report error
 							System.out.println("Path is missing 'From:', 'To:' or 'Enter:'");
 							continue;
 						}
-						_territory.addPath(path);
 					}
 					path = new EntryExitPath();
+					_territory.addPath(path);
 					continue;
 				}
 				if (path == null) {
