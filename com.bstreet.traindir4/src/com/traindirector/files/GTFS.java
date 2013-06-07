@@ -31,7 +31,7 @@ public class GTFS {
 	}
 	
 	public BufferedReader exists(String name) {
-		String fname = _dirName + "/" + name + ".txt";
+		String fname = _simulator._baseDir + "/" + _dirName + "/" + name + ".txt";
 		BufferedReader rdr = _simulator.getReaderForFile(fname);
 		return rdr;
 	}
@@ -379,4 +379,43 @@ public class GTFS {
         return true;
 
 	}
+
+	String[] _ourRoutes;
+	
+	public void setOurRoutes(String ourRoutes) {
+		_ourRoutes = ourRoutes.split(",");
+	}
+
+	public boolean ignoreRoute(String routeId) {
+        if(_ourRoutes == null || _ourRoutes.length == 0)
+            return false;       // no route list specified, allow all
+        for(String rt : _ourRoutes) 
+        	if(rt.equals(routeId))
+        		return true;
+        return false;        // not found in our list, so ignore it
+    }
+
+	public GTFS_Calendar findCalendarByService(String serviceId) {
+        for(int c = 0; c < _calendar.size(); ++c) {
+            GTFS_Calendar calEntry = _calendar.get(c);
+            if(calEntry._serviceId.equals(serviceId)) {
+                return calEntry;
+            }
+        }
+		return null;
+	}
+
+	public GTFS_Route findRouteById(String routeId) {
+
+        int r;
+        GTFS_Route route;
+
+        for(r = 0; r < _routes.size(); ++r) {
+            route = _routes.get(r);
+            if(route._routeId.equals(routeId))
+                return route;
+        }
+		return null;
+	}
+
 }

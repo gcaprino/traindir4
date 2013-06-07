@@ -3,6 +3,7 @@ package com.traindirector;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ControlContribution;
 import org.eclipse.jface.action.GroupMarker;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -29,20 +30,38 @@ import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.uiactions.AssignAction;
 import com.traindirector.uiactions.ChangeLanguageAction;
 import com.traindirector.uiactions.CloseSimulationAction;
+import com.traindirector.uiactions.CoordBarsAction;
 import com.traindirector.uiactions.EditAction;
 import com.traindirector.uiactions.FastSimulationAction;
+import com.traindirector.uiactions.InfoAction;
+import com.traindirector.uiactions.ItinerariesAction;
 import com.traindirector.uiactions.ItineraryAction;
+import com.traindirector.uiactions.LateGraphAction;
+import com.traindirector.uiactions.NewAction;
 import com.traindirector.uiactions.OpenSimulationAction;
 import com.traindirector.uiactions.PreferencesAction;
 import com.traindirector.uiactions.RestartSimulationAction;
+import com.traindirector.uiactions.RestoreSimulationAction;
 import com.traindirector.uiactions.RunSimulationAction;
 import com.traindirector.uiactions.SaveLayoutChangesAction;
 import com.traindirector.uiactions.SaveSimulationAction;
+import com.traindirector.uiactions.SetSignalsToGreenAction;
 import com.traindirector.uiactions.ShowAlertsViewAction;
 import com.traindirector.uiactions.ShowEditToolsAction;
+import com.traindirector.uiactions.ShowInfoPageAction;
+import com.traindirector.uiactions.ShowLayoutPageAction;
+import com.traindirector.uiactions.ShowPerformanceAction;
 import com.traindirector.uiactions.ShowScheduleViewAction;
 import com.traindirector.uiactions.ShowTrainStopsViewAction;
+import com.traindirector.uiactions.SkipAheadAction;
 import com.traindirector.uiactions.SlowSimulationAction;
+import com.traindirector.uiactions.StationScheduleAction;
+import com.traindirector.uiactions.StationsListAction;
+import com.traindirector.uiactions.StatusBarAction;
+import com.traindirector.uiactions.SwitchBoardAction;
+import com.traindirector.uiactions.TimeDistanceGraphAction;
+import com.traindirector.uiactions.ZoomInAction;
+import com.traindirector.uiactions.ZoomOutAction;
 
 /**
  * An action bar advisor is responsible for creating, adding, and disposing of the
@@ -78,6 +97,24 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     PreferencesAction preferencesAction;
     ItineraryAction itineraryAction;
     AssignAction assignAction;
+	private IAction statusBarAction;
+	private IAction coordBarsAction;
+	private IAction zoomOutAction;
+	private IAction zoomInAction;
+	private IAction showInfoPageAction;
+	private IAction showLayoutViewAction;
+	private IAction performanceAction;
+	private IAction setSignalToGreenAction;
+	private IAction stationScheduleAction;
+	private IAction skipAheadAction;
+	private IAction lateGraphAction;
+	private IAction timeDistanceAction;
+	private IAction stationsListAction;
+	private IAction infoAction;
+	private IAction newAction;
+	private IAction editSwitchboardAction;
+	private IAction editItineraryAction;
+	private IAction restoreSimulationAction;
 
     public ApplicationActionBarAdvisor(IActionBarConfigurer configurer) {
         super(configurer);
@@ -116,6 +153,24 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(itineraryAction = new ItineraryAction(window, "Itineraries..."));
         register(assignAction = new AssignAction(window, "Assign..."));
 
+    	register(statusBarAction = new StatusBarAction(window, "Show Status Bar"));
+    	register(coordBarsAction = new CoordBarsAction(window, "Show Coordinate Bars"));
+    	register(zoomOutAction = new ZoomOutAction(window, "Zoom Out"));
+    	register(zoomInAction = new ZoomInAction(window, "Zoom In"));
+    	register(showInfoPageAction = new ShowInfoPageAction(window, "Show Info"));
+    	register(showLayoutViewAction = new ShowLayoutPageAction(window, "Show Layout"));
+    	register(performanceAction = new ShowPerformanceAction(window, "Performance..."));
+    	register(setSignalToGreenAction = new SetSignalsToGreenAction(window, "Set Signals to Green"));
+    	register(stationScheduleAction = new StationScheduleAction(window, "Station Schedule"));
+    	register(skipAheadAction = new SkipAheadAction(window, "Skip Ahead"));
+    	register(lateGraphAction = new LateGraphAction(window, "Late Graph"));
+    	register(timeDistanceAction = new TimeDistanceGraphAction(window, "Time-Distance Graph"));
+    	register(stationsListAction = new StationsListAction(window, "Stations List"));
+    	register(infoAction = new InfoAction(window, "Info"));
+    	register(newAction = new NewAction(window, "New..."));
+    	register(editSwitchboardAction = new SwitchBoardAction(window, "Switchboard"));
+    	register(editItineraryAction = new ItinerariesAction(window, "Itineraries"));
+    	register(restoreSimulationAction = new RestoreSimulationAction(window, "Restore..."));
         /*
         newWindowAction = ActionFactory.OPEN_NEW_WINDOW.create(window);
         register(newWindowAction);
@@ -146,24 +201,45 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         // File
         fileMenu.add(openSimulationAction);
         fileMenu.add(saveSimulationAction);
+        fileMenu.add(restoreSimulationAction);
         fileMenu.add(closeSimulationAction);
+        // TODO: print
         fileMenu.add(exitAction);
 
         editMenu.add(editAction);
+        editMenu.add(editItineraryAction);
+        editMenu.add(editSwitchboardAction);
         editMenu.add(saveLayoutChangesAction);
         editMenu.add(preferencesAction);
+        editMenu.add(newAction);
+        editMenu.add(infoAction);
+        editMenu.add(stationsListAction);
         
         runMenu.add(runSimulationAction);
+        runMenu.add(timeDistanceAction);
+        runMenu.add(lateGraphAction);
+        runMenu.add(restartSimulationAction);
         runMenu.add(fastSimulationAction);
         runMenu.add(slowSimulationAction);
-        runMenu.add(restartSimulationAction);
+        runMenu.add(skipAheadAction);
+        runMenu.add(stationScheduleAction);
+        runMenu.add(setSignalToGreenAction);
         runMenu.add(itineraryAction);
+        runMenu.add(performanceAction);
         runMenu.add(assignAction);
         
+        viewMenu.add(showLayoutViewAction);
         viewMenu.add(showScheduleViewAction);
         viewMenu.add(showAlertsViewAction);
         viewMenu.add(showTrainStopsViewAction);
-        viewMenu.add(showEditToolsAction);
+        viewMenu.add(showInfoPageAction);
+        //viewMenu.add(showEditToolsAction);
+        fileMenu.add(new Separator());
+        viewMenu.add(zoomInAction);
+        viewMenu.add(zoomOutAction);
+        fileMenu.add(new Separator());
+        viewMenu.add(coordBarsAction);
+        viewMenu.add(statusBarAction);
         
         // Help
         helpMenu.add(aboutAction);

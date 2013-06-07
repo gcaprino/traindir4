@@ -10,12 +10,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.eclipse.core.runtime.Path;
 
+import com.traindirector.simulator.Simulator;
+
 public class FileManager {
 
 	String	_baseFile;
 	ZipFile _zipFile;
+	Simulator _simulator;
 	
-	public FileManager(String base) {
+	public FileManager(Simulator simulator, String base) {
+		_simulator = simulator;
 		_baseFile = base;
 		if (base.endsWith(".zip" ) || base.endsWith(".ZIP")) {
 			try {
@@ -52,6 +56,10 @@ public class FileManager {
 		if (_zipFile != null) {
 			Path path = new Path(schName);
 			String entryName = path.lastSegment();
+			if(schName.startsWith(_simulator._baseDir)) {
+				entryName = schName.substring(_simulator._baseDir.length() + 1);
+				entryName = entryName.replace("\\", "/");
+			}
 			ZipEntry zipEntry = _zipFile.getEntry(entryName);
 			if (zipEntry != null) {
 				try {

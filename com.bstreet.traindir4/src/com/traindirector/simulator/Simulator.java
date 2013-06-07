@@ -64,7 +64,7 @@ public class Simulator {
 	public boolean _signalsChanged;
 
 	private boolean _running;
-	private String _baseDir = "";
+	public String _baseDir = "";
 	public boolean _gMustBeClearPath;
 	public int[] _lateData = new int[24 * 60]; // how many late minutes we accumulated for each minute in the day
 	
@@ -396,7 +396,7 @@ public class Simulator {
 			_fileManager.close();
 			_fileManager = null;
 		}
-		_fileManager = new FileManager(fname);
+		_fileManager = new FileManager(this, fname);
 	}
 
 	public BufferedReader getReaderFor(String extension) {

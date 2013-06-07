@@ -146,8 +146,7 @@ public class Signal extends Track {
 		}
 
 		if (this._script != null && _script instanceof TDSScript) {
-			// try to set the signal's aspect using the associated script, if
-			// any
+			// try to set the signal's aspect using the associated script, if any
 			if (!_script.handle("onCleared", this, null))
 				setAspectFromName(SignalAspect.GREEN);
 		} else
@@ -156,8 +155,17 @@ public class Signal extends Track {
 		return true;
 	}
 
+	@Override
 	public void onClick() {
 		toggle();
+	}
+	
+	@Override
+	public void onRightClick() {
+		toggle();
+		if(!isClear())
+			return;
+		_nowfleeted = !_nowfleeted;	// TODO
 	}
 
 	public void setAspectFromName(String action) {

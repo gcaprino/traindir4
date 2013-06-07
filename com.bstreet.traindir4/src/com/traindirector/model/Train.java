@@ -96,6 +96,7 @@ public class Train {
 	public TDIcon _westCarIcon;
 	public TDIcon _eastCarIcon;
 	public TrainStatus _oldstatus;
+	public boolean _isExternal;
 
 	public Train(String name) {
 		_name = name;
@@ -103,6 +104,7 @@ public class Train {
 		_path = new TrackPath();
 		_waitFor = null;
 		_fleet = new ArrayList<Track>();
+		_isExternal = false;
 	}
 
 	public String getStatusAsString() {

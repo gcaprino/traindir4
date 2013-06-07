@@ -29,10 +29,27 @@ public interface ICommandIds {
     public static final String CMD_SHOW_TRAIN_STOPS = "com.bstreet.cg.traindirector.show.trainStops";
     public static final String CMD_SHOW_EDIT_TOOLS = "com.bstreet.cg.traindirector.show.edit.tools";
 
-    public static final String CMD_HELP_LANGUAGE = "com.bstreet.cg.traindirector.help.language";
+	public static final String CMD_RESTORE = "com.traindirector.restore";
+	public static final String CMD_COORD_BARS = "com.traindirector.coordbars";
+	public static final String CMD_INFO = "com.traindirector.info";
+	public static final String CMD_EDIT_ITINERARIES = "com.traindirector.edit.itineraries";
+	public static final String CMD_LATE_GRAPH = "com.traindirector.lategraph";
+	public static final String CMD_NEW = "com.traindirector.new";
+	public static final String CMD_SET_SIGNALS_TO_GREEN = "com.traindirector.settogreen";
+	public static final String CMD_SHOW_INFO_PAGE = "com.traindirector.infopage";
+	public static final String CMD_SHOW_LAYOUT_PAGE = "com.traindirector.layoutpage";
+	public static final String CMD_SHOW_PERFORMANCE = "com.traindirector.performance";
+	public static final String CMD_SKIP_AHEAD = "com.traindirector.skipahead";
+	public static final String CMD_STATION_SCHEDULE = "com.traindirector.stationschedule";
+	public static final String CMD_STATIONS_LIST = "com.traindirector.stationslist";
+	public static final String CMD_STATUS_BAR = "com.traindirector.statusbar";
+	public static final String CMD_SWITCHBOARD = "com.traindirector.switchboard";
+	public static final String CMD_TIME_DISTANCE_GRAPH = "com.traindirector.timedistance";
+	public static final String CMD_ZOOM_IN = "com.traindirector.zoomin";
+	public static final String CMD_ZOOM_OUT = "com.traindirector.zoomout";
+
+	public static final String CMD_HELP_LANGUAGE = "com.bstreet.cg.traindirector.help.language";
     
     // UNUSED
     public static final String CMD_OPEN_MESSAGE = "com.bstreet.cg.traindirector.openMessage";
-    
-    
 }

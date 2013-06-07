@@ -156,7 +156,7 @@
             name="Train Stops"
             description="Shows the train stops panel"
             categoryId="com.bstreet.cg.traindirector.category"
-            id="com.bstreet.cg.traindirector.show.trainstops">
+            id="com.bstreet.cg.traindirector.show.trainStops">
       </command>
       <command
             name="Edit Tools"
@@ -196,6 +196,115 @@
             id="com.traindirector.assign"
             name="Assign">
       </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Restore simulation to the previously saved state"
+            id="com.traindirector.restore"
+            name="Restore">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show coordinates bars in layout"
+            id="com.traindirector.coordbars"
+            name="CoordBars">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show information"
+            id="com.traindirector.info"
+            name="Info">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show how many late minutes were accumulated over time"
+            id="com.traindirector.lategraph"
+            name="LateGraph">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Clear the layout"
+            id="com.traindirector.new"
+            name="New">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Set all automatic signals to green"
+            id="com.traindirector.settogreen"
+            name="SetToGreen">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Info page"
+            id="com.traindirector.infopage"
+            name="InfoPage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the layout page"
+            id="com.traindirector.layoutpage"
+            name="LayoutPage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show performance points"
+            id="com.traindirector.performance"
+            name="Performance">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Skip to 3 minutes before the next arrival or departure"
+            id="com.traindirector.skipahead"
+            name="SkipAhead">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the schedule for individual stations"
+            id="com.traindirector.stationschedule"
+            name="StationSchedule">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the list of stations"
+            id="com.traindirector.stationslist"
+            name="StationsList">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show/hide the status bar"
+            id="com.traindirector.statusbar"
+            name="StatusBar">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the switchboard editor"
+            id="com.traindirector.switchboard"
+            name="SwitchBoard">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Define the itineraries"
+            id="com.traindirector.edit.itineraries"
+            name="EditItineraries">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Time-Distance graph"
+            id="com.traindirector.timedistance"
+            name="TimeDistance">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Zoom in see more details of the layout"
+            id="com.traindirector.zoomin"
+            name="ZoomIn">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Zoom out to see a larger portion of the layout"
+            id="com.traindirector.zoomout"
+            name="ZoomOut">
+      </command>
+
    </extension>
    <extension point="org.eclipse.ui.bindings">
       <key

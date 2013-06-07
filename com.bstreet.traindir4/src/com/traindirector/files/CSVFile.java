@@ -52,13 +52,13 @@ public class CSVFile extends TextFile {
 	}
 
 	public String getValue(int indx) {
-		if (indx < columnValues.length)
+		if (indx >= 0 && indx < columnValues.length)
 			return columnValues[indx];
 		return "?";
 	}
 
 	public int getValueHex(int index) {
-		if(index >= columnValues.length)
+		if(index < 0 || index >= columnValues.length)
 			return 0;
 		String val = columnValues[index];
 		if(val.charAt(0) != '#' && !val.startsWith("0x"))

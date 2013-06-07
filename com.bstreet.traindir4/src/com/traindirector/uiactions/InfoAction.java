@@ -8,19 +8,19 @@ import com.traindirector.Application;
 import com.traindirector.ICommandIds;
 import com.traindirector.commands.SpeedCommand;
 
-public class FastSimulationAction extends Action {
+public class InfoAction extends Action {
 
-	public FastSimulationAction(IWorkbenchWindow window, String label) {
+	public InfoAction(IWorkbenchWindow window, String label) {
         setText(label);
         // The id is used to refer to the action in a menu or toolbar
-		setId(ICommandIds.CMD_FAST);
+		setId(ICommandIds.CMD_INFO);
         // Associate the action with a pre-defined command, to allow key bindings.
-		setActionDefinitionId(ICommandIds.CMD_FAST);
-		setImageDescriptor(Activator.getImageDescriptor("/icons/faster16x16black.png"));
+		setActionDefinitionId(ICommandIds.CMD_INFO);
+		//setImageDescriptor(Activator.getImageDescriptor("/icons/faster16x16black.png"));
 	}
 	
 	public void run() {
-		SpeedCommand cmd = new SpeedCommand(1);
-		Application.getSimulator().addCommand(cmd);
+		//SpeedCommand cmd = new SpeedCommand(1);
+		//Application.getSimulator().addCommand(cmd);
 	}
 }
