@@ -30,6 +30,7 @@ import com.traindirector.model.TrainStatus;
 import com.traindirector.model.TrainStop;
 import com.traindirector.simulator.PathFinder;
 import com.traindirector.simulator.Simulator;
+import com.traindirector.simulator.TDDelay;
 
 public class SavFile extends TextFile {
 
@@ -63,6 +64,9 @@ public class SavFile extends TextFile {
 			in = new BufferedReader(new FileReader(new File(_fileName)));
 			
 			line = in.readLine();
+			if(line.startsWith("Layout:")) {
+				return loadNewFormat(in, line);
+			}
 			// check for relative path
 			File file = new File(line);
 			if (!file.canRead()) {
@@ -565,11 +569,11 @@ public class SavFile extends TextFile {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		ZipFile zFile = null;
-		ZipEntry zEntry;
+
 		/*
 		 * 
+		ZipFile zFile = null;
+		ZipEntry zEntry;
 		 *         ZipFile zFile = null;
         StringBuilder sb = new StringBuilder();
         try {
@@ -636,6 +640,9 @@ public class SavFile extends TextFile {
 		BufferedWriter out = null;
 		try {
 			out = new BufferedWriter(new FileWriter(new File(_fileName)));
+			if(saveNewFormat(out))
+				return true;
+			// TODO: remove saving in old format
 			out.append(trkFileName + eol);
 			out.append(String.format("%d,%ld,%d,%d,%d,%d,%d,%d,%d,%ld\n",
 					_simulator._currentTimeMultiplier,	// cur_time_mult
@@ -914,5 +921,944 @@ public class SavFile extends TextFile {
 			return 0;
 		line = line.trim();
 		return Integer.parseInt(line);
+	}
+
+	String key, value;
+	int ivalue;
+	boolean bvalue;
+	TDPosition posValue = new TDPosition();
+	
+	private boolean getKV(String in) {
+		String[] split = in.split(":");
+		key = split[0].trim();
+		if(split.length < 2) {
+			value = "";
+			ivalue = 0;
+		} else {
+			value = split[1];
+			try {
+				ivalue = Integer.parseInt(value);
+				bvalue = ivalue != 0;
+				return true;
+			} catch (Exception e) {
+				ivalue = 0;
+				bvalue = false;
+			}
+		}
+		return false;
+	}
+	
+	private TDPosition getPosValue() {
+		posValue._x = 0;
+		posValue._y = 0;
+		String[] split = value.split(",");
+		if(split.length == 2) {
+			try {
+				posValue._x = Integer.parseInt(split[0]);
+				posValue._y = Integer.parseInt(split[1]);
+			} catch (Exception e) {
+				// do nothing, will return 0,0
+			}
+		}
+		return posValue;
+	}
+
+	public boolean loadNewFormat(BufferedReader in, String line) throws IOException {
+		Schedule schedule = _simulator._schedule;
+		getKV(line);
+		// check for relative path
+		File file = new File(value);
+		if (!file.canRead()) {
+			FilePath path = new FilePath(line);
+			String[] segs = path.getSegments();
+			file = new File(segs[segs.length - 1], "");
+			if (!file.canRead()) {
+				// TODO: show alert - file not found
+				return false;
+			}
+		}
+		String trkFileName = file.getPath();
+		trkFileName = trkFileName.replace(".TRK", ".trk");
+		trkFileName = trkFileName.replace(".ZIP", ".zip");
+		LoadCommand loadCmd = new LoadCommand(trkFileName);
+		loadCmd.handle();
+
+		Switch sw = null;
+		Signal signal = null;
+
+		while((line = in.readLine()) != null) {
+			if(line.length() == 0)
+				break;
+			if(!getKV(line))
+				continue;
+			if(key.equals("CurrentTimeMultiplier")) {
+				_simulator._currentTimeMultiplier = ivalue;
+				continue;
+			}
+			if(key.equals("StartTime")) {
+				schedule._startTime = ivalue;
+				continue;
+			}
+			if(key.equals("ShowSpeeds")) {
+				_simulator._showSpeeds.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowBlocks")) {
+				_simulator._showBlocks.set(bvalue);
+				continue;
+			}
+			if(key.equals("BeepOnAlert")) {
+				_simulator._beepOnAlert.set(bvalue);
+				continue;
+			}
+			if(key.equals("RunPoints")) {
+				_simulator._runPoints = ivalue;
+				continue;
+			}
+			if(key.equals("TotalDelay")) {
+				_simulator._totalDelay = ivalue;
+				continue;
+			}
+			if(key.equals("TotalLate")) {
+				_simulator._totalLate = ivalue;
+				continue;
+			}
+			if(key.equals("TimeMultiplier")) {
+				_simulator._timeMult= ivalue;
+				continue;
+			}
+			if(key.equals("SimulatedTime")) {
+				_simulator._simulatedTime = ivalue;
+				continue;
+			}
+
+			if(key.equals("Switch")) {
+				getPosValue();
+				sw = _simulator._territory.findSwitch(posValue);
+				if(sw != null)
+					sw._switched = true;
+				continue;
+			}
+		}
+		
+		// reload the state of every signal
+
+		while((line = in.readLine()) != null) {
+			if(line.length() == 0)
+				break;
+			getKV(line);
+			if(key.equals("Signal")) {
+				getPosValue();
+				signal = _territory.findSignal(posValue._x, posValue._y);
+				// TODO: report error if signal not found
+				continue;
+			}
+			if(signal == null)
+				continue;
+			if(key.equals("Clear")) {
+				signal._status = ivalue == 1 ? TrackStatus.BUSY : TrackStatus.FREE;
+				continue;
+			}
+			if(key.equals("Fleeted")) {
+				signal.setFleeted(bvalue);
+				continue;
+			}
+			if(key.equals("Aspect")) {
+				signal.setAspectFromName(value);
+				continue;
+			}
+		}
+
+		// post-process signals
+
+		for(Track track : _territory._tracks) {
+			if(!(track instanceof Signal))
+				continue;
+			signal = (Signal)track;
+			if (!signal.isApproach() && signal.isClear())
+				signal.unlock();
+		}
+
+
+		// reload state of all trains
+
+		Train train = null;
+		TrainStop stop = null;
+		boolean notOnTrack = false;
+		while((line = in.readLine()) != null) {
+			if(line.length() == 0)	// separator between trains
+				continue;
+			if(line.charAt(0) == '.')
+				break;
+			getKV(line);
+			if(key.equals("Train")) {
+				train = schedule.findTrainNamed(value);
+				stop = null;
+				// TODO: report error if train not found
+				continue;
+			}
+
+			if(train == null)
+				continue;
+
+			if(key.equals("Status")) {
+				train._status = TrainStatus.fromInteger(ivalue);
+				continue;
+			}
+			if(key.equals("Direction")) {
+				train._direction = Direction.fromInteger(ivalue);
+				continue;
+			}
+			if(key.equals("Exited")) {
+				train._exited = value;
+				continue;
+			}
+			if(key.equals("TimeExited")) {
+				train._timeExited = ivalue;
+				continue;
+			}
+			if(key.equals("WrongDest")) {
+				train._wrongDest = ivalue;
+				continue;
+			}
+			if(key.equals("Speed")) {
+				train._speed = ivalue;
+				continue;
+			}
+			if(key.equals("MaxSpeed")) {
+				train._maxspeed = ivalue;
+				continue;
+			}
+			if(key.equals("CurMaxSpeed")) {
+				train._curmaxspeed = ivalue;
+				continue;
+			}
+			if(key.equals("TrackPos")) {
+				train._trackpos = ivalue;
+				continue;
+			}
+			if(key.equals("TimeLate")) {
+				train._timeLate = ivalue;
+				continue;
+			}
+			if(key.equals("TimeDelay")) {
+				train._timeDelay = ivalue;
+				continue;
+			}
+			if(key.equals("TimeRed")) {
+				train._timeRed = ivalue;
+				continue;
+			}
+			if(key.equals("EntryDelay")) {
+				train._entryDelay = new TDDelay();
+				train._entryDelay._nSeconds = ivalue;
+				continue;
+			}
+			if(key.equals("TimeDep")) {
+				train._timeDep = ivalue;
+				continue;
+			}
+			if(key.equals("PathTraveled")) {
+				train._pathtravelled= ivalue;
+				continue;
+			}
+			if(key.equals("Shunting")) {
+				train._shunting = bvalue;
+				continue;
+			}
+			if(key.equals("StopPoint")) {
+				getPosValue();
+				train._stopPoint = _territory.findTrack(posValue);
+				continue;
+			}
+			if(key.equals("DistanceToStop")) {
+				train._distanceToStop = ivalue;
+				continue;
+			}
+			if(key.equals("SlowPoint")) {
+				getPosValue();
+				train._slowPoint = _territory.findTrack(posValue);
+				continue;
+			}
+			if(key.equals("DistanceToSlow")) {
+				train._distanceToSlow = ivalue;
+				continue;
+			}
+			if(key.equals("NeedFindStop")) {
+				train._needFindStop = bvalue;
+				continue;
+			}
+			if(key.equals("FleetSignal")) {
+				getPosValue();
+				signal = _territory.findSignal(posValue._x, posValue._y);
+				if(signal == null)
+					continue;
+				if(train._fleet == null)
+					train._fleet = new ArrayList<Track>();
+				train._fleet.add(signal);
+				continue;
+			}
+
+			if(key.equals("Position")) {
+				getPosValue();
+				Track track = _territory.findTrack(posValue);
+				if(track == null)
+					track = _territory.findSwitch(posValue);
+				if(track != null)
+					train._position = track;
+				else {
+					switch (train._status) {
+					case READY:
+					case ARRIVED:
+					case DERAILED:
+					case DELAYED:
+						break;
+					case WAITING:
+					case STOPPED:
+					case RUNNING:
+						notOnTrack = true;
+					}
+				}
+				continue;
+			}
+			if(key.equals("WaitTime")) {
+				train._waitTime = ivalue;
+				continue;
+			}
+			if(key.equals("Flags")) {
+				train._flags = ivalue;
+				continue;
+			}
+			if(key.equals("Arrived")) {
+				train._arrived = ivalue;
+				continue;
+			}
+			if(key.equals("OldStatus")) {
+				train._oldstatus = TrainStatus.fromInteger(ivalue);
+				continue;
+			}
+			if(key.equals("OutOf")) {
+				train._outOf = _territory.findStation(value);
+				continue;
+			}
+			if(key.equals("Stop")) {
+				stop = train.findStop(value);
+				continue;
+			}
+			if(stop != null) {
+				if(key.equals("Stopped")) {
+					stop._stopped = bvalue;
+					continue;
+				}
+				if(key.equals("Delay")) {
+					stop._delay = ivalue;
+					continue;
+				}
+				if(key.equals("DepDelay")) {
+					stop._depDelay = new TDDelay();
+					stop._depDelay._nSeconds = ivalue;
+					continue;
+				}
+			}
+			if(key.equals("StoppingAt")) {
+				train._stopping = _territory.findStation(value);
+				continue;
+			}
+			if(key.equals("Length")) {
+				// get the train's length. This may be different than
+				// the length specified in the sch file because
+				// it may have been changed by a split/merge operation.
+				train._length = ivalue;
+				continue;
+			}
+			/* TODO
+			 
+			 if(key.equals("Icons")) {
+			 }
+			 
+			 */
+
+			// Tail information
+
+			if(key.equals("Tail")) {
+				if(train._tail == null) // maybe Length: was removed in the .sch file
+					train._tail = new Train(null);
+				continue;
+			}
+			Train tail = train._tail;
+			if(tail != null) {
+				if(key.equals("TailFleet")) {
+					getPosValue();
+					signal = _territory.findSignal(posValue._x, posValue._y);
+					if(signal == null) 
+						continue;
+					if(tail._fleet == null)
+						tail._fleet = new ArrayList<Track>();
+					tail._fleet.add(signal);
+					continue;
+				}
+				if(key.equals("TailTrackPos")) {
+					tail._trackpos = ivalue;
+					continue;
+				}
+				if(key.equals("TailEntry")) {
+					tail._tailEntry = ivalue;
+					continue;
+				}
+				if(key.equals("TailExit")) {
+					tail._tailExit = ivalue;
+					continue;
+				}
+				if(key.equals("TailTrack")) {
+					getPosValue();
+					Track track = _territory.findTrack(posValue);
+					if (track == null) {
+						track = _territory.findSwitch(posValue);
+						if (track == null)
+							track = _territory.findTextTrack(posValue);
+					}
+					if(track == null)
+						continue;
+					if (tail._path == null)
+						tail._path = new TrackPath();
+					Direction dir = Direction.E;
+					line = in.readLine();
+					if(line == null)
+						break;
+					getKV(line);
+					if(key.equals("TailDir"))
+						dir = Direction.fromInteger(ivalue);
+					tail._path.add(track, dir);
+					continue;
+				}
+			}
+			
+			if (train._status == TrainStatus.DELAYED && tail != null && tail._path != null)
+				tail._path = null;
+			if (notOnTrack) {
+				// alert ("train is not on track!");
+				// train._status = TrainStatus.DERAILED;
+			}
+		} // end while trains
+
+		// other attribute types
+
+		PerformanceCounters perf_tot = _simulator._performanceCounters;
+		while((line = in.readLine()) != null && !line.isEmpty()) {
+			getKV(line);
+			if(key.equals("WhiteTrack")) {
+				getPosValue();
+				Track track = _territory.findTrack(posValue);
+				if(track == null)
+					track = _territory.findSwitch(posValue);
+				if(track == null)
+					continue;
+				track._status = TrackStatus.BUSYSHUNTING;
+				continue;
+			}
+
+			if(key.equals("Stranded")) {
+				train = new Train(null);
+				train._flags = Train.STRANDED;
+				train._status = TrainStatus.ARRIVED;
+				_simulator._schedule._stranded.add(train);
+				int pathLength = 0;
+				while((line = in.readLine()) != null && line.length() > 0) {
+					getKV(line);
+					if(key.equals("Type")) {
+						train._type = ivalue;
+						continue;
+					}
+					if(key.equals("Position")) {
+						getPosValue();
+						train._position = _territory.findTrack(posValue);
+						if(train._position == null)
+							train._position = _territory.findSwitch(posValue);
+						continue;
+					}
+					if(key.equals("Direction")) {
+						train._direction = Direction.fromInteger(ivalue);
+						continue;
+					}
+					if(key.equals("MaxSpeed")) {
+						train._maxspeed = ivalue;
+						continue;
+					}
+					if(key.equals("CurMaxSpeed")) {
+						train._curmaxspeed = ivalue;
+						continue;
+					}
+					if(key.equals("Length")) {
+						train._length = ivalue;
+						continue;
+					}
+					if(key.equals("TailLength")) {
+						train._tail = new Train(null);
+						train._tail._path = new TrackPath();
+						continue;
+					}
+					if(train._tail == null)
+						continue;
+					if(key.equals("TailPos")) {
+						getPosValue();
+						Track track = _territory.findTrack(posValue);
+						if(track == null)
+							_territory.findSwitch(posValue);
+						line = in.readLine();
+						if(line == null)
+							break;
+						Direction dir = Direction.E;
+						getKV(line);
+						if(key.equals("TailDirection"))
+							dir = Direction.fromInteger(ivalue);
+						if(track != null) {
+							train._tail._path.add(track, dir);
+							track._status = TrackStatus.OCCUPIED;
+							train._tail._length += track._length;
+						}
+						continue;
+					}
+				}
+				if(train._tail != null && train._tail._path != null)
+					train._tail._position = train._tail._path.getTrackAt(0);
+				continue;
+			}
+
+			if(key.equals("LateMinutes")) {
+				int x = 0;
+				while((line = in.readLine()) != null && !line.isEmpty()) {
+					String[] cols = line.split(",");
+					for (int i = 0; i < cols.length; ++i) {
+						int m = Integer.parseInt(cols[i]);
+						_simulator._lateData[x % (24 * 60)] = m;
+						++x;
+					}
+				}
+				continue;
+			}
+			if(key.equals("RunDay")) {
+				schedule._runDay = ivalue;
+				continue;
+			}
+			if(key.equals("TerseStatus")) {
+				_simulator._terseStatus.set(bvalue);
+				continue;
+			}
+			if(key.equals("StatusOnTop")) {
+				_simulator._statusOnTop.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowSeconds")) {
+				_simulator._showSeconds.set(bvalue);
+				continue;
+			}
+			if(key.equals("TraditionalSignals")) {
+				_simulator._traditionalSignals.set(bvalue);
+				continue;
+			}
+			if(key.equals("AutoLink")) {
+				_simulator._autoLink.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowGrid")) {
+				_simulator._showGrid.set(bvalue);
+				continue;
+			}
+			if(key.equals("WrongDest")) {
+				perf_tot.wrong_dest = ivalue;
+				continue;
+			}
+			if(key.equals("LateTrains")) {
+				perf_tot.late_trains = ivalue;
+				continue;
+			}
+			if(key.equals("ThrownSwitches")) {
+				perf_tot.thrown_switch = ivalue;
+				continue;
+			}
+			if(key.equals("ClearedSignals")) {
+				perf_tot.cleared_signal = ivalue;
+				continue;
+			}
+			if(key.equals("Denied")) {
+				perf_tot.denied = ivalue;
+				continue;
+			}
+			if(key.equals("TurnedTrains")) {
+				perf_tot.turned_train = ivalue;
+				continue;
+			}
+			if(key.equals("WaitingTrains")) {
+				perf_tot.waiting_train = ivalue;
+				continue;
+			}
+			if(key.equals("WrongPlatform")) {
+				perf_tot.wrong_platform = ivalue;
+				continue;
+			}
+			if(key.equals("NTrainsLate")) {
+				perf_tot.ntrains_late = ivalue;
+				continue;
+			}
+			if(key.equals("NTrainsWrong")) {
+				perf_tot.ntrains_wrong = ivalue;
+				continue;
+			}
+			if(key.equals("NMissedStops")) {
+				perf_tot.nmissed_stops = ivalue;
+				continue;
+			}
+			if(key.equals("NWrongAssign")) {
+				perf_tot.wrong_assign = ivalue;
+				continue;
+			}
+			if(key.equals("HardCounters")) {
+				_simulator._hardCounters.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowCanceled")) {
+				_simulator._showCanceled = bvalue;
+				continue;
+			}
+			if(key.equals("ShowLinks")) {
+				_simulator._showLinks.set(bvalue);
+				continue;
+			}
+			if(key.equals("BeepOnEnter")) {
+				_simulator._beepOnEnter.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowCoords")) {
+				_simulator._showCoords = bvalue;
+				continue;
+			}
+			if(key.equals("ShowIcons")) {
+				_simulator._showIcons.set(bvalue);
+				continue;
+			}
+			if(key.equals("ShowToolTip")) {
+				_simulator._showTooltip = bvalue;
+				continue;
+			}
+			if(key.equals("ShowScripts")) {
+				_simulator._hardCounters.set(bvalue);
+				continue;
+			}
+			if(key.equals("RandomDelay")) {
+				_simulator._randomDelays.set(bvalue);
+				continue;
+			}
+			if(key.equals("LinkToLeft")) {
+				_simulator._linkToLeft.set(bvalue);
+				continue;
+			}
+			if(key.equals("PlaySynchronously")) {
+				_simulator._playSynchronously.set(bvalue);
+				continue;
+			}
+		}
+
+		/* needs to be here, after we reloaded the list
+		 * of stranded rolling stock, because it might
+		 * reduce the path a shunting train can travel.
+		 */
+		
+		// first need to position trains
+		
+		for (Train train1 : schedule._trains) {
+			train = train1;
+			if (train._shunting || train.isMerging())
+				continue;
+			if (train._position != null) {
+				PathFinder finder = new PathFinder();
+				train._path = finder.find(train._position._position, train._direction);
+				if (train._path != null && train._path.getTrackCount(0) > 1) {
+					for (Track track : train._path._tracks) {
+						if (track._status != TrackStatus.BUSYSHUNTING)
+							track._status = TrackStatus.BUSY;
+					}
+				}
+			}
+			positionTail(train);
+		}
+		
+		// then need to position shunting material
+		// because we need to know the position
+		// of material we are merging to
+		
+		for (Train train1 : schedule._trains) {
+			train = train1;
+			if (!train._shunting && !train.isMerging())
+				continue;
+			if (train._position == null)
+				continue;
+		
+			int i;
+			Train trn;
+			
+			PathFinder finder = new PathFinder();
+			train._path = finder.find(train._position._position , train._direction);
+			if (train._path != null) {
+				// 0 is the position of the train
+				for(i = 1; i < train._path.getTrackCount(0); ++i) {
+					Track track = train._path.getTrackAt(i);
+					if ((trn = schedule.findTrainAt(track._position)) == null) {
+						if((trn = schedule.findTailAt(track._position)) == null) {
+							if ((trn = schedule.findStrandedAt(track._position)) == null) {
+								trn = schedule.findStrandedTailAt(track._position);
+							}
+						}
+					}
+					if (trn != null) {
+						train._merging = trn;
+						train._flags |= Train.MERGING;
+						train._path.truncate(i);
+						trn._flags |= Train.WAITINGMERGE;
+						break;
+					}
+					// if FREE the path was clear when we saved the game
+					if (track._status == TrackStatus.FREE)
+						track._status = TrackStatus.BUSY;
+					// else the path must have been colored white by (white tracks) above
+					if (track._status != TrackStatus.BUSYSHUNTING && track._status != TrackStatus.BUSY)
+						break;// impossible (should be caught by findStranded above)
+				}
+			}
+			Train tail;
+			
+			if ((tail = train._tail) != null && tail._path != null) {
+				tail._position = null;
+				for (i = 0; i < tail._path.getTrackCount(0); ++i) {
+					Track track = tail._path.getTrackAt(i);
+					if (track == train._position)
+						break;
+					track._status = TrackStatus.OCCUPIED;
+				}
+				if (tail._path.getTrackCount(0) > 0)
+					tail._position = tail._path.getTrackAt(0);
+			}
+		}
+		
+		return true;
+	}
+
+	public boolean saveNewFormat(BufferedWriter out) throws IOException {
+		Schedule schedule = _simulator._schedule;
+		out.append("Layout: " + trkFileName + eol);
+		out.append(String.format("CurrentTimeMultiplier:%d\nStartTime:%ld\nShowSpeeds:%d\nShowBlocks:%d\nBeenOnAlert:%d\nRunPoints:%d\nTotalDelay:%d\nTotalLate:%d\nTimeMultiplier:%d\nSimulatedTime:%ld\n",
+				_simulator._currentTimeMultiplier,	// cur_time_mult
+				schedule._startTime,	// start_time
+				_simulator._showSpeeds._intValue,	// show_speeds
+				_simulator._showBlocks._intValue,	// show_blocks
+				_simulator._beepOnAlert._intValue,// beep_on_alert
+				_simulator._runPoints,// run_points
+				_simulator._totalDelay,// total_delay
+				_simulator._totalLate,// total_late
+				_simulator._timeMult,// time_mult
+				_simulator._simulatedTime));// current_time
+
+		//
+		// Save the state of every switch
+		//
+		// Actually we only need to save the positions
+		// of switches that are currently thrown, since
+		// all other switches will be reset in the main position
+		// when the layout is loaded from disk
+		//
+
+		for (Track track : _territory._tracks) {
+			if (!(track instanceof Switch))
+				continue;
+			Switch sw = (Switch) track;
+			if (!sw.isThrown())
+				continue;
+			out.append(String.format("Switch:%d,%d\n", sw._position._x, sw._position._y));
+		}
+		out.append(eol);
+		
+		// Save the state of every signal
+		
+		for (Track track : _territory._tracks) {
+			if (!(track instanceof Signal))
+				continue;
+			Signal signal = (Signal) track;
+			if (!signal.isClear() && !signal.isFleeted())	// signal is in the default state,
+				continue;									// so no need to save it
+			out.append(String.format("Signal:%d,%d\n  Clear:%d\n  Fleeted:%d\n",
+					signal._position._x, signal._position._y,
+					signal.isClear() ? 1 : 0, signal.isFleeted() ? 1 : 0));
+			if (signal._currentAspect != null) {
+				out.append("Aspect:" + signal._currentAspect._name + eol);	// Format(wxT(",%s"), sig->_currentState))
+			}
+		}
+		out.append(eol);
+
+		// Save the position of every train
+	
+		for (Train train : schedule._trains) {
+			if (train._status == TrainStatus.READY &&
+					(train._entryDelay == null || train._entryDelay._nSeconds == 0))
+				continue; // train in initial state - no need to save its data
+			
+			out.append(String.format("Train:%s\n", train._name));
+			out.append(String.format("  Status:%d\n  Direction:%d\n  Exited:%s\n", train._status.ordinal(), train._direction.ordinal(),
+				train._exited != null ? train._exited : ""));
+			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackPos:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
+					train._timeExited, train._wrongDest, train._speed, train._maxspeed,
+					train._curmaxspeed, train._trackpos, train._timeLate,
+					train._timeDelay, train._timeRed));
+			if (train._entryDelay != null)
+				out.append(String.format("  EntryDelay:%d\n", train._entryDelay._nSeconds));
+			
+			out.append(String.format("  TimeDep:%ld\n  PathPos:%d\n  PathTraveled:%ld\n  DistanceToStop:%ld\n  Shunting:%d\n",
+					train._timeDep, 0, //tr->pathpos,
+					train._pathtravelled, train._distanceToStop, train._shunting ? 1 : 0));
+			if (train._stopPoint != null)
+				out.append(String.format("  StopPoint:%d,%d\n  DistanceToStop:%d\n",
+						train._stopPoint._position._x, train._stopping._position._y, train._distanceToStop));
+			if (train._slowPoint != null)
+				out.append(String.format("  SlowPoint:%d,%d\n  DistanceToSlow:%d\n",
+						train._slowPoint._position._x, train._slowPoint._position._y, train._distanceToSlow));
+			out.append(String.format("  NeedFIndStop:%d\n", train._needFindStop ? 1 : 0));
+			
+			if (train._fleet != null) {
+				for (Track track : train._fleet) {
+					out.append(String.format("  FleetSignal:%d,%d\n", track._position._x, track._position._y));
+				}
+			}
+			
+			if (train._position != null)
+				out.append(String.format("  Position:%d,%d\n", train._position._position._x, train._position._position._y));
+			out.append(String.format("  WaitTime:%d\n  Flags:%d\n  Arrived:%d\n", train._waitTime, train._flags, train._arrived));
+
+			out.append(String.format("  OldStatus:%d\n  OutOf:%s\n", train._oldStatus.ordinal(),
+					train._outOf != null ? train._outOf._station : ""));
+			
+			// Save status of each stop
+			
+			for (TrainStop stop : train._stops) {
+					out.append(String.format("    Stop:%s\n    Stopped:%d\n    Delay:%d\n", stop._station, stop._stopped ? 1 : 0, stop._delay));
+				if (stop._depDelay != null)
+					out.append(String.format("    DepDelay:%d\n", stop._depDelay._nSeconds));
+				out.append(eol);
+			}
+			if(train._stopping != null)
+				out.append(String.format("  StoppingAt:%s\n", train._stopping._station));
+			if (train._length > 0) {
+				// save the length. This may be different than
+				// the length specified in the sch file because
+				// it may have been changed by a split/merge operation.
+				out.append(String.format("  Length:%d\n", train._length));
+			}
+
+			// Tail information
+
+			Train tail = train._tail;
+			if (tail != null && tail._path != null) {
+				if (tail._fleet != null && !tail._fleet.isEmpty()) {
+					for (Track track : tail._fleet) {
+						out.append(String.format("    TailFleet:%d,%d\n", track._position._x, track._position._y));
+					}
+					out.append(eol);
+				}
+				out.append(String.format("    TailPos:%d\n    TailTrackPos:%d\n    TailEntry:%d\n    TailExit:%d",
+						tail._position == null ? -1 : 0, tail._trackpos, tail._tailEntry, tail._tailExit));
+				int i;
+				for (i = 0; i < tail._path.getTrackCount(0); ++i) {
+					Track trk = tail._path.getTrackAt(i);
+					Direction dir = tail._path.getDirectionAt(i);	// TODO: how to maintain backward compatibility?
+					out.append(String.format("    TailTrack:%d,%d\n    TailDir:%d\n", trk._position._x, trk._position._y, dir.ordinal()));
+				}
+			}
+			out.append(eol);
+		}
+		out.append(".\n");	// end of trains information
+		
+		// save white tracks (to allow merging trains)
+
+		boolean found = false;
+		for (Track track : _territory._tracks) {
+			if (track instanceof Track || track instanceof Switch) {
+				if (track._status == TrackStatus.BUSYSHUNTING) {
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (found) {
+			for (Track track : _territory._tracks) {
+				if (track instanceof Track || track instanceof Switch) {
+					if (track._status == TrackStatus.BUSYSHUNTING) {
+						out.append(String.format("WhiteTrack:%d,%d\n", track._position._x, track._position._y));
+					}
+				}
+			}
+		}
+
+		// Save the position of every stranded train
+
+		for (Train train : schedule._stranded) {
+			out.append(String.format("Stranded:\n  Type:%d\n  Position:%d,%d\n  Direction:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  Length:%d\n",
+					train._type, train._position._position._x, train._position._position._y,
+					train._direction, //  TODO: train._ecarpix, train._wcarpix,
+					train._maxspeed, train._curmaxspeed,
+					train._length));
+			if (train._length > 0) {
+				if (train._tail != null && train._tail._path != null) {
+					String sep = "";
+					int i;
+					out.append(String.format("  TailLength:%d\n", train._tail._path.getTrackCount(0)));
+					for (i = 0; i < train._tail._path._tracks.size(); ++i) {
+						Track track = train._tail._path.getTrackAt(i);
+						Direction dir = train._tail._path.getDirectionAt(i);// TODO: how to do this?
+						out.append(String.format("    TailPos:%d,%d\n    TailDirection:%d", track._position._x, track._position._y, dir.ordinal()));
+					}
+					out.append(eol);
+				}
+			}
+		}
+
+		// late minutes statistics
+
+		int m = 0;
+		out.append("LateMinutes\n");
+		for (int i = 0; i < 24 * 60; ++i) {
+			out.append(String.format(" %d", _simulator._lateData[i]));
+			if (++m == 15) { // 15 values per line
+				out.append('\n');
+				m = 0;
+			}
+		}
+		
+		// other statistics and options
+		
+		out.append(String.format("RunDay:%d\nTerseStatus:%d\nStatusOnTop:%d\nShowSeconds:%d\nTraditionalSignals:%d\n",
+				schedule._runDay, _simulator._terseStatus, _simulator._statusOnTop,
+				_simulator._showSeconds, _simulator._traditionalSignals));
+		
+		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._autoLink, _simulator._showGrid));
+
+		PerformanceCounters perf_tot = _simulator._performanceCounters;
+		out.append(String.format("WrongDest:%d\nLateTrains:%d\nThrownSwitches:%d\nClearedSignals:%d\nDenied:%d\nTurnedTrains:%d\nWaitingTrains:%d\nWrongPlatform:%d\nNTrainsLate:%d\nNTrainsWrong:%d\nNMissedStops:%d\nNWrongAssign:%d\n",
+		    perf_tot.wrong_dest, perf_tot.late_trains, perf_tot.thrown_switch,
+		    perf_tot.cleared_signal, perf_tot.denied, perf_tot.turned_train,
+		    perf_tot.waiting_train, perf_tot.wrong_platform,
+		    perf_tot.ntrains_late, perf_tot.ntrains_wrong,
+		    perf_tot.nmissed_stops, perf_tot.wrong_assign));
+
+		out.append(String.format("HardCounters:%d\n", _simulator._hardCounters.isSet() ? 1 : 0));
+		out.append(String.format("ShowCanceled:%d\n", _simulator._showCanceled ? 1 : 0));
+		out.append(String.format("ShowLinks:%d\n", _simulator._showLinks.isSet() ? 1 : 0));
+		out.append(String.format("BeepOnEnter:%d\n", _simulator._beepOnEnter.isSet() ? 1 : 0));
+		out.append(String.format("ShowCoords:%d\n", _simulator._showCoords ? 1 : 0));
+		out.append(String.format("ShowIcons:%d\n", _simulator._showIcons.isSet() ? 1 : 0));
+		out.append(String.format("ShowToolTip:%d\n", _simulator._showTooltip ? 1 : 0));
+		out.append(String.format("ShowScripts:%d\n", _simulator._showScripts.isSet() ? 1 : 0));
+		out.append(String.format("RandomDelays:%d\n", _simulator._randomDelays.isSet() ? 1 : 0));
+		out.append(String.format("LinkToLeft:%d\n", _simulator._linkToLeft.isSet() ? 1 : 0));
+		out.append(String.format("PlaySynchronously:%d\n", _simulator._playSynchronously.isSet() ? 1 : 0));
+
+		return true;
 	}
 }

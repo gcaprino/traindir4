@@ -162,10 +162,14 @@ public class Signal extends Track {
 	
 	@Override
 	public void onRightClick() {
-		toggle();
 		if(!isClear())
 			return;
-		_nowfleeted = !_nowfleeted;	// TODO
+		_fleeted = !_fleeted;
+		_nowfleeted = _fleeted;
+		if(_fleeted)
+			setAspectFromName("greenFleeted");
+		else
+			setAspectFromName("green");
 	}
 
 	public void setAspectFromName(String action) {

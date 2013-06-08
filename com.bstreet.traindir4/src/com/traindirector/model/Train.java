@@ -433,6 +433,14 @@ public class Train {
 		return null;
 	}
 
+	public TrainStop findStop(String station) {
+		for (TrainStop stop : _stops) {
+			if (Territory.sameStation(stop._station, station))
+				return stop;
+		}
+		return null;
+	}
+
 	public boolean stoppingAtStation(Track position) {
 		if (_shunting && !isSet(DONTSTOPSHUNTERS)) {
 			return false;
