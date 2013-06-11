@@ -9,19 +9,21 @@
          </run>
       </application>
    </extension>
-   <extension
-         point="org.eclipse.ui.perspectives">
+   <extension point="org.eclipse.ui.perspectives">
       <perspective
             name="Simulation Perspective"
             class="com.traindirector.SimulationPerspective"
             id="com.bstreet.cg.traindirector.perspective">
       </perspective>
-   </extension>
-   <extension point="org.eclipse.ui.perspectives">
       <perspective
             name="Welcome Perspective"
             class="com.traindirector.WelcomePerspective"
             id="com.traindirector.welcomePerspective">
+      </perspective>
+      <perspective
+            class="com.traindirector.EditLayoutPerspective"
+            id="com.traindirector.edit.layoutPerspective"
+            name="EditLayout">
       </perspective>
    </extension>
    <extension point="org.eclipse.ui.views">
@@ -68,11 +70,20 @@
             restorable="true">
       </view>
       <view
-            name="Schedule Editor"
+            name="Editor Tools"
             allowMultiple="false"
-            icon="icons/schedule16x16black.png"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.EditToolsView"
+            icon="icons/edit16x16black.png"
+            id="com.traindirector.views.editTools">
+      </view>
+      <view
+            id="com.traindirector.views.editschedule"
+            allowMultiple="false"
+            category="com.bstreet.cg.traindirector"
             class="com.traindirector.views.EditScheduleView"
-            id="com.traindirector.views.editschedule">
+            icon="icons/schedule16x16black.png"
+            name="Schedule Editor">
       </view>
    </extension>
    <extension point="org.eclipse.ui.commands">
@@ -395,5 +406,22 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="CTRL+S">
       </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="com.traindirector.edit.layoutPerspective">
+         <view
+               closeable="false"
+               id="com.traindirector.views.editTools"
+               minimized="false"
+               moveable="true"
+               ratio="0.25f"
+               relationship="left"
+               relative="org.eclipse.ui.editorss"
+               showTitle="true"
+               visible="true">
+         </view>
+      </perspectiveExtension>
    </extension>
 </plugin>

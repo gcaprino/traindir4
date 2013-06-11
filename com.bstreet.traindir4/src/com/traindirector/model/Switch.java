@@ -5,7 +5,6 @@ import com.traindirector.simulator.Simulator;
 public class Switch extends Track {
 
 	public boolean _switched;
-	boolean editing = false;		// TODO: get from simulator
 
 	public Switch() {
 		
@@ -15,7 +14,11 @@ public class Switch extends Track {
 		super(x, y);
 	}
 
-	public void onClick() {
+	public Switch(TDPosition pos) {
+	    super(pos._x, pos._y);
+    }
+
+    public void onClick() {
 		
 		// if _status != FREE return
 		
@@ -233,11 +236,16 @@ public class Switch extends Track {
 	}
 
 	public VLine[] getSegments() {
+	    int dir = _direction.ordinal();
+	    return getSegments(dir);
+	}
+	
+	public VLine[] getSegments(int direction) {
 		VLine[] arr = new VLine[0];
 		VLine[] t1 = null;
 		VLine[] t2 = null;
-		int tmp = _direction.ordinal();
-		switch(tmp) {
+		boolean editing = Simulator.getEditing();
+		switch(direction) {
 		case 0:
 			if(editing) {
 				t1 = getSegments(TrackDirection.W_NE);

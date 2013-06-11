@@ -1,22 +1,32 @@
 package com.traindirector.commands;
 
-import java.nio.channels.ShutdownChannelGroupException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.Platform;
+import javax.swing.plaf.metal.MetalBorders.OptionDialogBorder;
+
+import org.eclipse.jface.bindings.Trigger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import com.traindirector.Application;
 import com.traindirector.dialogs.AssignDialog;
+import com.traindirector.dialogs.PropertyDialog;
+import com.traindirector.dialogs.TextOption;
+import com.traindirector.files.BooleanOption;
+import com.traindirector.files.Option;
+import com.traindirector.model.ItineraryButton;
 import com.traindirector.model.Signal;
 import com.traindirector.model.SignalAspect;
+import com.traindirector.model.Switch;
 import com.traindirector.model.TDPosition;
+import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
+import com.traindirector.model.TrackDirection;
+import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
-import com.traindirector.simulator.Simulator;
+import com.traindirector.model.TriggerTrack;
 import com.traindirector.simulator.SimulatorCommand;
 
 public class ClickCommand extends SimulatorCommand {
@@ -72,6 +82,10 @@ public class ClickCommand extends SimulatorCommand {
 	}
 	
 	public void handle() {
+	    if(_simulator.getEditing()) {
+	        handleEditing();
+	        return;
+	    }
 		Train train = _simulator._schedule.findAnyTrainAt(_pos);
 		if (train != null) {
 			if(isRightClick()) {
@@ -113,6 +127,179 @@ public class ClickCommand extends SimulatorCommand {
 			} else
 				track.onClick();
 		}
+	}
+
+	private void handleEditing() {
+	    Track track;
+	    Switch sw;
+	    Signal signal;
+	    Territory territory = _simulator._territory;
+	    
+	    if(isRightClick()) {
+	        
+	        // Open properties dialog based on object type
+	        track = territory.findTrack(_pos);
+	        if(track == null)
+	        	return;
+	        
+	        if(track instanceof Switch) {
+	        	return; // switches have no properties
+	        } else if(track instanceof Signal) {
+	        	editSignalProperties((Signal)track);
+	        } else if(track instanceof TriggerTrack) {
+	        	editTriggerProperties((TriggerTrack)track);
+	        } else if(track instanceof ItineraryButton) {
+	        	editItineraryButton((ItineraryButton)track);
+	        } else {
+	        	editTrackProperties(track);
+	        }
+	    } else {
+	        int type = _simulator.getEditorTrackType();
+	        int dir = _simulator.getEditorTrackDirection();
+	        track = territory.findTrack(_pos);
+	        if(track != null) {
+	            territory._tracks.remove(track);
+	        }
+	        switch(type) {
+	        case 0:    // delete
+	            break;
+	        case 1:    // tracks
+	            track = new Track(_pos);
+	            track._direction = TrackDirection.parse(dir);
+	            territory.add(track);
+	            break;
+	        case 2:    // switches
+                sw = new Switch(_pos);
+                sw._direction = TrackDirection.parse(dir);
+                territory.add(sw);
+	            break;
+	        case 3:    // signals
+                signal = _simulator._signalFactory.newInstance(dir < 4 ? 1 : 2);
+                signal._position = _pos;
+                signal._direction = TrackDirection.parse(dir);
+                signal.setAspectFromName(SignalAspect.RED);
+                signal._status = TrackStatus.FREE; // RED
+                if(dir >= 4)
+                    signal._fleeted = true;
+                territory.add(signal);
+                if(!_simulator._autoLink.isSet())
+                    break;
+                int dx = 0;
+                int dy = 0;
+                switch(dir) {
+                case 0:
+                case 4:
+                    dx = 0;
+                    dy = -1;
+                    break;
+                case 1:
+                case 5:
+                    dx = 0;
+                    dy = 1;
+                    break;
+                case 2:
+                case 6:
+                    dx = 1;
+                    dy = 0;
+                    break;
+                case 3:
+                case 7:
+                    dx = -1;
+                    dy = 0;
+                    break;
+                }
+                if(_simulator._linkToLeft.isSet()) {
+                    dx *= -1;
+                    dy *= -1;
+                }
+                track = territory.findTrack(new TDPosition(_pos._x + dx, _pos._y * dy));
+                if(track == null)
+                    break;
+                signal.linkedTo(track);
+	            break;
+	        case 4:    // items
+	            break;
+	        case 5:    // actions
+	            break;
+	        }
+	    }
+    }
+
+    private void editTrackProperties(Track track) {
+    	List<Option> options = new ArrayList<Option>();
+    	Option o = new TextOption("length", "Track Length (m) :");
+    	o._value = "" + track._length;
+    	options.add(o); // 0
+    	o = new TextOption("station", "Station name :");
+    	o._value = track._station;
+    	options.add(o); // 1
+    	o = new TextOption("km", "Lm. :");
+    	o._value = "" + track._km;
+    	options.add(o); // 2
+    	o = new TextOption("speeds", "Speed(s) :");
+    	if(track._speed == null)
+    		track._speed = new int[Track.NSPEEDS];
+    	o._value = "";
+    	for(int i = 0; i < track._speed.length; ++i) {
+    		o._value = o._value + "/" + track._speed[i]; 
+    	}
+    	o._value = o._value.substring(1);
+    	options.add(o); // 3
+    	o = new TextOption("eastlink", "Linked to east :");
+    	if(track._elink != null)
+    		o._value = "" + track._elink._x + "," + track._elink._y;
+    	options.add(o); // 4
+    	o = new TextOption("westlink", "Linked to west :");
+    	if(track._wlink != null)
+    		o._value = "" + track._wlink._x + "," + track._wlink._y;
+    	options.add(o); // 5
+    	
+    	o = new BooleanOption("hidden", "Hidden");
+    	o._intValue = track._invisible ? 1 : 0;
+    	options.add(o); // 6
+    	o = new BooleanOption("highsignal", "Don't stop if shunting");
+    	o._intValue = (track._flags & Track.DONTSTOPSHUNTERS) != 0 ? 1 : 0;
+    	options.add(o); // 7
+
+    	// TODO: add script button
+    	
+    	final int[] result = new int[1];
+    	final PropertyDialog dialog = new PropertyDialog(null, options);
+    	Display.getDefault().syncExec(new Runnable() {
+			
+			@Override
+			public void run() {
+				result[0] = dialog.open();
+			}
+		});
+    	if(result[0] == PropertyDialog.CANCEL)
+    		return;
+    	
+    	track._length = Integer.parseInt(options.get(0)._value);
+    	track._station = options.get(1)._value;
+    	track._km = Integer.parseInt(options.get(2)._value);
+    	String[] spds = options.get(3)._value.split("/");
+    	for(int i = 0; i < track._speed.length; ++i) {
+    		if(i >= spds.length)
+    			track._speed[i] = 0;
+    		else
+    			track._speed[i] = Integer.parseInt(spds[i]);
+    	}
+		track._elink = new TDPosition(options.get(4)._value);
+		track._wlink = new TDPosition(options.get(5)._value);
+		track._invisible = options.get(6)._intValue != 0;
+		track._flags &= ~Track.DONTSTOPSHUNTERS;
+		if(options.get(7)._intValue != 0)
+			track._flags |= Track.DONTSTOPSHUNTERS;
+	}
+
+	private void editItineraryButton(ItineraryButton track) {
+	}
+
+	private void editTriggerProperties(TriggerTrack track) {
+	}
+
+	private void editSignalProperties(Signal track) {
 	}
 
 	private boolean leftClickOnTrain(final Train train) {

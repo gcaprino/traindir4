@@ -26,7 +26,15 @@ public class Signal extends Track {
 	private boolean _isShunting;
 	private boolean _nowfleeted;
 
-	public SignalAspect getAspect() {
+	public Signal() {
+	    
+	}
+
+	public Signal(TDPosition pos) {
+	    super(pos);
+    }
+
+    public SignalAspect getAspect() {
 		return _currentAspect;
 	}
 

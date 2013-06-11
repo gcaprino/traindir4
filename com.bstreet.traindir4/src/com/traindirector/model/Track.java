@@ -26,9 +26,14 @@ public class Track {
 	public TrackStatus _status = TrackStatus.FREE;
 	public String _scriptFile;
 	public Script _script;
+	public boolean _invisible;
 
 	// performance flags
-	public static final int THROWN = 1;
+	public static final int TURNED = 1;
+	public static final int THROWN = 2;
+
+	public static final int DONTSTOPSHUNTERS = 1024; // don't stop here if train is shunting
+
 	public int _flags;
 	
 	public long _updateTime;
@@ -47,7 +52,13 @@ public class Track {
 		_elink = new TDPosition();
 	}
 
-	public Direction walk(Direction dir) {
+	public Track(TDPosition pos) {
+	    _position = pos;
+        _wlink = new TDPosition();
+        _elink = new TDPosition();
+    }
+
+    public Direction walk(Direction dir) {
 		if (_direction != null) {
 			switch(_direction) {
 	
@@ -179,7 +190,7 @@ public class Track {
 		return s;
 	}
 	
-	public VLine[] getSegments(TrackDirection direction) {
+	public static VLine[] getSegments(TrackDirection direction) {
 		switch(direction) {
 		case E_W:
 		case W_E:

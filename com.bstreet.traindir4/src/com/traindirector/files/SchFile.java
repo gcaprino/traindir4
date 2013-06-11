@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.traindirector.model.TDIcon;
@@ -246,6 +247,8 @@ public class SchFile extends TextFile {
 					i = skipBlanks(line, 6);
 					if(i < 0)
 						continue;
+					if(train._notes == null)
+					    train._notes = new ArrayList<String>();
 					train._notes.add(line.substring(i));
 					continue;
 				}

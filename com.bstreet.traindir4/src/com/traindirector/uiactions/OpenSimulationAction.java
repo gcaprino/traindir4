@@ -15,6 +15,7 @@ import org.eclipse.ui.internal.Workbench;
 import com.traindirector.Activator;
 import com.traindirector.Application;
 import com.traindirector.ICommandIds;
+import com.traindirector.SimulationPerspective;
 import com.traindirector.commands.LoadCommand;
 import com.traindirector.editors.LayoutPart;
 import com.traindirector.editors.WebPage;
@@ -55,7 +56,7 @@ public class OpenSimulationAction extends Action {
 		// switch perspective
 		IWorkbench workbench = PlatformUI.getWorkbench();
 		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		String simPerspective = "com.bstreet.cg.traindirector.perspective";
+		String simPerspective = SimulationPerspective.ID;
 		try {
 			workbench.showPerspective(simPerspective, window);
 		} catch (WorkbenchException e) {

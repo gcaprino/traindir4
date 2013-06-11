@@ -51,6 +51,7 @@ public class Simulator {
 	public Timer _timer;
 	private TimerTask _timedExecutor;
 	public static Random _random = new Random(System.currentTimeMillis());
+    private static boolean _currentlyEditing;
 
 	public int _timeSliceCount;
 	public int _timeSlice;
@@ -109,6 +110,8 @@ public class Simulator {
 	public List<String> _oldSimulations;
 	public int _runPointBase;
 	public int _runDay;
+    private int _editorTrackType;
+    private int _editorTrackDirection;
 
 	public Simulator() {
 
@@ -406,5 +409,26 @@ public class Simulator {
 	public BufferedReader getReaderForFile(String fname) {
 		return _fileManager.getReaderForFile(fname);
 	}
+
+	public void setEditing(boolean b) {
+	    _currentlyEditing = b;
+	}
+
+    public static boolean getEditing() {
+        return _currentlyEditing;
+    }
+
+    public void setEditorTool(int trackType, int direction) {
+        _editorTrackType = trackType;
+        _editorTrackDirection = direction;
+    }
+    
+    public int getEditorTrackType() {
+        return _editorTrackType;
+    }
+    
+    public int getEditorTrackDirection() {
+        return _editorTrackDirection;
+    }
 	
 }

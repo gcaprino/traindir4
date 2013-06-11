@@ -42,10 +42,12 @@ import com.traindirector.model.TDPosition;
 import com.traindirector.model.Territory;
 import com.traindirector.model.TextTrack;
 import com.traindirector.model.Track;
+import com.traindirector.model.TrackDirection;
 import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TriggerTrack;
 import com.traindirector.model.VLine;
+import com.traindirector.simulator.SignalFactory;
 import com.traindirector.simulator.Simulator;
 
 public class LayoutCanvas {
@@ -68,7 +70,14 @@ public class LayoutCanvas {
 
 	private int _mouseDownX, _mouseDownY;
 	private boolean _mouseDown;
+	
+	private int _xMultiplier = 1;
+	private int _yMultiplier = 1;
+	private int _currentTrackType;
+	private int _currentTrackDirection;
+	private int _currentMaxTrackDirection;
 
+	private boolean _isEditorToolbox;
 
 	public LayoutCanvas(Composite parent) {
 		
@@ -207,6 +216,10 @@ public class LayoutCanvas {
 			bgColor = _simulator._colorFactory.getBackgroundColor();
 		}
 
+		if(_isEditorToolbox) {
+		    drawToolbox(gc);
+		    return;
+		}
 		long mostRecentUpdate = lastUpdate;
 
 		synchronized (_simulator) {
@@ -228,8 +241,8 @@ public class LayoutCanvas {
 
 					} else if (trk instanceof ItineraryButton) {
 						drawImage(gc, trk._position, ":icons:itinButton.xpm");
-						gc.drawText(trk._station, (trk._position._x + 1) * Simulator.HGRID,
-								trk._position._y * Simulator.VGRID);
+						gc.drawText(trk._station, (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
+								trk._position._y * Simulator.VGRID * _yMultiplier);
 					} else if (trk instanceof PlatformTrack) {
 
 					} else if (trk instanceof Signal) {
@@ -248,13 +261,10 @@ public class LayoutCanvas {
 							drawSegments(gc, sw._position, segs, sw._status);
 						segs = sw.getBlockSegments();
 						if (segs != null)
-							drawSegments(gc, sw._position, segs,
-									TrackStatus.FREE);
+							drawSegments(gc, sw._position, segs, TrackStatus.FREE);
 
 					} else if (trk instanceof TextTrack) {
-						gc.drawText(trk._station, trk._position._x
-								* Simulator.HGRID, trk._position._y
-								* Simulator.VGRID);
+                        gc.drawText(trk._station, trk._position._x * Simulator.HGRID * _xMultiplier, trk._position._y * Simulator.VGRID * _yMultiplier);
 
 					} else if (trk instanceof TriggerTrack) {
 						VLine[] segs = trk.getSegments();
@@ -312,7 +322,7 @@ public class LayoutCanvas {
 		lastUpdate = mostRecentUpdate;
 	}
 
-	private void drawImage(GC gc, TDPosition position, String iconFileName) {
+    private void drawImage(GC gc, TDPosition position, String iconFileName) {
 		TDIcon icon = _simulator._iconFactory.get(iconFileName);
 		if (icon == null) {
 			icon = _simulator._iconFactory.get(":icons:camera.xpm");
@@ -334,16 +344,16 @@ public class LayoutCanvas {
 	}
 
 	public void eraseGridCell(GC gc, TDPosition pos) {
-		int x = pos._x * Simulator.HGRID;
-		int y = pos._y * Simulator.VGRID;
+		int x = pos._x * Simulator.HGRID * _xMultiplier;
+		int y = pos._y * Simulator.VGRID * _yMultiplier;
 		gc.setForeground(bgColor);
 		gc.fillRectangle(x, y, Simulator.HGRID, Simulator.VGRID);
 	}
 
 	public void drawSegments(GC gc, TDPosition pos, VLine[] segs,
 			TrackStatus status) {
-		int x = pos._x * Simulator.HGRID;
-		int y = pos._y * Simulator.VGRID;
+		int x = pos._x * Simulator.HGRID * _xMultiplier;
+		int y = pos._y * Simulator.VGRID * _yMultiplier;
 		// TODO: use options for track colors
 		if (status == TrackStatus.BUSY)
 			gc.setForeground(greenColor);
@@ -354,13 +364,13 @@ public class LayoutCanvas {
 		else
 			gc.setForeground(blackColor);
 		for (VLine vl : segs) {
-			gc.drawLine(x + vl._x0, y + vl._y0, x + vl._x1, y + vl._y1);
+			gc.drawLine(x + vl._x0 * _xMultiplier, y + vl._y0 * _yMultiplier, x + vl._x1 * _xMultiplier, y + vl._y1 * _yMultiplier);
 		}
 	}
 
 	public void drawImage(GC gc, TDPosition pos, Image image) {
-		int x = pos._x * Simulator.HGRID;
-		int y = pos._y * Simulator.VGRID;
+		int x = pos._x * Simulator.HGRID * _xMultiplier;
+		int y = pos._y * Simulator.VGRID * _yMultiplier;
 		gc.drawImage(image, x, y);
 	}
 
@@ -377,7 +387,7 @@ public class LayoutCanvas {
 
 	// convert canvas to layout coords
 	public TDPosition toLayoutCoord(int x, int y) {
-		TDPosition pos = new TDPosition(x / Simulator.HGRID, y / Simulator.VGRID);
+		TDPosition pos = new TDPosition(x / Simulator.HGRID / _xMultiplier, y / Simulator.VGRID / _yMultiplier);
 		return pos;
 	}
 
@@ -390,7 +400,7 @@ public class LayoutCanvas {
 	}
 
 	public void onMouseMove(MouseEvent e) {
-		if (_simulator == null || _simulator._territory == null)
+		if (_simulator == null || _simulator._territory == null || _isEditorToolbox)
 			return;
 		// TODO: if editing we could draw a line
 		// if not editing, we could select an area
@@ -414,12 +424,28 @@ public class LayoutCanvas {
 			return;
 		if (_simulator == null)
 			return;
-		ClickCommand cmd = new ClickCommand(toLayoutCoord(e.x, e.y));
-		cmd.setLeftClick(e.button == 1);
-		cmd.setShiftKey((e.stateMask & SWT.SHIFT) != 0);
-		cmd.setCtrlKey((e.stateMask & SWT.CONTROL) != 0);
-		cmd.setAltKey((e.stateMask & SWT.ALT) != 0);
-		_simulator.addCommand(cmd);
+		TDPosition pos = toLayoutCoord(e.x, e.y);
+		if(!_isEditorToolbox) {
+        	ClickCommand cmd = new ClickCommand(pos);
+        	cmd.setLeftClick(e.button == 1);
+        	cmd.setShiftKey((e.stateMask & SWT.SHIFT) != 0);
+        	cmd.setCtrlKey((e.stateMask & SWT.CONTROL) != 0);
+        	cmd.setAltKey((e.stateMask & SWT.ALT) != 0);
+        	_simulator.addCommand(cmd);
+        	return;
+		}
+		if(pos._y == 0) {
+		    if(pos._x >= 0 && pos._x < 6) {
+		        _currentTrackType = pos._x;
+		        // redraw second row, since we changed the tools' type
+                _canvas.update();
+		    }
+		    return;
+		}
+		if(pos._x >= 0 && pos._x < _currentMaxTrackDirection) {
+		    _currentTrackDirection = pos._x;
+		    _simulator.setEditorTool(_currentTrackType, _currentTrackDirection);
+		}
 	}
 
 	public void onMouseDoubleClick(MouseEvent e) {
@@ -440,4 +466,102 @@ public class LayoutCanvas {
 
 	}
 
+    public void setEditorToolbox(boolean b) {
+        _isEditorToolbox = b;
+        _xMultiplier = 4;
+        _yMultiplier = 4;
+    }
+
+    private void drawToolbox(GC gc) {
+        // First row
+        String[] firstRow = { "Del", "Tracks", "Switches", "Signals", "Items", "Actions" };
+        TDPosition pos = new TDPosition(0, 1);
+        
+        gc.setBackground(bgColor);
+        gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
+        gc.setBackground(greenColor);
+        gc.fillRectangle(_currentTrackDirection * Simulator.HGRID * _xMultiplier, Simulator.VGRID * _yMultiplier,
+                Simulator.HGRID * _xMultiplier - 3, Simulator.VGRID * _yMultiplier - 3);
+        gc.setBackground(whiteColor);
+        for(int x = 0; x < firstRow.length; ++x) {
+            gc.drawText(firstRow[x], x * Simulator.HGRID * _xMultiplier, 0);
+        }
+        switch(_currentTrackType) {
+        case 0: // Delete
+            break;
+        case 1: // Tracks
+            _currentMaxTrackDirection = trackDirections.length;
+            for(int x = 0; x < _currentMaxTrackDirection; ++x) {
+                pos._x = x;
+                VLine[] segs = Track.getSegments(trackDirections[x]);
+                if (segs != null)
+                    drawSegments(gc, pos, segs, TrackStatus.FREE);
+            }
+            break;
+        case 2: // Switches
+            Switch sw = new Switch();
+            _currentMaxTrackDirection = 24;
+            for(int x = 0; x < _currentMaxTrackDirection; ++x) {
+                pos._x = x;
+                VLine[] segs = sw.getSegments(x);
+                if (segs != null)
+                    drawSegments(gc, pos, segs, TrackStatus.FREE);
+                segs = sw.getBlockSegments();
+                if (segs != null)
+                    drawSegments(gc, pos, segs, TrackStatus.FREE);
+            }
+            break;
+        case 3: // Signals
+            _currentMaxTrackDirection = 8;
+            SignalFactory factory = Simulator.INSTANCE._signalFactory;
+            Signal signal = factory.newInstance(1);
+            for(int x = 0; x < 4; ++x) {
+                pos._x = x;
+                SignalAspect aspect = signal.getAspect();
+                String iconFileName = aspect.getXpmStrings(signalsDirections[x]);
+                drawImage(gc, pos, iconFileName);
+            }
+            signal = factory.newInstance(2);
+            for(int x = 0; x < 4; ++x) {
+                pos._x = 4 + x;
+                SignalAspect aspect = signal.getAspect();
+                String iconFileName = aspect.getXpmStrings(signalsDirections[x]);
+                drawImage(gc, pos, iconFileName);
+            }
+            break;
+        case 4: // Items
+        case 5: // Actions
+            break;
+        }
+        
+        
+    }
+
+    TrackDirection[] trackDirections = {
+             TrackDirection.E_W,
+             TrackDirection.NW_SE,
+             TrackDirection.SW_NE,
+             TrackDirection.W_NE,
+             TrackDirection.W_SE,
+             TrackDirection.NW_E,
+             TrackDirection.SW_E,
+             TrackDirection.TRK_N_S,
+             TrackDirection.SW_N,
+             TrackDirection.NW_S,
+             TrackDirection.SE_N,
+             TrackDirection.NE_S,
+             TrackDirection.X_X,
+             TrackDirection.X_PLUS,
+             TrackDirection.XH_SW_NE,
+             TrackDirection.XH_NW_SE,
+             TrackDirection.N_NE_S_SW,
+             TrackDirection.N_NW_S_SE
+    };
+
+    TrackDirection[] signalsDirections = {
+            TrackDirection.E_W,
+            TrackDirection.W_E,
+            TrackDirection.S_N,
+            TrackDirection.N_S,
+    };
 }
