@@ -15,6 +15,7 @@ import com.traindirector.dialogs.AssignDialog;
 import com.traindirector.dialogs.PropertyDialog;
 import com.traindirector.dialogs.TextOption;
 import com.traindirector.files.BooleanOption;
+import com.traindirector.files.FileOption;
 import com.traindirector.files.Option;
 import com.traindirector.model.ItineraryButton;
 import com.traindirector.model.Signal;
@@ -36,6 +37,7 @@ public class ClickCommand extends SimulatorCommand {
 	boolean _altKey;
 	boolean _ctrlKey;
 	TDPosition _pos;
+	List<Option> _options;
 
 	public ClickCommand(TDPosition pos) {
 		_pos = pos;
@@ -226,16 +228,16 @@ public class ClickCommand extends SimulatorCommand {
     }
 
     private void editTrackProperties(Track track) {
-    	List<Option> options = new ArrayList<Option>();
+    	_options = new ArrayList<Option>();
     	Option o = new TextOption("length", "Track Length (m) :");
     	o._value = "" + track._length;
-    	options.add(o); // 0
+    	_options.add(o); // 0
     	o = new TextOption("station", "Station name :");
     	o._value = track._station;
-    	options.add(o); // 1
+    	_options.add(o); // 1
     	o = new TextOption("km", "Lm. :");
     	o._value = "" + track._km;
-    	options.add(o); // 2
+    	_options.add(o); // 2
     	o = new TextOption("speeds", "Speed(s) :");
     	if(track._speed == null)
     		track._speed = new int[Track.NSPEEDS];
@@ -244,27 +246,27 @@ public class ClickCommand extends SimulatorCommand {
     		o._value = o._value + "/" + track._speed[i]; 
     	}
     	o._value = o._value.substring(1);
-    	options.add(o); // 3
+    	_options.add(o); // 3
     	o = new TextOption("eastlink", "Linked to east :");
     	if(track._elink != null)
     		o._value = "" + track._elink._x + "," + track._elink._y;
-    	options.add(o); // 4
+    	_options.add(o); // 4
     	o = new TextOption("westlink", "Linked to west :");
     	if(track._wlink != null)
     		o._value = "" + track._wlink._x + "," + track._wlink._y;
-    	options.add(o); // 5
+    	_options.add(o); // 5
     	
     	o = new BooleanOption("hidden", "Hidden");
     	o._intValue = track._invisible ? 1 : 0;
-    	options.add(o); // 6
+    	_options.add(o); // 6
     	o = new BooleanOption("highsignal", "Don't stop if shunting");
     	o._intValue = (track._flags & Track.DONTSTOPSHUNTERS) != 0 ? 1 : 0;
-    	options.add(o); // 7
+    	_options.add(o); // 7
 
     	// TODO: add script button
     	
     	final int[] result = new int[1];
-    	final PropertyDialog dialog = new PropertyDialog(null, options);
+    	final PropertyDialog dialog = new PropertyDialog(null, _options);
     	Display.getDefault().syncExec(new Runnable() {
 			
 			@Override
@@ -275,21 +277,21 @@ public class ClickCommand extends SimulatorCommand {
     	if(result[0] == PropertyDialog.CANCEL)
     		return;
     	
-    	track._length = Integer.parseInt(options.get(0)._value);
-    	track._station = options.get(1)._value;
-    	track._km = Integer.parseInt(options.get(2)._value);
-    	String[] spds = options.get(3)._value.split("/");
+    	track._length = Integer.parseInt(_options.get(0)._value);
+    	track._station = _options.get(1)._value;
+    	track._km = Integer.parseInt(_options.get(2)._value);
+    	String[] spds = _options.get(3)._value.split("/");
     	for(int i = 0; i < track._speed.length; ++i) {
     		if(i >= spds.length)
     			track._speed[i] = 0;
     		else
     			track._speed[i] = Integer.parseInt(spds[i]);
     	}
-		track._elink = new TDPosition(options.get(4)._value);
-		track._wlink = new TDPosition(options.get(5)._value);
-		track._invisible = options.get(6)._intValue != 0;
+		track._elink = new TDPosition(_options.get(4)._value);
+		track._wlink = new TDPosition(_options.get(5)._value);
+		track._invisible = _options.get(6)._intValue != 0;
 		track._flags &= ~Track.DONTSTOPSHUNTERS;
-		if(options.get(7)._intValue != 0)
+		if(_options.get(7)._intValue != 0)
 			track._flags |= Track.DONTSTOPSHUNTERS;
 	}
 
@@ -299,9 +301,73 @@ public class ClickCommand extends SimulatorCommand {
 	private void editTriggerProperties(TriggerTrack track) {
 	}
 
-	private void editSignalProperties(Signal track) {
+	private void editSignalProperties(Signal signal) {
+    	_options = new ArrayList<Option>();
+    	String name = signal._station;
+    	if((name == null || name.isEmpty()) && signal._position != null)
+    		name = signal._position.toString();
+    	addTextOption("Signal name :", name);	// 0
+    	name = "";
+    	if(signal._wlink != null) {
+    		name = "" + signal._wlink._x + "," + signal._wlink._y;
+    	}
+    	addTextOption("Linked to track at :", name); // 1
+    	
+    	name = "";
+    	if(signal._blockedBy != null) {
+    		name = "" + signal._blockedBy._x + "," + signal._blockedBy._y;
+    	}
+    	addTextOption("Blocked by :", name); // 2
+    	
+    	addBooleanOption("Signal is always red", signal._fixedred); // 3
+    	addBooleanOption("Signal has square frame", signal._signalx); // 4
+    	addBooleanOption("No penalty for train stopping at this signal", signal._nopenalty); // 5
+    	addBooleanOption("No penalty for un-necessary clicks", signal._noClickPenalty); // 6
+    	addBooleanOption("Hidden", signal._invisible); // 7
+    	addBooleanOption("Intermediate", signal._intermediate); // 8
+    	FileOption fo = new FileOption("script", "Script file :"); // 9
+    	if(signal._script != null)
+    		fo._value = signal._scriptFile;
+    	_options.add(fo);
+
+    	final int[] result = new int[1];
+    	final PropertyDialog dialog = new PropertyDialog(null, _options);
+    	Display.getDefault().syncExec(new Runnable() {
+			
+			@Override
+			public void run() {
+				result[0] = dialog.open();
+			}
+		});
+    	if(result[0] == PropertyDialog.CANCEL)
+    		return;
+    	
+    	signal._station = _options.get(0)._value;
+    	// TODO: read coords for linked and blocked
+    	signal._fixedred = _options.get(3)._intValue != 0;
+    	signal._signalx = _options.get(4)._intValue != 0;
+    	signal._nopenalty = _options.get(5)._intValue != 0;
+    	signal._noClickPenalty = _options.get(6)._intValue != 0;
+    	signal._invisible = _options.get(7)._intValue != 0;
+    	signal._intermediate = _options.get(8)._intValue != 0;
 	}
 
+	private void addTextOption(String descr, String value) {
+    	TextOption o = new TextOption("", descr);
+    	o._value = value;
+    	_options.add(o); // 0
+	}
+	
+	private void addBooleanOption(String descr, boolean value) {
+    	BooleanOption o = new BooleanOption("", descr);
+    	o._intValue = value ? 1 : 0;
+    	_options.add(o);
+	}
+	
+	private void addBooleanOption(String descr, int value) {
+		addBooleanOption(descr, value != 0);
+	}
+	
 	private boolean leftClickOnTrain(final Train train) {
 		Application._display.syncExec(new Runnable() {
 			@Override

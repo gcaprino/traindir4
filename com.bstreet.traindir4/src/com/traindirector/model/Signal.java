@@ -25,6 +25,8 @@ public class Signal extends Track {
 	private boolean _isApproach;
 	private boolean _isShunting;
 	private boolean _nowfleeted;
+	public TDPosition _blockedBy;
+	public boolean _intermediate;
 
 	public Signal() {
 	    
