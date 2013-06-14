@@ -356,17 +356,20 @@
             id="com.bstreet.cg.traindirector.layout"
             name="Layout">
       </editor>
-   </extension>
-   <extension point="org.eclipse.ui.editors">
       <editor
-            class="com.traindirector.editors.WebPage"
+            class="com.traindirector.editors.WelcomePage"
             default="false"
             icon="icons/switch16x16black.png"
-            id="com.traindirector.webpage"
-            name="WebPage">
+            id="com.traindirector.editor.welcome"
+            name="Welcome">
       </editor>
-   </extension>
-   <extension point="org.eclipse.ui.editors">
+      <editor
+            class="com.traindirector.editors.SwitchboardEditor"
+            default="false"
+            icon="icons/switch16x16black.png"
+            id="com.traindirector.editor.switchboard"
+            name="Switchboard">
+      </editor>
       <editor
             class="com.traindirector.editors.GraphicPage"
             default="false"

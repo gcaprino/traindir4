@@ -22,6 +22,7 @@ import com.traindirector.model.PerformanceCounters;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
 import com.traindirector.model.SignalAspect;
+import com.traindirector.model.Switchboard;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
 import com.traindirector.model.Train;
@@ -39,6 +40,7 @@ public class Simulator {
 	public Territory _territory;
 	public Schedule _schedule;
 	public List<Alert> _alerts;
+	public List<Switchboard> _switchboards;
 
 	public IconFactory _iconFactory;
 	public SignalFactory _signalFactory;
@@ -430,5 +432,37 @@ public class Simulator {
     public int getEditorTrackDirection() {
         return _editorTrackDirection;
     }
-	
+
+    //
+    //	Switchboards
+    //
+    
+    public Switchboard findSwitchboard(String name) {
+        for (Switchboard swb : _switchboards) {
+            if (swb.equals(name)) {
+                return swb;
+            }
+        }
+        return null;
+    }
+
+    public Switchboard addSwitchboard(String name) {
+        Switchboard swb = new Switchboard();
+        swb._name = name;       // TODO: remove full path
+        swb._filename = name;   // TODO:
+        return swb;
+    }
+    
+    public Switchboard createSwitchboard(String name) {
+    	Switchboard sw = findSwitchboard(name);
+    	if(sw != null)
+    		_switchboards.remove(sw);
+    	sw = addSwitchboard(name);
+    	_switchboards.add(sw);
+    	return sw;
+    }
+    
+    public void removeAllSwitchboards() {
+    	_switchboards.clear();
+    }
 }

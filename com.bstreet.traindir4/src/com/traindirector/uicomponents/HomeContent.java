@@ -26,7 +26,7 @@ public class HomeContent extends WebContent {
 	public String getHTML() {
 		Simulator sim = Simulator.INSTANCE;
 		
-		File homePageFile = getResourceFile("/html/home.html");
+		File homePageFile = getResourceFile("/html/en/home.html");
 		File cssFile = getResourceFile("/html/style.css");
 		List<String> content = new ArrayList<String>();
 		List<String> cssContent = getFileContent(cssFile);

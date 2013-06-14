@@ -13,7 +13,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 
-import com.traindirector.uicomponents.HomeContent;
 import com.traindirector.uicomponents.WebContent;
 
 public class WebPage extends EditorPart {
@@ -75,22 +74,15 @@ public class WebPage extends EditorPart {
 			public void changed(LocationEvent event) {
 			}
 		});
-		_content = new HomeContent();
-		String body = _content.getHTML();
-		_browser.setText(body);
+		_content = getContentProvider();
+		if(_content != null) {
+			String body = _content.getHTML();
+			_browser.setText(body);
+		}
 	}
 
-	public static void openEditor(IWorkbenchWindow window, String fname) {
-		LayoutEditorInput input = new LayoutEditorInput();
-		input.setFileName(fname);
-		try {
-			IEditorPart part = window.getActivePage().openEditor(input, "com.traindirector.webpage");
-			WebPage wpage = (WebPage) part;
-			wpage.setTitle(fname);
-		} catch (PartInitException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public WebContent getContentProvider() {
+		return null;
 	}
 
 }

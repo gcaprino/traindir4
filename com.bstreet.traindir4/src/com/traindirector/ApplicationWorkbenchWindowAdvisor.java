@@ -10,6 +10,7 @@ import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
 import com.traindirector.editors.WebPage;
+import com.traindirector.editors.WelcomePage;
 import com.traindirector.files.IniFile;
 
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
@@ -38,7 +39,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
     	super.postWindowOpen();
     	IniFile initFile = new IniFile(Application._simulator);
     	initFile.load();
-    	WebPage.openEditor(_actionBarAdvisor._window, "Home");
+    	WelcomePage.openEditor(_actionBarAdvisor._window, "Home");
     }
     
     @Override
