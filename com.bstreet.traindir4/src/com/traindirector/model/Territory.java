@@ -176,7 +176,6 @@ public class Territory {
 			break;
 		}
 		return null;
-
 	}
 
 	public void loadSignalAspects(ScriptFactory scriptFactory) {

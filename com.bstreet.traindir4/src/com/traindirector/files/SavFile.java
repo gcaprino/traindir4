@@ -686,6 +686,9 @@ public class SavFile extends TextFile {
 				out.append(String.format("%d,%d,%d,%d",
 						signal._position._x, signal._position._y,
 						signal.isClear() ? 1 : 0, signal.isFleeted() ? 1 : 0));
+				if (signal._intermediate) {
+					out.append("/" + signal._nReservations);
+				}
 				if (signal._currentAspect != null) {
 					out.append(',');
 					out.append(signal._currentAspect._name);	// Format(wxT(",%s"), sig->_currentState))

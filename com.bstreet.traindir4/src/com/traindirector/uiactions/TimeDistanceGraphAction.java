@@ -3,14 +3,15 @@ package com.traindirector.uiactions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchWindow;
 
-import com.traindirector.Activator;
-import com.traindirector.Application;
 import com.traindirector.ICommandIds;
-import com.traindirector.commands.SpeedCommand;
+import com.traindirector.editors.TimeDistanceEditor;
 
 public class TimeDistanceGraphAction extends Action {
 
+    IWorkbenchWindow _window;
+    
 	public TimeDistanceGraphAction(IWorkbenchWindow window, String label) {
+	    _window = window;
         setText(label);
         // The id is used to refer to the action in a menu or toolbar
 		setId(ICommandIds.CMD_TIME_DISTANCE_GRAPH);
@@ -20,7 +21,6 @@ public class TimeDistanceGraphAction extends Action {
 	}
 	
 	public void run() {
-		//SpeedCommand cmd = new SpeedCommand(1);
-		//Application.getSimulator().addCommand(cmd);
+	    TimeDistanceEditor.openEditor(_window);
 	}
 }

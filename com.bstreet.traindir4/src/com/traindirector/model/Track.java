@@ -159,7 +159,7 @@ public class Track {
 	}
 
 	public void parseMilepost(String string) {
-		String[] s = string.split(".");
+		String[] s = string.split("\\.");
 		if(s.length < 1)
 			return;
 		_km = Integer.parseInt(s[0]) * 1000;

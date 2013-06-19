@@ -238,7 +238,7 @@ public class TimeDistanceDiagram {
 	void	time_to_time(GC gc, int x, int y, int nx, int ny, int type)
 	{
 		// TODO: int	colr = COL_TRAIN1 + type;
-		Color color = _simulator._colorFactory.get("black");
+		Color color = _simulator._colorFactory.get(0,0,0);
 		if(nx < x)	// ignore if arrival is next day
 		    return;
 		gc.setForeground(color);
@@ -266,26 +266,28 @@ public class TimeDistanceDiagram {
 	void	drawTrains(GC gc) {
 		Track	trk;
 		int	indx;
-		int	x, y;
-		int	nx, ny;
+		int	x;
 
 		for(Train t : _simulator._schedule._trains) {
-		    x = y = -1;
+		    x = -1;
 		    trk = null;
-		    for(Track trk1 : _simulator._territory._tracks) {
-				if((trk1 instanceof TextTrack) && islinkedtext(trk1) && trk1._km > 0 && samestation(trk1._station, t._entrance)) {
-					trk = trk1;
-				    break;
-				}
-				if((trk1 instanceof Track) && trk._isStation && samestation(trk1._station, t._entrance)) {
-					trk = trk1;
-					break;
-				}
-		    }
 		    TDPosition pos = new TDPosition();
 		    TDPosition npos = new TDPosition();
-		    if(trk != null && (indx = graphstation(trk._station)) >= 0)
-		    	graph_xy(stations.get(indx)._km, t._timeIn, pos);
+		    if (t._entrance != null) {
+    		    for(Track trk1 : _simulator._territory._tracks) {
+    				if((trk1 instanceof TextTrack) && islinkedtext(trk1) && trk1._km > 0 && samestation(trk1._station, t._entrance)) {
+    					trk = trk1;
+    				    break;
+    				}
+    				if((trk1 instanceof Track) && trk1._isStation && trk1._station != null && samestation(trk1._station, t._entrance)) {
+    					trk = trk1;
+    					break;
+    				}
+    		    }
+    		    if(trk != null)
+    		    	if((indx = graphstation(trk._station)) >= 0)
+    		    		graph_xy(stations.get(indx)._km, t._timeIn, pos);
+		    }
 	    	for(TrainStop ts : t._stops) {
 				indx = graphstation(ts._station);
 				if(indx < 0)
@@ -293,20 +295,22 @@ public class TimeDistanceDiagram {
 				Track station = stations.get(indx);
 				if(x == -1) {
 				    graph_xy(station._km, ts._departure, pos);
+				    x = pos._x;
 				    continue;
 				}
 				graph_xy(station._km, ts._arrival, npos);
 				time_to_time(gc, pos._x, pos._y, npos._x, npos._y, t._type);
 				graph_xy(station._km, ts._departure, pos);
+				x = pos._x;
 		    }
-		    if(x != -1) {
+		    if(x != -1 && t._exit != null) {
 		    	trk = null;
 			    for(Track trk1 : _simulator._territory._tracks) {
 					if((trk1 instanceof TextTrack) && islinkedtext(trk1) && trk1._km > 0 && samestation(trk1._station, t._exit)) {
 						trk = trk1;
 					    break;
 					}
-					if((trk1 instanceof Track) && trk._isStation && samestation(trk1._station, t._exit)) {
+					if((trk1 instanceof Track) && trk1._isStation && samestation(trk1._station, t._exit)) {
 						trk = trk1;
 						break;
 					}

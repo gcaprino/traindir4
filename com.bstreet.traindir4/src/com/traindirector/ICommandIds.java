@@ -45,6 +45,7 @@ public interface ICommandIds {
 	public static final String CMD_STATUS_BAR = "com.traindirector.statusbar";
 	public static final String CMD_SWITCHBOARD = "com.traindirector.switchboard";
 	public static final String CMD_TIME_DISTANCE_GRAPH = "com.traindirector.timedistance";
+    public static final String CMD_PLATFORM_OCCUPANCY = "com.traindirector.platformoccupancy";
 	public static final String CMD_ZOOM_IN = "com.traindirector.zoomin";
 	public static final String CMD_ZOOM_OUT = "com.traindirector.zoomout";
 

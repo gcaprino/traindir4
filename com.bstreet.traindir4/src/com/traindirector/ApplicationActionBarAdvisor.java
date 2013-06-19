@@ -39,6 +39,7 @@ import com.traindirector.uiactions.ItineraryAction;
 import com.traindirector.uiactions.LateGraphAction;
 import com.traindirector.uiactions.NewAction;
 import com.traindirector.uiactions.OpenSimulationAction;
+import com.traindirector.uiactions.PlatformOccupancyAction;
 import com.traindirector.uiactions.PreferencesAction;
 import com.traindirector.uiactions.RestartSimulationAction;
 import com.traindirector.uiactions.RestoreSimulationAction;
@@ -97,6 +98,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     PreferencesAction preferencesAction;
     ItineraryAction itineraryAction;
     AssignAction assignAction;
+    PlatformOccupancyAction platformOccupancyAction;
 	private IAction statusBarAction;
 	private IAction coordBarsAction;
 	private IAction zoomOutAction;
@@ -165,6 +167,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     	register(skipAheadAction = new SkipAheadAction(window, "Skip Ahead"));
     	register(lateGraphAction = new LateGraphAction(window, "Late Graph"));
     	register(timeDistanceAction = new TimeDistanceGraphAction(window, "Time-Distance Graph"));
+        register(platformOccupancyAction = new PlatformOccupancyAction(window, "Platform Occupancy Graph"));
     	register(stationsListAction = new StationsListAction(window, "Stations List"));
     	register(infoAction = new InfoAction(window, "Info"));
     	register(newAction = new NewAction(window, "New..."));
@@ -233,6 +236,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         viewMenu.add(showAlertsViewAction);
         viewMenu.add(showTrainStopsViewAction);
         viewMenu.add(showInfoPageAction);
+        viewMenu.add(platformOccupancyAction);
         //viewMenu.add(showEditToolsAction);
         fileMenu.add(new Separator());
         viewMenu.add(zoomInAction);

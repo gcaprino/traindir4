@@ -25,6 +25,11 @@
             id="com.traindirector.edit.layoutPerspective"
             name="EditLayout">
       </perspective>
+      <perspective
+            class="com.traindirector.EditItineraryPerspective"
+            id="com.traindirector.edit.itineraryPerspective"
+            name="EditItinerary">
+      </perspective>
    </extension>
    <extension point="org.eclipse.ui.views">
       <view
@@ -76,6 +81,14 @@
             class="com.traindirector.views.EditToolsView"
             icon="icons/edit16x16black.png"
             id="com.traindirector.views.editTools">
+      </view>
+      <view
+            name="Itineraries"
+            allowMultiple="false"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.ItinerariesView"
+            icon="icons/edit16x16black.png"
+            id="com.traindirector.views.itineraries">
       </view>
       <view
             id="com.traindirector.views.editschedule"
@@ -376,6 +389,27 @@
             icon="icons/switch16x16black.png"
             id="com.traindirector.graphics"
             name="Graphics">
+      </editor>
+      <editor
+            class="com.traindirector.editors.PlatformOccupancyEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.platforms"
+            name="Platform Occupancy">
+      </editor>
+      <editor
+            class="com.traindirector.editors.TimeDistanceEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.timedistance"
+            name="Time Distance Graph">
+      </editor>
+      <editor
+            class="com.traindirector.editors.ReportEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.report"
+            name="Report">
       </editor>
    </extension>
    <extension point="org.eclipse.help.contexts">

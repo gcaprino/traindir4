@@ -54,6 +54,7 @@ public class Simulator {
 	private TimerTask _timedExecutor;
 	public static Random _random = new Random(System.currentTimeMillis());
     private static boolean _currentlyEditing;
+    private static boolean _currentlyEditingItineraries;
 
 	public int _timeSliceCount;
 	public int _timeSlice;
@@ -114,7 +115,7 @@ public class Simulator {
 	public int _runDay;
     private int _editorTrackType;
     private int _editorTrackDirection;
-
+	
 	public Simulator() {
 
 		INSTANCE = this;
@@ -418,6 +419,14 @@ public class Simulator {
 
     public static boolean getEditing() {
         return _currentlyEditing;
+    }
+
+	public void setEditingItineraries(boolean b) {
+	    _currentlyEditingItineraries = b;
+	}
+
+    public static boolean getEditingItineraries() {
+        return _currentlyEditingItineraries;
     }
 
     public void setEditorTool(int trackType, int direction) {

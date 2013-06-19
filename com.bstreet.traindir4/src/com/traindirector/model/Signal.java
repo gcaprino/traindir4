@@ -27,6 +27,7 @@ public class Signal extends Track {
 	private boolean _nowfleeted;
 	public TDPosition _blockedBy;
 	public boolean _intermediate;
+	public int _nReservations;
 
 	public Signal() {
 	    
@@ -135,11 +136,15 @@ public class Signal extends Track {
 		Direction dir = getDirectionFrom(_direction);
 		TrackPath path = finder.find(_controls._position, dir);
 
+		// TODO: if shunting signal
+		
 		if (isClear()) {
 			// TODO: penalty if !fleeted
+			// TODO: unreserveIntermediateSignals(path);
 			setAspectFromName(SignalAspect.RED);
 			onUnclear();
-			_nowfleeted = false;
+			if(!_intermediate)
+				_nowfleeted = false;
 			if (path == null)
 				return false;
 			finder.setAs(path, TrackStatus.FREE);
@@ -522,4 +527,139 @@ public class Signal extends Track {
 			}
 		}
 	}
+
+	public boolean checkIntermediateSignals(TrackPath path, List<Signal> intermediateSignals) {
+		Track trk;
+		Signal sig;
+		List<Track> nextPath;
+		
+		if (path._tracks.size() < 1)
+			return true;
+		trk = path.getLastTrack();
+		Direction dir = path._dirs.get(path._dirs.size() - 1);
+		//while((trk = path.findFirstTrackAfterPath()) != null) {
+			//TrainRunner.findSignalAtEndOfPath();
+		//}
+		return false;
+	}
+	/*
+bool    checkIntermediateSignals(Vector *path, Array<Signal *>& intermediateSignals)
+{
+        Track   *trk;
+        Signal  *sig;
+        Vector  *nextPath = 0;
+        trkdir  ndir;
+        trkdir  dir;
+        int size = path->_size;
+        if(size < 1)
+            return true;
+
+        trk = path->TrackAt(size - 1);
+        dir = (trkdir)path->FlagAt(size - 1);
+        while((trk = findNextTrack1(dir, trk->x, trk->y, &ndir))) {
+
+	    // Check if we can cross the signal that protects the next block
+
+	    sig = (Signal *)((dir == W_E || dir == S_N) ? trk->esignal : trk->wsignal);
+	    if(!sig)
+	        break;
+
+            if(!sig->_intermediate)
+                break;
+
+            nextPath = findPath0(nextPath, trk, ndir);
+            if(!nextPath)
+                break;
+            if(!sig->IsClear()) {
+                if(pathIsBusy(0, nextPath, ndir)) {
+    //                if(sig->fleeted && sig->nowfleeted) // all following signals will eventually clear
+    //                    break; // which means the following path(s) are valid
+                    Track *t0 = nextPath->FirstTrack();
+                    Track *tx = nextPath->LastTrack();
+                    if(t0->fgcolor != conf.fgcolor || tx->fgcolor == conf.fgcolor) {
+                        Vector_delete(nextPath);
+                        return false;
+                    }
+                    // track is occupied by a train traveling in the same direction,
+                    // that is, another train preceding us
+                }
+            }
+            size = nextPath->_size;
+            if(size < 1)
+                break;
+            intermediateSignals.Add(sig);
+            trk = nextPath->TrackAt(size - 1);
+            dir = (trkdir)nextPath->FlagAt(size - 1);
+        }
+        for(int i = 0; i < intermediateSignals.Length(); ++i) {
+            sig = intermediateSignals.At(i);
+            sig->fleeted = 1;
+            sig->nowfleeted = 1;
+            change_coord(sig->x, sig->y);
+        }
+        if(nextPath)
+            Vector_delete(nextPath);
+        return true;
+}
+
+void    reserveIntermediateSignals(Array<Signal *>& intermSigs)
+{
+        for(int i = 0; i < intermSigs.Length(); ++i) {
+            Signal *sig = intermSigs.At(i);
+            sig->_nReservations++;
+        }
+}
+
+void    unreserveIntermediateSignals(Vector *path)
+{
+        Track   *trk;
+        Signal  *sig;
+        Vector  *nextPath = 0;
+        trkdir  ndir;
+        trkdir  dir;
+        int size = path->_size;
+        if(size < 1)
+            return;
+        trk = path->LastTrack();
+        dir = (trkdir)path->FlagAt(size - 1);
+        while((trk = findNextTrack1(dir, trk->x, trk->y, &ndir))) {
+
+	    sig = (Signal *)((dir == W_E || dir == S_N) ? trk->esignal : trk->wsignal);
+	    if(!sig)
+	        break;
+
+            if(!sig->_intermediate)
+                break;
+
+            nextPath = findPath0(nextPath, trk, ndir);
+            if(!nextPath)
+                break;
+
+            // clear signal
+	    change_coord(sig->x, sig->y);
+            if(sig->_nReservations < 2) {
+                sig->nowfleeted = 0;
+                sig->fleeted = 0;
+                if(sig->IsClear()) {  // no train after signal
+	            //sig->SetColor(color_green);
+                    colorPath(nextPath, conf.fgcolor);
+                }
+                sig->OnUnclear();
+                sig->_nReservations = 0;
+	        UpdateSignals(sig);
+            } else {
+                --sig->_nReservations;
+            }
+
+            size = nextPath->_size;
+            if(size < 1)
+                break;
+            trk = nextPath->LastTrack();
+            dir = (trkdir)nextPath->FlagAt(size - 1);
+        }
+        if(nextPath)
+            Vector_delete(nextPath);
+}
+
+	 */
 }

@@ -25,6 +25,18 @@ public class TrackPath {
 	public Direction getDirectionAt(int i) {
 		return _dirs.get(i);
 	}
+	
+	public Track getFirstTrack() {
+		if (_tracks.size() > 0)
+			return _tracks.get(0);
+		return null;
+	}
+
+	public Track getLastTrack() {
+		if (_tracks.size() > 0)
+			return _tracks.get(_tracks.size() - 1);
+		return null;
+	}
 
 	public boolean isFree() {
 		for (Track track : _tracks) {

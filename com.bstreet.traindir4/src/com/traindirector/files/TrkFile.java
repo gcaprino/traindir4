@@ -75,7 +75,38 @@ public class TrkFile {
 					continue;
 				}
 				if(line.startsWith("(attributes ")) {
-					// TODO
+					while((line = input.readLine()) != null && !line.equals(")")) {
+						if (trk == null)
+							continue;
+						if(line.equals("hidden")) {
+							trk._invisible = true;
+							continue;
+						}
+						if (line.startsWith("icons:")) {	// ITIN and IMAGE
+							// TODO
+							continue;
+						}
+						if (line.startsWith("locked")) {
+							if (!(trk instanceof Signal))	// impossible
+								continue;
+							Signal sig = (Signal)trk;
+							sig._blockedBy = new TDPosition();
+							sig._blockedBy.fromString(line.substring(6).trim(), 0);
+							continue;
+						}
+						if (line.startsWith("intermediate")) {
+							if (!(trk instanceof Signal))	// impossible
+								continue;
+							Signal sig = (Signal)trk;
+							sig._intermediate = Integer.parseInt(line.substring(12).trim()) != 0;
+							sig._nReservations = 0;
+							continue;
+						}
+						if (line.startsWith("dontstopshunters")) {
+							trk._flags |= Track.DONTSTOPSHUNTERS;
+							continue;
+						}
+					}
 					continue;
 				}
 				if(line.startsWith("(switchboard ")) {

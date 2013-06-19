@@ -22,6 +22,11 @@ public class SwitchboardContent extends WebContent {
 	
 	@Override
 	public boolean doLink(String location) {
+        if (location.startsWith("sb-edit")) {
+            return true;
+        } else if(location.startsWith("sb-cell")) {
+            return true;
+        }
 		return false;
 	}
 

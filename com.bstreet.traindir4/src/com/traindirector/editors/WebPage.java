@@ -67,6 +67,8 @@ public class WebPage extends EditorPart {
 			public void changing(LocationEvent event) {
 				if(_content.doLink(event.location)) {
 					event.doit = false;
+					String body = _content.getHTML();
+					_browser.setText(body);
 				}
 			}
 			

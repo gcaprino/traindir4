@@ -116,6 +116,7 @@ public class PlatformOccupancyGraph {
 				});
 
 	}
+
 	void	DrawTimeGrid(GC gc, int y) {
 		int	h, m;
 		int	x;
@@ -179,7 +180,7 @@ public class PlatformOccupancyGraph {
 
 	void	time_to_time(GC gc, int x, int y, int nx, int ny, int type)	{
 		//int	color = fieldcolors[COL_TRAIN1 + type];
-		Color color = _simulator._colorFactory.get("black");
+		Color color = _simulator._colorFactory.get(0, 0, 0);
 
 		if(nx < x)	// ignore if arrival is next day
 		    return;

@@ -22,12 +22,13 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.traindirector.Activator;
 import com.traindirector.model.Itinerary;
+import com.traindirector.uicomponents.ItinerariesTable;
 
 public class ItineraryDialog extends TitleAreaDialog {
 
 	public static int CLEAR = -1;	// not OK nor CANCEL
 
-	Table _table;
+	ItinerariesTable _table;
 	Button okButton;
 	Button clearButton;
 	Button cancelButton;
@@ -58,32 +59,8 @@ public class ItineraryDialog extends TitleAreaDialog {
 		// layout.horizontalAlignment = GridData.FILL;
 		parent.setLayout(layout);
 
-		// The text fields will grow with the size of the dialog
-		GridData gridData = new GridData();
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.grabExcessVerticalSpace = true;
-		gridData.verticalAlignment = GridData.FILL;
-
-		_table = new Table(parent, SWT.V_SCROLL | SWT.H_SCROLL);
-		_table.setLayoutData(gridData);
-		TableColumn col = new TableColumn(_table, SWT.NONE);
-		col.setText("Name");
-		col.setWidth(140);
-		
-		col = new TableColumn(_table, SWT.NONE);
-		col.setText("Start Signal");
-		col.setWidth(140);
-		
-		col = new TableColumn(_table, SWT.NONE);
-		col.setText("End Signal");
-		col.setWidth(140);
-		
-		col = new TableColumn(_table, SWT.NONE);
-		col.setText("Next Itinerary");
-		col.setWidth(140);
-		
-		_table.setHeaderVisible(true);
+		_table = new ItinerariesTable();
+		_table.create(parent);
 		return parent;
 	}
 
@@ -168,16 +145,8 @@ public class ItineraryDialog extends TitleAreaDialog {
 	}
 
 	public void fillTable(List<Itinerary> itineraries) {
-		for (Itinerary i : itineraries) {
-			TableItem item = new TableItem(_table, SWT.NONE);
-			item.setText(i._name);
-			item.setText(1, i._signame);
-			item.setText(2, i._endsig);
-			item.setText(3, i._nextitin);
-		}
-		if (itineraries.size() > 0)
-			_table.setSelection(0);
-		else {
+		_table.fill(itineraries);
+		if (itineraries.size() == 0) {
 			setErrorMessage("There are no itineraries defined in this layout");
 			okButton.setEnabled(false);
 			clearButton.setEnabled(false);

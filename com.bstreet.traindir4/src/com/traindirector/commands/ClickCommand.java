@@ -12,11 +12,13 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.traindirector.Application;
 import com.traindirector.dialogs.AssignDialog;
+import com.traindirector.dialogs.ItineraryProperties;
 import com.traindirector.dialogs.PropertyDialog;
 import com.traindirector.dialogs.TextOption;
 import com.traindirector.files.BooleanOption;
 import com.traindirector.files.FileOption;
 import com.traindirector.files.Option;
+import com.traindirector.model.Itinerary;
 import com.traindirector.model.ItineraryButton;
 import com.traindirector.model.Signal;
 import com.traindirector.model.SignalAspect;
@@ -28,6 +30,7 @@ import com.traindirector.model.TrackDirection;
 import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TriggerTrack;
+import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.SimulatorCommand;
 
 public class ClickCommand extends SimulatorCommand {
@@ -84,7 +87,11 @@ public class ClickCommand extends SimulatorCommand {
 	}
 	
 	public void handle() {
-	    if(_simulator.getEditing()) {
+		if(Simulator.getEditingItineraries()) {
+			handleEditingItineraries();
+			return;
+		}
+	    if(Simulator.getEditing()) {
 	        handleEditing();
 	        return;
 	    }
@@ -125,9 +132,31 @@ public class ClickCommand extends SimulatorCommand {
 					signal._aspectChanged = true;
 				_simulator._signalsChanged = true;
 				_simulator.updateSignals(signal);
-				
 			} else
 				track.onClick();
+		}
+	}
+
+	private void handleEditingItineraries() {
+		Track track = _simulator._territory.findTrack(_pos);
+		if (track == null)
+			return;
+		if (track instanceof Signal) {
+			Signal signal = (Signal) track;
+			if (isRightClick()) {
+				Itinerary itinerary = new Itinerary();
+				itinerary._signame = signal._position.toString();
+				_simulator._territory._itineraries.add(itinerary);
+				ItineraryProperties props = new ItineraryProperties(itinerary);
+				if(!props.open())
+					_simulator._territory._itineraries.remove(itinerary);
+			} else {
+				signal.onClick();
+			}
+			return;
+		}
+		if (track instanceof Switch) {
+			track.onClick();
 		}
 	}
 

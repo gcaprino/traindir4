@@ -291,6 +291,11 @@ public class ScheduleView extends ViewPart {
 		manager.add(showArrivedAction);
 	}
 
+	private void fillLocalToolBar(IToolBarManager manager) {
+		manager.add(showCancelledAction);
+		manager.add(showArrivedAction);
+	}
+
 	private void fillContextMenu(IMenuManager manager) {
 		manager.add(showCancelledAction);
 		manager.add(showArrivedAction);
@@ -298,11 +303,6 @@ public class ScheduleView extends ViewPart {
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
-	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(showCancelledAction);
-		manager.add(showArrivedAction);
-	}
-
 	private void makeActions() {
 		showCancelledAction = new Action("Show Cancelled", Action.AS_CHECK_BOX) {
 			public void run() {
