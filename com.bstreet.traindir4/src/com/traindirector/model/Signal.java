@@ -126,8 +126,10 @@ public class Signal extends Track {
 			return false;
 		}
 		
-		// TODO: always red
-		
+		if(_fixedred) {
+			// TODO penalty always red
+			return false;
+		}
 		SignalAspect aspect = getAspect(); // get current aspect
 		if (aspect._action.equalsIgnoreCase(SignalAspect.NONE))
 			return true;

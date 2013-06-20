@@ -31,7 +31,8 @@ public class AssignCommand extends SimulatorCommand {
 			}
 			if (!_from._path.isFree()) {
 				// TODO: why should we check if path[1] == GREEN?
-				// TODO - alert path is not free
+				_simulator.alert(String.format("Train %s: path is not free at %s",
+						_from._name, _from._position._position.toString()));
 				_simulator._performanceCounters.denied++;
 				return;
 			}

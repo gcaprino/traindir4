@@ -77,9 +77,10 @@ public class DoCommand extends SimulatorCommand {
 			
 		} else if(_cmd.startsWith("reverse")) {
 			offset = skipBlanks(_cmd, 7);
-			Train train = _simulator._schedule.findTrainNamed(_cmd.substring(offset));
+			String trainName = _cmd.substring(offset);
+			Train train = _simulator._schedule.findTrainNamed(trainName);
 			if (train == null) {
-				// TODO: alert train not found in reverse command
+				_simulator.alert(String.format("Train %s not found in reverse command.", trainName));
 				return;
 			}
 			ReverseCommand rcmd = new ReverseCommand(train);
@@ -160,7 +161,7 @@ public class DoCommand extends SimulatorCommand {
 			}
 			Train from = _simulator._schedule.findTrainNamed(sb.toString());
 			if (from == null) {
-				// TODO: alert train not found in assign command
+				_simulator.alert(String.format("No train %s in assign command.", sb.toString()));
 				return;
 			}
 			String destTrainName;
@@ -169,17 +170,18 @@ public class DoCommand extends SimulatorCommand {
 				destTrainName = _cmd.substring(offset);
 			} else {
 				if (from._stock == null) {
-					// TODO: train has no default stock assignment
+					_simulator.alert(String.format("Train %s has no default stock assignment.", from._name));
 					return;
 				}
 				destTrainName = from._stock;
 			}
-			Train to = _simulator._schedule.findTrainNamed(destTrainName);
-			if (to == null) {
-				// TODO: alert: no destination train for assign command
+			Train toTrain = _simulator._schedule.findTrainNamed(destTrainName);
+			if (toTrain == null) {
+				_simulator.alert(String.format("Cannot assign train %s: destination train %s not in the schedule.",
+						from._name, destTrainName));
 				return;
 			}
-			AssignCommand acmd = new AssignCommand(from, to);
+			AssignCommand acmd = new AssignCommand(from, toTrain);
 			_simulator.addCommand(acmd);
 		} else if(_cmd.startsWith("play")) {
 			

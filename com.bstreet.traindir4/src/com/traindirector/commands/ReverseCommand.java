@@ -48,7 +48,7 @@ public class ReverseCommand extends SimulatorCommand {
 				_train._position = headPos;
 				headPos.setStatus(TrackStatus.OCCUPIED);
 			}
-			// TODO: alert cannot reverse direction. Path is busy.
+			_simulator.alert(String.format("Train %s: cannot reverse direction. Path is busy.", _train._name));
 			path = null;
 			++_simulator._performanceCounters .denied;
 			return;

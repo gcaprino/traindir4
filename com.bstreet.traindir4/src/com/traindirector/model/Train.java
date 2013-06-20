@@ -6,6 +6,7 @@ import java.util.List;
 import com.traindirector.scripts.ExprValue;
 import com.traindirector.scripts.NodeOp;
 import com.traindirector.scripts.Script;
+import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDDelay;
 
 public class Train {
@@ -190,15 +191,17 @@ public class Train {
 			if (_status != TrainStatus.STOPPED
 					&& _status != TrainStatus.WAITING
 					&& _status != TrainStatus.ARRIVED) {
-				// TODO: do_alert("Train is not stopped nor arrived.");
+				Simulator.INSTANCE.alert(String.format("Train %s: cannot set property %s. Train is not stopped.",
+						_name, prop));
 				return;
 			}
 			// TODO: shunt_train(this);
 			return;
 		}
 		if (prop.equalsIgnoreCase("wait")) {
-			if (_status != TrainStatus.RUNNING || _speed != 0) {
-				// TODO: do_alert("Train is not stopped nor arrived.");
+			if (_status == TrainStatus.RUNNING || _speed != 0) {
+				Simulator.INSTANCE.alert(String.format("Train %s: cannot set property %s. Train is not stopped.",
+						_name, prop));
 				return;
 			}
 			// TODO: _timedep += value._val;

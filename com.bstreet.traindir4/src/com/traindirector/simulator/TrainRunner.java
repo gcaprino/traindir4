@@ -78,31 +78,39 @@ public class TrainRunner {
 				// we can start the train
 				TextTrack text = territory.findTextTrack(train._entrance);
 				if (text == null || text._wlink == null) {
-					// TODO: Derailed
+					_simulator.alert(String.format("Train %s derailed: entry point %s not found",
+							train._name, train._entrance));
+					train.derailed();
 					continue;
 				}
 				Track entryTrack = territory.findTrack(text._wlink);
 				if (entryTrack == null) {
 					entryTrack = territory.findTrack(text._elink);
 					if (entryTrack == null) {
-						// TODO: Derailed
+						_simulator.alert(String.format("Train %s derailed: entry point %s not linked to any track",
+								train._name, train._entrance));
+						train.derailed();
 						continue;
 					}
 				}
 				PathFinder finder = new PathFinder();
 				Direction dir = territory.findEntryDirection(text, entryTrack);
 				if (dir == null) {
-					// TODO: Derailed
+					_simulator.alert(String.format("Train %s derailed: entry point %s not linked to horizontal or vertical track",
+							train._name, train._entrance));
+					train.derailed();
 					continue;
 				}
 				TrackPath path = finder.find(entryTrack._position, dir);
 				if (path == null) {
-					// TODO: Derailed
+					_simulator.alert(String.format("Train %s derailed: cannot create path from entry point %s",
+							train._name, train._entrance));
+					train.derailed();
 					continue;
 				}
 				train._path = path;
 				if (!path.isFree()) {
-					// TODO: Delayed
+					train._status = TrainStatus.DELAYED;
 					continue;
 				}
 				startRunning(train);
@@ -114,7 +122,9 @@ public class TrainRunner {
 			case DELAYED:
 
 				if (train._path == null) {
-					// TODO: Derailed - impossible
+					_simulator.alert(String.format("Train %s derailed: path disappeared from entry point %s",
+							train._name, train._entrance));
+					train.derailed();
 					break;
 				}
 				// check delay condition
@@ -850,7 +860,9 @@ public class TrainRunner {
 		if (nextTrack == null)
 			_simulator._territory.findSwitch(nextPos);
 		if (nextTrack == null) {
-			// TODO alert cannot go from position to nextTrack
+			// alert cannot go from position to nextTrack
+			_simulator.alert(String.format("Train %s: cannot go from %s to %s - no track",
+					train._name, position._position.toString(), nextPos.toString()));
 			train.derailed();
 			return 0;
 		}
@@ -860,7 +872,7 @@ public class TrainRunner {
 		Signal signal;
 		signal = _simulator._territory.findSignalLinkedTo(nextTrack, dir);
 		if (signal == null) {
-			// TODO alert no signal controlling nextTrack
+			_simulator.alert(String.format("Train %s: no signal linked to track %s", train._name, nextTrack._position.toString()));
 			train.derailed();
 			return 0;
 		}
@@ -931,10 +943,13 @@ public class TrainRunner {
 // stop_train:
 			train._speed = 0;
 			if (!train.isWaiting()) {
-				// TODO alert Train is waiting at position
-				if (signal._station != null) {
-					// TODO add signal name to alert
-				}
+				// alert Train is waiting at position
+				if (signal._station != null)
+					_simulator.alert(String.format("Train %s: waiting at signal %s %s",
+							train._name, signal._station, train._position.toString()));
+				else
+					_simulator.alert(String.format("Train %s: waiting at signal %s",
+							train._name, train._position.toString()));
 				if (!signal._nopenalty)
 					++_simulator._performanceCounters.waiting_train;
 			}
