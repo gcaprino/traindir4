@@ -56,6 +56,30 @@ public class WebPage extends EditorPart {
 
 	}
 
+	Thread webUpdater = new Thread() {
+
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					synchronized(_content) {
+						_content.wait();
+					}
+					Display.getDefault().asyncExec(new Runnable() {
+						
+						@Override
+						public void run() {
+							_browser.setText(_content.getHTML());
+						}
+					});
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+		}
+		
+	};
+	
 	@Override
 	public void createPartControl(Composite parent) {
 
@@ -67,12 +91,16 @@ public class WebPage extends EditorPart {
 			@Override
 			public void changing(LocationEvent event) {
 				if(_content.doLink(event.location)) {
-					event.doit = true;
+					event.doit = false;
+					synchronized(_content) {
+						_content.notify();
+					}
 				}
 			}
 			
 			@Override
 			public void changed(LocationEvent event) {
+				/*
 				if(_content.doLink(event.location)) {
 					event.doit = false;
 					Display.getDefault().asyncExec(new Runnable() {
@@ -84,6 +112,7 @@ public class WebPage extends EditorPart {
 						}
 					});
 				}
+				*/
 			}
 		});
 		_content = getContentProvider();
@@ -91,6 +120,7 @@ public class WebPage extends EditorPart {
 			String body = _content.getHTML();
 			_browser.setText(body);
 		}
+		webUpdater.start();
 	}
 
 	public WebContent getContentProvider() {

@@ -71,11 +71,14 @@ public class FileManager {
 				}
 			} else {
 				System.out.println("Not found entry " + entryName + " in file " + _zipFile.getName());
+				return null;
 			}
 		}
 		try {
 			input = new BufferedReader(new FileReader(schName));
 			return input;
+		} catch (FileNotFoundException e) {
+			return null;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
