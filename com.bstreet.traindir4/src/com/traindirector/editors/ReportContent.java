@@ -40,7 +40,7 @@ public class ReportContent extends WebContent {
             } else {
                 for (TrainStop stop : train._stops) {
                     sb.append("<tr>");
-                    appendColumn(sb, "<a href=\"/station/" + stop._station + ">" + stop._station + "</a>");
+                    appendColumn(sb, "<a href=\"/station/" + stop._station + "\">" + stop._station + "</a>");
                     appendColumn(sb, TDTime.toString(stop._arrival));
                     appendColumn(sb, TDTime.toString(stop._departure));
                     appendColumn(sb, "" + stop._minstop);
@@ -125,7 +125,7 @@ public class ReportContent extends WebContent {
         	_type = location.substring(6);
             return true;
         }
-        return true;
+        return false;
     }
 
 }

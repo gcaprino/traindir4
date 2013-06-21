@@ -6,6 +6,7 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
@@ -65,15 +66,21 @@ public class WebPage extends EditorPart {
 			
 			@Override
 			public void changing(LocationEvent event) {
-				if(_content.doLink(event.location)) {
-					event.doit = false;
-					String body = _content.getHTML();
-					_browser.setText(body);
-				}
 			}
 			
 			@Override
 			public void changed(LocationEvent event) {
+				if(_content.doLink(event.location)) {
+					event.doit = false;
+					Display.getDefault().asyncExec(new Runnable() {
+						
+						@Override
+						public void run() {
+							String body = _content.getHTML();
+							_browser.setText(body);
+						}
+					});
+				}
 			}
 		});
 		_content = getContentProvider();
