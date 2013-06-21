@@ -66,6 +66,9 @@ public class WebPage extends EditorPart {
 			
 			@Override
 			public void changing(LocationEvent event) {
+				if(_content.doLink(event.location)) {
+					event.doit = true;
+				}
 			}
 			
 			@Override
