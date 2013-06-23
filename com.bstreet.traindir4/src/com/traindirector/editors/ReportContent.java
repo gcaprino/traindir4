@@ -12,7 +12,6 @@ import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDTime;
-import com.traindirector.uiactions.OpenSimulationAction;
 import com.traindirector.uicomponents.WebContent;
 
 public class ReportContent extends WebContent {
@@ -64,6 +63,21 @@ public class ReportContent extends WebContent {
                 }
             }
             values.put("$table", sb.toString());
+        } else if(_type != null && _type.startsWith("/stations/")) {
+        	List<Track> stations = new ArrayList<Track>();
+        	for(Track track : sim._territory._tracks) {
+        		if (!track._isStation)
+        			continue;
+        		stations.add(track);
+        	}
+        	// TODO: sort
+        	for (Track station : stations) {
+        		sb.append("<tr>");
+        		appendColumn(sb, "<a href=\"/station/" + station._station + "\">" + station._station + "</a>");
+        		sb.append("</tr>\n");
+        	}
+        	pageName = "stationsList.html";
+        	values.put("$table", sb.toString());
         } else if(_type != null && _type.startsWith("/station/")) {
             Track station = sim._territory.findStation(_type.substring(9));
             if (station == null) {
@@ -165,12 +179,18 @@ public class ReportContent extends WebContent {
 
     @Override
     public boolean doLink(String location) {
-        if (location.startsWith("about:/traininfo/")) {
-        	_type = location.substring(6);
+    	String cmd = location;
+    	if (cmd.startsWith("about:"))
+    		cmd = cmd.substring(6);
+        if (cmd.startsWith("/traininfo/")) {
+        	_type = cmd;
             return true;
-        } else if(location.startsWith("about:/station/")) {
-        	_type = location.substring(6);
+        } else if(cmd.startsWith("/station/")) {
+        	_type = cmd;
             return true;
+        } else if(cmd.startsWith("/stations/")) {
+        	_type = cmd;
+        	return true;
         }
         return false;
     }

@@ -172,8 +172,12 @@ public class ScheduleView extends ViewPart {
 			// TODO: get currently selected item, to keep it visible after the table has been refilled
 			_table.removeAll();
 			for (Train train : schedule._trains) {
-				if (!_showCancelled && train.isCancelled())
-					continue;
+				if (!_showCancelled) {
+					if(train.isCancelled())
+						continue;
+					if(!train.runsToday())
+						continue;
+				}
 				if (!_showArrived && train.isArrived())
 					continue;
 				TableItem item = new TableItem(_table, SWT.NONE);
@@ -223,6 +227,7 @@ public class ScheduleView extends ViewPart {
 	private void setItemColors(TableItem item, Train train) {
 		Color fg = null;
 		Color bg = null;
+		
 		switch (train._status){ 
 		case WAITING:
 			fg = waitingColorFg;
@@ -259,6 +264,10 @@ public class ScheduleView extends ViewPart {
 		default:
 			fg = derailedColorFg;
 			bg = derailedColorBg;
+		}
+		if (!train.runsToday()) {
+			fg = cancelledColorFg;
+			bg = cancelledColorBg;
 		}
 		if(!item.getBackground().equals(bg))
 			item.setBackground(bg);

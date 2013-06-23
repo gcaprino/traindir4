@@ -3,9 +3,6 @@ package com.traindirector.commands;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.plaf.metal.MetalBorders.OptionDialogBorder;
-
-import org.eclipse.jface.bindings.Trigger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -393,17 +390,12 @@ public class ClickCommand extends SimulatorCommand {
     	_options.add(o);
 	}
 	
-	private void addBooleanOption(String descr, int value) {
-		addBooleanOption(descr, value != 0);
-	}
-	
 	private boolean leftClickOnTrain(final Train train) {
 		Application._display.syncExec(new Runnable() {
 			@Override
 			public void run() {
 				if(MessageDialog.openQuestion(Application._display.getActiveShell(), "Reverse Train", "Reverse train direction?")) {
-					ReverseCommand rcmd = new ReverseCommand(train);
-					_simulator.addCommand(rcmd);
+					_simulator.addCommand(new ReverseCommand(train));
 				}
 			}
 		});
@@ -412,14 +404,30 @@ public class ClickCommand extends SimulatorCommand {
 
 	private boolean rightClickOnTrain(final Train train) {
 		final boolean[] result = new boolean[1];
-		Application._display.syncExec(new Runnable() {
-			
-			@Override
-			public void run() {
-				result[0] = doAssignDialog(train);
+		if (train.isArrived()) {
+			Application._display.syncExec(new Runnable() {
+				@Override
+				public void run() {
+					result[0] = doAssignDialog(train);
+				}
+			});
+			return result[0];
+		}
+	    if(train._speed > 0) {
+			if(!train._shunting) {
+			    _simulator.alert("You must wait for train to stop.");
+			    return false;
 			}
-		});
-		return result[0];
+			_simulator.alert("Train stopped.");
+			train._outOf = null;
+			_simulator._trainRunner.trainAtStation(train, train._position); // revert from shunting to stopped
+			return true;
+	    }
+	    
+	    if(!_simulator.ask("Proceed to next station?"))
+			return false;
+	    _simulator.addCommand(new ShuntCommand(train));
+	    return true;
 	}
 	
 	private boolean doAssignDialog(Train train) {

@@ -22,6 +22,7 @@ public class ReportEditor extends WebPage {
         try {
             IEditorPart part = window.getActivePage().openEditor(input, "com.traindirector.editor.report");
             ReportEditor report = (ReportEditor)part;
+            report.showContent(fname);
             //report.setType(fname);
         } catch (PartInitException e) {
             // TODO Auto-generated catch block

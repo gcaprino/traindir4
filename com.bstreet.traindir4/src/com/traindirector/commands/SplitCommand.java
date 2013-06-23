@@ -14,6 +14,6 @@ public class SplitCommand extends SimulatorCommand {
 	}
 	
 	public void handle() {
-		
+		// TODO: handle split command
 	}
 }

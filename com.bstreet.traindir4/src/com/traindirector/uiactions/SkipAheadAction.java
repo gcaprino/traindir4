@@ -6,6 +6,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import com.traindirector.Activator;
 import com.traindirector.Application;
 import com.traindirector.ICommandIds;
+import com.traindirector.commands.SkipAheadCommand;
 import com.traindirector.commands.SpeedCommand;
 
 public class SkipAheadAction extends Action {
@@ -20,7 +21,7 @@ public class SkipAheadAction extends Action {
 	}
 	
 	public void run() {
-		//SpeedCommand cmd = new SpeedCommand(1);
-		//Application.getSimulator().addCommand(cmd);
+		SkipAheadCommand cmd = new SkipAheadCommand();
+		Application.getSimulator().addCommand(cmd);
 	}
 }

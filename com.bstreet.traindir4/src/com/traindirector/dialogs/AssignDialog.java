@@ -232,7 +232,7 @@ public class AssignDialog extends TitleAreaDialog {
 		return true;
 	}
 
-	// Coyy selected item because the UI gets disposed
+	// Copy selected item because the UI gets disposed
 	// and the TableItems are not accessible any more.
 	private void saveInput() {
 		TableItem[] items = _table.getSelection();

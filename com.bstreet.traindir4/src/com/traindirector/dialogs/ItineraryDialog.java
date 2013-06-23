@@ -3,9 +3,7 @@ package com.traindirector.dialogs;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.IMessageProvider;
-import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -16,20 +14,17 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 import com.traindirector.Activator;
 import com.traindirector.model.Itinerary;
 import com.traindirector.uicomponents.ItinerariesTable;
 
-public class ItineraryDialog extends TitleAreaDialog {
+public class ItineraryDialog extends BaseDialog {
 
 	public static int CLEAR = -1;	// not OK nor CANCEL
 
 	ItinerariesTable _table;
-	Button okButton;
 	Button clearButton;
 	Button cancelButton;
 	
@@ -94,32 +89,8 @@ public class ItineraryDialog extends TitleAreaDialog {
 		});
 	}
 
-	protected Button createOkButton(Composite parent, int id, String label, boolean defaultButton) {
-		// increment the number of columns in the button bar
-		((GridLayout) parent.getLayout()).numColumns++;
-		Button button = new Button(parent, SWT.PUSH);
-		button.setText(label);
-		button.setFont(JFaceResources.getDialogFont());
-		button.setData(new Integer(id));
-		button.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				if (isValidInput()) {
-					okPressed();
-				}
-			}
-		});
-		if (defaultButton) {
-			Shell shell = parent.getShell();
-			if (shell != null) {
-				shell.setDefaultButton(button);
-			}
-		}
-		setButtonLayoutData(button);
-		okButton = button;
-		return button;
-	}
-
-	private boolean isValidInput() {
+	@Override
+	protected boolean isValidInput() {
 		boolean valid = true;
 		int i = _table.getSelectionCount();
 		if (i < 1) {
@@ -131,14 +102,10 @@ public class ItineraryDialog extends TitleAreaDialog {
 		return valid;
 	}
 
-	@Override
-	protected boolean isResizable() {
-		return true;
-	}
-
 	// Coyy textFields because the UI gets disposed
 	// and the Text Fields are not accessible any more.
-	private void saveInput() {
+	@Override
+	protected void saveInput() {
 		TableItem[] items = _table.getSelection();
 		if(items.length > 0)
 			_selectedItinerary = (String) items[0].getText();
@@ -153,10 +120,5 @@ public class ItineraryDialog extends TitleAreaDialog {
 		}
 	}
 
-	@Override
-	protected void okPressed() {
-		saveInput();
-		super.okPressed();
-	}
 
 }

@@ -9,6 +9,8 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.eclipse.jface.dialogs.MessageDialog;
+
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
 import com.traindirector.events.AlertEvent;
@@ -474,4 +476,17 @@ public class Simulator {
     public void removeAllSwitchboards() {
     	_switchboards.clear();
     }
+
+	public boolean ask(final String question) {
+		final boolean[] result = new boolean[1];
+		result[0] = false;
+		Application._display.syncExec(new Runnable() {
+			
+			@Override
+			public void run() {
+				result[0] = MessageDialog.openQuestion(Application._display.getActiveShell(), "Question", question);
+			}
+		});
+		return result[0];
+	}
 }

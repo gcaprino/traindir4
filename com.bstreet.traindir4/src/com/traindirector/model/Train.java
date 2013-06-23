@@ -497,4 +497,10 @@ public class Train {
 			_script.handle("OnShunt", null, this);
 	}
 
+	public boolean runsToday() {
+		if(_days == 0)
+			return true;
+		return (_days & Simulator.INSTANCE._runDay) != 0;
+	}
+
 }

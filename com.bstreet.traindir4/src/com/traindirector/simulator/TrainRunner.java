@@ -1,9 +1,5 @@
 package com.traindirector.simulator;
 
-import com.bstreet.cg.events.CGEvent;
-import com.bstreet.cg.events.CGEventDispatcher;
-import com.bstreet.cg.events.CGEventListener;
-import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.model.Direction;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
@@ -65,7 +61,8 @@ public class TrainRunner {
 				// check time in
 				if (train._entrance == null)
 					continue;
-				// if(train._days)
+				if(train._days != 0 && (_simulator._schedule._runDay & train._days) == 0)
+					continue;
 				if (train._timeIn < schedule._startTime)
 					continue;
 				// check random delay 3 minutes
@@ -158,7 +155,7 @@ public class TrainRunner {
 			case WAITING:
 
 				// check waiting condition
-				signal = findSignalAtEndOfPath(train);
+				signal = findSignalAtEndOfPath(train._path);
 				if (signal == null) {
 					// TODO: set to stop - maybe signal was deleted during
 					// editing
@@ -329,18 +326,18 @@ public class TrainRunner {
 
 	}
 
-	public Signal findSignalAtEndOfPath(Train train) {
-		int nPathElements = train._path.getTrackCount(0);
-		Track position = train._path.getTrackAt(nPathElements - 1);
+	public Signal findSignalAtEndOfPath(TrackPath path) {
+		int nPathElements = path.getTrackCount(0);
+		Track track = path.getLastTrack();
 		PathFinder finder = new PathFinder();
-		Direction dir = position.walk(train._path.getDirectionAt(nPathElements - 1));
-		TDPosition nextPos = dir.offset(position._position);
-		TrackPath path = finder.find(nextPos, dir);
-		if (path == null)
+		Direction dir = track.walk(path.getDirectionAt(nPathElements - 1));
+		TDPosition nextPos = dir.offset(track._position);
+		TrackPath nextPath = finder.find(nextPos, dir);
+		if (nextPath == null)
 			return null;
-		position = path.getTrackAt(0);
+		track = nextPath.getFirstTrack();
 		Signal signal;
-		signal = _simulator._territory.findSignalLinkedTo(position, path.getDirectionAt(0));
+		signal = _simulator._territory.findSignalLinkedTo(track, nextPath.getDirectionAt(0));
 		if (signal == null) {
 			return null;
 		}
@@ -384,7 +381,7 @@ public class TrainRunner {
 				return;
 			}
 		}
-		Signal signal = findSignalAtEndOfPath(train);
+		Signal signal = findSignalAtEndOfPath(train._path);
 		if (signal == null)
 			return;
 		if (!signal.isClear()) {
@@ -410,7 +407,7 @@ public class TrainRunner {
 			}
 			distToSlow += track._length;
 		}
-		Signal signal = findSignalAtEndOfPath(train);
+		Signal signal = findSignalAtEndOfPath(train._path);
 		if (signal == null)
 			return;
 		if (signal.isClear()) {

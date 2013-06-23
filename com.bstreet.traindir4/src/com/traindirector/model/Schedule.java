@@ -124,10 +124,10 @@ public class Schedule {
 
 	public List<Train> getTrainsDepartingFrom(String station) {
 		List<Train> departingTrains = new ArrayList<Train>();
-		for(Train train : _trains) {
-			switch(train._status) {
+		for (Train train : _trains) {
+			switch (train._status) {
 			case READY:
-				if(train._entrance.equals(station))
+				if (train._entrance.equals(station))
 					departingTrains.add(train);
 			}
 		}
@@ -137,19 +137,27 @@ public class Schedule {
 
 	public void sortByEntryTime() {
 		List<Train> sorted = new ArrayList<Train>(_trains.size());
-		while(_trains.size() > 0) {
+		while (_trains.size() > 0) {
 			Train lowest = null;
 			for (Train train : _trains) {
 				if (lowest == null)
 					lowest = train;
-				else if(train._timeIn < lowest._timeIn)
+				else if (train._timeIn < lowest._timeIn)
 					lowest = train;
 			}
-			if(!_trains.remove(lowest)) {
+			if (!_trains.remove(lowest)) {
 				System.out.println("Failed remove of " + lowest._name);
 			}
 			sorted.add(lowest);
 		}
 		_trains = sorted;
+	}
+
+	public boolean runDaySpecified() {
+		for (Train train : _trains) {
+			if (train._days != 0)
+				return true;
+		}
+		return false;
 	}
 }

@@ -123,6 +123,13 @@ public class WebPage extends EditorPart {
 		webUpdater.start();
 	}
 
+	public void showContent(String location) {
+		_content.doLink(location);
+		synchronized(_content) {
+			_content.notify();
+		}
+	}
+
 	public WebContent getContentProvider() {
 		return null;
 	}

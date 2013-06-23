@@ -5,7 +5,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.eclipse.swt.widgets.Display;
+
 import com.bstreet.cg.events.CGEventDispatcher;
+import com.traindirector.dialogs.DaysDialog;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
 import com.traindirector.files.PthFile;
@@ -49,11 +52,23 @@ public class LoadCommand extends SimulatorCommand {
 		_territory.linkSignals();
 		_territory.loadSignalAspects(_simulator._scriptFactory);
 		_schedule = _simulator._schedule;
+		_simulator._runDay = 0;
 		loadSchedule();
 		loadPaths();
 		_schedule.sortByEntryTime();
 		// parse programs from schedule
 		LoadEndEvent endLoadEvent = new LoadEndEvent(_simulator);
+		if(_schedule.runDaySpecified()) {
+			Display.getDefault().syncExec(new Runnable() {
+				
+				@Override
+				public void run() {
+					DaysDialog dialog = new DaysDialog(null);
+					dialog.open();
+					_simulator._runDay = 1 << dialog.getSelectedDay();
+				}
+			});
+		}
 		CGEventDispatcher.getInstance().postEvent(endLoadEvent);
 		_simulator.restartSimulation();
 	}
