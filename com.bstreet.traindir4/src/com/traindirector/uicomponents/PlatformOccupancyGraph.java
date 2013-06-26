@@ -22,6 +22,7 @@ import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
+import com.traindirector.events.ResetEvent;
 import com.traindirector.model.TDPosition;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
@@ -107,13 +108,29 @@ public class PlatformOccupancyGraph {
 							_canvas.getDisplay().syncExec(new Runnable() {
 								@Override
 								public void run() {
-									// _canvas.redraw();
+									_canvas.redraw();
 									_canvas.update();
 								}
 							});
 						}
 					}
 				});
+		CGEventDispatcher.getInstance().addListener(new CGEventListener(ResetEvent.class) {
+			public void handle(CGEvent event, Object target) {
+				if(target instanceof Simulator) {
+					_simulator = (Simulator)target;
+					if(_canvas == null || _canvas.isDisposed())
+						return;
+					_canvas.getDisplay().syncExec(new Runnable() {
+						@Override
+						public void run() {
+							_canvas.redraw();
+							_canvas.update();
+						}
+					});
+				}
+			}
+		});
 
 	}
 
@@ -146,7 +163,6 @@ public class PlatformOccupancyGraph {
 	}
 
 	void	drawStations(GC gc) {
-		Track	t;
 		int	y = HEADER_HEIGHT;
 
 		for(Track track : _simulator._territory._tracks) {
@@ -210,13 +226,10 @@ public class PlatformOccupancyGraph {
 	void	drawTrains(GC gc) {
 		Track	trk;
 		int	indx;
-		int	x, y;
-		int	nx, ny;
 
 		for(Train t : _simulator._schedule._trains) {
 		    if(t._days != 0 && _simulator._runDay != 0 && (t._days & _simulator._runDay) == 0)
 		    	continue;
-		    x = y = -1;
 		    trk = null;
 		    for(Track track1 : _simulator._territory._tracks) {
 				if(track1 instanceof Track && track1._isStation &&
@@ -305,8 +318,6 @@ public class PlatformOccupancyGraph {
 		}
 
 		synchronized (_simulator) {
-			Territory territory = _simulator._territory;
-
 			gc.setBackground(bgColor);
 			gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
 			gc.setForeground(blackColor);

@@ -19,6 +19,7 @@ import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
 import com.traindirector.commands.ShowTrainStopsCommand;
 import com.traindirector.events.LoadEndEvent;
+import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Train;
@@ -157,6 +158,21 @@ public class ScheduleView extends ViewPart {
 						@Override
 						public void run() {
 							updateScheduleTable();
+						}
+					});
+				}
+			}
+		});
+		CGEventDispatcher.getInstance().addListener(new CGEventListener(ResetEvent.class) {
+			public void handle(CGEvent event, Object target) {
+				if(target instanceof Simulator) {
+					_simulator = (Simulator)target;
+					if(_table == null || _table.isDisposed())
+						return;
+					_table.getDisplay().syncExec(new Runnable() {
+						@Override
+						public void run() {
+							fillScheduleTable();
 						}
 					});
 				}

@@ -1,8 +1,10 @@
 package com.traindirector.files;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -19,7 +21,9 @@ import com.traindirector.model.TextTrack;
 import com.traindirector.model.Track;
 import com.traindirector.model.TrackDirection;
 import com.traindirector.model.TrackStatus;
+import com.traindirector.model.Train;
 import com.traindirector.model.TriggerTrack;
+import com.traindirector.model.Itinerary.ItinerarySwitch;
 import com.traindirector.scripts.Script;
 import com.traindirector.simulator.Simulator;
 
@@ -29,6 +33,7 @@ public class TrkFile {
 	Territory _territory;
 	String _fname;
 	BufferedReader _reader;
+	private BufferedWriter writer;
 	
 	public TrkFile(Simulator simulator, Territory territory, String fname, BufferedReader rdr) {
 		_simulator = simulator;
@@ -38,7 +43,6 @@ public class TrkFile {
 	}
 
 	public void load() {
-		BufferedReader input = null;
 		try {
 			_reader = new BufferedReader(new FileReader(_fname));
 			loadTracks(_reader);
@@ -341,6 +345,170 @@ public class TrkFile {
 		}
 	}
 	
+	
+	public void save() {
+		try {
+			writer = new BufferedWriter(new FileWriter(_fname));
+			saveTracks(writer);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
 
+	}
+/*
+
+int	save_layout(const wxChar *name, Track *layout)
+{
+	wxFFile file;
+	Track	*t;
+	TextList *tl;
+	Itinerary *it;
+	int	i;
+	int	ch;
+
+
+	SaveSwitchBoards(file);
+
+	file.Close();
+	layout_modified = 0;
+	return 1;
+}
+
+
+ */
+
+	private void saveTracks(BufferedWriter file) throws IOException {
+		int	i;
+
+		for (Track t : _territory._tracks) {
+			if (t instanceof Switch) {
+				file.write(String.format("1,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("%d,%d\n", t._wlink._x, t._wlink._y));
+			} else if (t instanceof Signal) {
+				Signal signal = (Signal)t;
+				file.write(String.format("2,%d,%d,%d,", signal._position._x, signal._position._y,
+						signal._direction.ordinal() +		// TODO: compatibility
+						(signal._fleeted ? 1 : 0) * 2 +
+						((signal._fixedred ? 1 : 0) << 8) +
+						((signal._nopenalty ? 1 : 0) << 9) +
+						((signal._signalx ? 1 : 0) << 10) +
+						((signal._noClickPenalty ? 1 : 0) << 11)));
+				file.write(String.format("%d,%d", signal._wlink._x, signal._wlink._y));
+				// TODO
+				/*
+				if(signal._script != null) {
+				    for(int i = wxStrlen(signal._stateProgram); i >= 0; --i)
+						if(signal._stateProgram[i] == '/' || signal._stateProgram[i] == '\\')
+						    break;
+				    file.write(String.format(",@%s", signal._stateProgram + i + 1));
+				}
+				*/
+				if(signal._station != null && !signal._station.isEmpty())	// for itineraries
+				    file.write(String.format(",%s", signal._station));
+				file.write("\n");
+			} else if (t instanceof PlatformTrack) {
+				file.write(String.format("3,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+			} else if (t instanceof TextTrack) {
+				file.write(String.format("4,%d,%d,%d,%s,", t._position._x, t._position._y, t._direction, t._station));
+				file.write(String.format("%d,%d,%d,%d", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
+				if(t._km != 0)
+				    file.write(String.format(">%d.%d", t._km / 1000, t._km % 1000));
+				file.write("\n");
+			} else if (t instanceof ImageTrack) {
+				if(t._station == null)
+				    t._station = "";
+				for(i = t._station.length(); i >= 0; --i)
+				    if(t._station.charAt(i) == '/' || t._station.charAt(i) == '\\')
+				    	break;
+				file.write(String.format("5,%d,%d,0,%s\n", t._position._x, t._position._y, t._station.substring(i + 1)));
+				
+			} else if (t instanceof TriggerTrack) {
+				file.write(String.format("9,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("%d,%d,%d,%d", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
+				int ch = ',';
+				for(i = 0; i < t._speed.length; ++i) {
+				    file.write(String.format("%c%d", ch, t._speed[i]));
+				    ch = '/';
+				}
+				file.write(String.format(",%s\n", t._station));
+				
+			} else if (t instanceof TerritoryInfo) {
+			    file.write(String.format("6,0,0,0,%s\n", t._station));
+			} else if (t instanceof ItineraryButton) {
+				file.write(String.format("8,%d,%d,%d,%s\n", t._position._x, t._position._y, t._direction, t._station));
+				
+			} else { // generic Track
+				file.write(String.format("0,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("%d,%d,", t._isStation, t._length));
+				file.write(String.format("%d,%d,%d,%d,", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
+				if(t._speed != null && t._speed[0] != 0) {
+				    int ch = '@';
+
+				    for(i = 0; i < t._speed.length; ++i) {
+						file.write(String.format("%c%d", ch, t._speed[i]));
+						ch = '/';
+				    }
+				    file.write(',');
+				}
+				if(t._km != 0)
+				    file.write(String.format(">%d.%d,", t._km / 1000, t._km % 1000));
+				if(t._isStation && t._station != null)
+				    file.write(String.format("%s\n", t._station));
+				else
+				    file.write(String.format("noname\n"));
+			}
+		}
+		
+		for (Itinerary it : _territory._itineraries) {
+		    file.write(String.format("7,0,0,0,%s,%s,%s,", it._name, it._signame, it._endsig));
+		    if(it._nextitin != null && !it._nextitin.isEmpty())
+		    	file.write(String.format("@%s,", it._nextitin));
+		    for (ItinerarySwitch sw : it._switches)
+				file.write(String.format("%d,%d,%d,", sw._position._x, sw._position._y, sw._thrown));
+		    file.write(String.format("\n"));
+		}
+		
+		for (Track track : _territory._tracks) {
+			if (track instanceof ItineraryButton || track instanceof ImageTrack) {
+				// TODO
+				/*
+				if(track._flashingIcons[0]) {
+					file.write(String.format("(attributes %d,%d\nicons:", track._position._x, track._position._y));
+					for(int x = 0; ;) {
+						file.write(track._flashingIcons[x]);
+						++x;
+						if(x >= MAX_FLASHING_ICONS || !track._flashingIcons[x])
+							break;
+						file.write(",");
+					}
+					file.write("\n)\n");
+				}
+				 */
+			} else if (track instanceof Signal) {
+				Signal t = (Signal) track;
+                if(t._blockedBy != null) {
+                    file.write(String.format("(attributes %d,%d\nlocked %s\n)\n", t._position._x, t._position._y, t._blockedBy));
+                }
+                if((t._flags & Train.DONTSTOPSHUNTERS) != 0) {
+                    file.write(String.format("(attributes %d,%d\ndontstopshunters\n)\n", t._position._x, t._position._y));
+                }
+                if(t._intermediate) {
+                    file.write(String.format("(attributes %d,%d\nintermediate %d\n)\n",
+                        t._position._x, t._position._y, t._intermediate ? 1 : 0));
+                }
+			}
+			if(!(track instanceof Signal) && track._script != null) {
+			    file.write(String.format("(script %d,%d\n%s)\n", track._position._x, track._position._y, track._script._body));
+			}
+			if (track._invisible) {
+				file.write(String.format("(attributes %d,%d\nhidden\n)\n", track._position._x, track._position._y));				
+			}
+		}
+		// TODO: _simulator._switchboards.save(file);
+	}
+	
 }
 

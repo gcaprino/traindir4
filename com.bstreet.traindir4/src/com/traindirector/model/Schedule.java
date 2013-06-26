@@ -7,8 +7,8 @@ import java.util.List;
 public class Schedule {
 
 	public List<Train> _trains;
-	public int _startTime;
 	public List<Train> _stranded;
+	public int _startTime;
 	public int _runDay;
 
 	public int _nRunning;
@@ -23,16 +23,20 @@ public class Schedule {
 		_stranded = new LinkedList<Train>();
 	}
 	
+	public void clear() {
+		_trains.clear();
+		_stranded.clear();
+		_startTime = 0;
+		_runDay = 0;
+		clearCounters();
+	}
+
 	public void add(Train train) {
 		_trains.add(train);
 	}
 	
 	public Train get(int index) {
 		return _trains.get(index);
-	}
-
-	public void clear() {
-		_trains.clear();
 	}
 
 	public Train findTrainNamed(String name) {

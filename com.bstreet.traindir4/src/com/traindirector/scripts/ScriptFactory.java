@@ -11,6 +11,10 @@ public class ScriptFactory {
 		_scripts = new HashMap<String, Script>();
 	}
 	
+	public void clear() {
+		_scripts.clear();
+	}
+	
 	public Script createInstance(String fname) {
 		Script script = _scripts.get(fname);
 		if (script != null)
@@ -22,5 +26,5 @@ public class ScriptFactory {
 		_scripts.put(fname, script);
 		return script;
 	}
-	
+
 }

@@ -14,6 +14,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
 import com.traindirector.events.AlertEvent;
+import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.files.BooleanOption;
 import com.traindirector.files.FileManager;
@@ -75,6 +76,11 @@ public class Simulator {
 	public int[] _lateData = new int[24 * 60]; // how many late minutes we accumulated for each minute in the day
 	
 	public PerformanceCounters _performanceCounters = new PerformanceCounters();
+	public int _runPoints;
+	public int _totalDelay;
+	public int _totalLate;
+	public int _runPointBase;
+	public int _runDay;
 
 	// TODO: move to options
 	public OptionsManager _optionsManager;
@@ -108,13 +114,8 @@ public class Simulator {
 	public boolean _noTrainNamesColors;
 	public String _locale;
 	public int _currentTimeMultiplier;
-	public int _runPoints;
-	public int _totalDelay;
-	public int _totalLate;
 	public int _timeMult;
 	public List<String> _oldSimulations;
-	public int _runPointBase;
-	public int _runDay;
     private int _editorTrackType;
     private int _editorTrackDirection;
 	
@@ -343,7 +344,7 @@ public class Simulator {
 	public void setBaseDirectory(String name) {
 		_baseDir = name;
 	}
-	
+
 	public String getFilePath(String fname) {
 		File f = new File(fname);
 		if (!f.exists()) {
@@ -488,5 +489,31 @@ public class Simulator {
 			}
 		});
 		return result[0];
+	}
+
+	public void newSimulation() {
+		_territory.clear();
+		_schedule.clear();
+		_scriptFactory.clear();
+		if(_switchboards != null)
+			_switchboards.clear();
+		_iconFactory.clear();
+		_fileManager.close();
+		_fileManager = null;
+		_alerts.clear();
+		_simulatedTime = 0;
+		_running = false;
+		clearPoints();
+		CGEventDispatcher.getInstance().postEvent(new ResetEvent(this));
+	}
+	
+	public void clearPoints() {
+		for(int i = 0; i < _lateData.length; ++i)
+			_lateData[i] = 0;
+		_runPoints = 0;
+		_totalDelay = 0;
+		_totalLate = 0;
+		_runPointBase = 0;
+		_runDay = 0;
 	}
 }

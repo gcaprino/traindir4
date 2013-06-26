@@ -19,6 +19,10 @@ public class IconFactory {
 		initSignalIcons();
 	}
 	
+	public void clear() {
+		_icons.clear();		// forget icons defined by last simulation
+		initSignalIcons();	// and restart with the default set of icons
+	}
 	
 	public void initSignalIcons() {
 		_icons.add(new TDIcon(":icons:sig_e_r1.xpm", sig_e_r1));

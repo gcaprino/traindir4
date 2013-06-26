@@ -34,7 +34,7 @@ public class OpenSimulationAction extends Action {
 		setImageDescriptor(Activator.getImageDescriptor("/icons/open16x16.png"));
 	}
 	
-	FileDialog openDialog;
+	static FileDialog openDialog;
 	
 	public void run() {
 

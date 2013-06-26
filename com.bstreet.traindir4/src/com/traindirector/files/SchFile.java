@@ -289,14 +289,14 @@ public class SchFile extends TextFile {
 				}
 				if(i < 0)
 					continue;
-				if(line.charAt(i) == '+') {
+				if(i < line.length() && line.charAt(i) == '+') {
 					i = scanInteger(line, i + i);
 					stop._minstop = _intValue;
 				}
 				stop._arrival = arrival;
 				if(i < 0)
 					continue;
-				if(line.charAt(i) == ',')
+				if(i < line.length() && line.charAt(i) == ',')
 					++i;
 				i = skipBlanks(line, i);
 				if(i < 0)

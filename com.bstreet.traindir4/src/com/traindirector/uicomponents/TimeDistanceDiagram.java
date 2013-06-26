@@ -6,9 +6,7 @@ import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -23,18 +21,9 @@ import org.eclipse.swt.widgets.Display;
 import com.bstreet.cg.events.CGEvent;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
-import com.traindirector.commands.ClickCommand;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
-import com.traindirector.events.TimeSliceEvent;
-import com.traindirector.model.Direction;
-import com.traindirector.model.ImageTrack;
-import com.traindirector.model.ItineraryButton;
-import com.traindirector.model.PlatformTrack;
-import com.traindirector.model.Signal;
-import com.traindirector.model.SignalAspect;
-import com.traindirector.model.Switch;
-import com.traindirector.model.TDIcon;
+import com.traindirector.events.ResetEvent;
 import com.traindirector.model.TDPosition;
 import com.traindirector.model.Territory;
 import com.traindirector.model.TextTrack;
@@ -42,7 +31,6 @@ import com.traindirector.model.Track;
 import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
-import com.traindirector.model.TriggerTrack;
 import com.traindirector.model.VLine;
 import com.traindirector.simulator.Simulator;
 
@@ -60,8 +48,6 @@ public class TimeDistanceDiagram {
 	private static int STATION_WIDTH = 100;
 	private static int KM_WIDTH = 50;
 	private static int HEADER_HEIGHT = 20;
-	private static int MAXWIDTH = (4 * 60 * 24 + STATION_WIDTH + KM_WIDTH);
-	
 	static	int	highkm;
 	static	List<Track>	stations;
 
@@ -96,8 +82,6 @@ public class TimeDistanceDiagram {
 				});
 		CGEventDispatcher.getInstance().addListener(
 				new CGEventListener(LoadEndEvent.class) {
-					private Simulator _simulator;
-
 					@Override
 					public void handle(CGEvent event, Object target) {
 						if (_canvas == null || _canvas.isDisposed()) {
@@ -109,13 +93,29 @@ public class TimeDistanceDiagram {
 							_canvas.getDisplay().syncExec(new Runnable() {
 								@Override
 								public void run() {
-									// _canvas.redraw();
+									_canvas.redraw();
 									_canvas.update();
 								}
 							});
 						}
 					}
 				});
+		CGEventDispatcher.getInstance().addListener(new CGEventListener(ResetEvent.class) {
+			public void handle(CGEvent event, Object target) {
+				if(target instanceof Simulator) {
+					_simulator = (Simulator)target;
+					if(_canvas == null || _canvas.isDisposed())
+						return;
+					_canvas.getDisplay().syncExec(new Runnable() {
+						@Override
+						public void run() {
+							_canvas.redraw();
+							_canvas.update();
+						}
+					});
+				}
+			}
+		});
 	}
 
 	static	void	DrawTimeGrid(GC gc, int y) {
@@ -339,35 +339,12 @@ public class TimeDistanceDiagram {
 		}
 
 		synchronized (_simulator) {
-			Territory territory = _simulator._territory;
-
 			gc.setBackground(bgColor);
 			gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
 			gc.setForeground(blackColor);
 			
 			drawStations(gc);
 			drawTrains(gc);
-		}
-	}
-
-	private void drawImage(GC gc, TDPosition position, String iconFileName) {
-		TDIcon icon = _simulator._iconFactory.get(iconFileName);
-		if (icon == null) {
-			icon = _simulator._iconFactory.get(":icons:camera.xpm");
-		}
-		drawImage(gc, position, icon);
-	}
-	
-	private void drawImage(GC gc, TDPosition position, TDIcon icon) {
-		if (icon != null) {
-			if (icon._bytes == null || !(icon._bytes instanceof Image)) {
-				String[] xpm = icon._xpmBytes;
-				if (xpm != null) {
-					icon._bytes = drawXpm(position, xpm);
-				}
-			}
-			if (icon._bytes != null)
-				drawImage(gc, position, (Image) icon._bytes);
 		}
 	}
 
@@ -394,18 +371,6 @@ public class TimeDistanceDiagram {
 		for (VLine vl : segs) {
 			gc.drawLine(x + vl._x0, y + vl._y0, x + vl._x1, y + vl._y1);
 		}
-	}
-
-	public void drawImage(GC gc, TDPosition pos, Image image) {
-	}
-
-	public Image drawXpm(TDPosition pos, String[] xpm) {
-		return null;
-	}
-
-	// convert canvas to layout coords
-	public TDPosition toLayoutCoord(int x, int y) {
-		return null;
 	}
 
 	public void onMouseDown(MouseEvent e) {

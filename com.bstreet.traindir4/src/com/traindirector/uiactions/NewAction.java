@@ -3,10 +3,9 @@ package com.traindirector.uiactions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchWindow;
 
-import com.traindirector.Activator;
 import com.traindirector.Application;
 import com.traindirector.ICommandIds;
-import com.traindirector.commands.SpeedCommand;
+import com.traindirector.commands.NewCommand;
 
 public class NewAction extends Action {
 
@@ -20,7 +19,7 @@ public class NewAction extends Action {
 	}
 	
 	public void run() {
-		//SpeedCommand cmd = new SpeedCommand(1);
-		//Application.getSimulator().addCommand(cmd);
+		NewCommand cmd = new NewCommand();
+		Application.getSimulator().addCommand(cmd);
 	}
 }

@@ -17,9 +17,9 @@ public class Itinerary {
 	Territory territory;
 	
 	public class ItinerarySwitch {
-		TDPosition _position;
-		boolean _thrown;
-		boolean _oldThrown;
+		public TDPosition _position;
+		public boolean _thrown;
+		public boolean _oldThrown;
 	}
 	
 	public void addSwitch(int x, int y, boolean thrown) {

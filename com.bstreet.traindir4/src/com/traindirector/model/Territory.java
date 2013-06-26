@@ -24,6 +24,12 @@ public class Territory {
 		_paths = new LinkedList<EntryExitPath>();
 	}
 
+	public void clear() {
+		_tracks.clear();
+		_itineraries.clear();
+		_paths.clear();
+	}
+
 	public void add(Track trk) {
 		_tracks.add(trk);
 	}

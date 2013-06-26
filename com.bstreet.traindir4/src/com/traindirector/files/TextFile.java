@@ -72,13 +72,14 @@ public class TextFile {
 	public int scanString(String input, int offset) {
 		StringBuilder val = new StringBuilder();
 		char ch;
-		while(offset < input.length()) {
-			ch = input.charAt(offset);
-			if(ch == ' ' || ch == '\t')
-				break;
-			val.append(ch);
-			++offset;
-		}
+		if(offset > 0)
+			while(offset < input.length()) {
+				ch = input.charAt(offset);
+				if(ch == ' ' || ch == '\t')
+					break;
+				val.append(ch);
+				++offset;
+			}
 		_stringValue = val.toString();
 		if(val.length() < 1) {
 			return offset;
