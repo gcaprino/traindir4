@@ -305,7 +305,7 @@ public class ClickCommand extends SimulatorCommand {
     	
     	track._length = Integer.parseInt(_options.get(0)._value);
     	track._station = _options.get(1)._value;
-    	track._km = Integer.parseInt(_options.get(2)._value);
+    	track._km = Integer.parseInt(_options.get(2)._value);	// TODO: parse km.meters
     	String[] spds = _options.get(3)._value.split("/");
     	for(int i = 0; i < track._speed.length; ++i) {
     		if(i >= spds.length)

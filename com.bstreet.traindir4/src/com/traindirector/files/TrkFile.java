@@ -354,9 +354,12 @@ public class TrkFile {
 			e.printStackTrace();
 		} catch(Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				writer.close();
+			} catch (IOException e) {
+			}
 		}
-		
-
 	}
 /*
 
@@ -385,7 +388,7 @@ int	save_layout(const wxChar *name, Track *layout)
 
 		for (Track t : _territory._tracks) {
 			if (t instanceof Switch) {
-				file.write(String.format("1,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("1,%d,%d,%d,", t._position._x, t._position._y, t._direction.ordinal()));
 				file.write(String.format("%d,%d\n", t._wlink._x, t._wlink._y));
 			} else if (t instanceof Signal) {
 				Signal signal = (Signal)t;
@@ -410,9 +413,9 @@ int	save_layout(const wxChar *name, Track *layout)
 				    file.write(String.format(",%s", signal._station));
 				file.write("\n");
 			} else if (t instanceof PlatformTrack) {
-				file.write(String.format("3,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("3,%d,%d,%d,", t._position._x, t._position._y, t._direction.ordinal()));
 			} else if (t instanceof TextTrack) {
-				file.write(String.format("4,%d,%d,%d,%s,", t._position._x, t._position._y, t._direction, t._station));
+				file.write(String.format("4,%d,%d,%d,%s,", t._position._x, t._position._y, t._direction.ordinal(), t._station));
 				file.write(String.format("%d,%d,%d,%d", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
 				if(t._km != 0)
 				    file.write(String.format(">%d.%d", t._km / 1000, t._km % 1000));
@@ -426,7 +429,7 @@ int	save_layout(const wxChar *name, Track *layout)
 				file.write(String.format("5,%d,%d,0,%s\n", t._position._x, t._position._y, t._station.substring(i + 1)));
 				
 			} else if (t instanceof TriggerTrack) {
-				file.write(String.format("9,%d,%d,%d,", t._position._x, t._position._y, t._direction));
+				file.write(String.format("9,%d,%d,%d,", t._position._x, t._position._y, t._direction.ordinal()));
 				file.write(String.format("%d,%d,%d,%d", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
 				int ch = ',';
 				for(i = 0; i < t._speed.length; ++i) {
@@ -438,11 +441,11 @@ int	save_layout(const wxChar *name, Track *layout)
 			} else if (t instanceof TerritoryInfo) {
 			    file.write(String.format("6,0,0,0,%s\n", t._station));
 			} else if (t instanceof ItineraryButton) {
-				file.write(String.format("8,%d,%d,%d,%s\n", t._position._x, t._position._y, t._direction, t._station));
+				file.write(String.format("8,%d,%d,%d,%s\n", t._position._x, t._position._y, t._direction.ordinal(), t._station));
 				
 			} else { // generic Track
-				file.write(String.format("0,%d,%d,%d,", t._position._x, t._position._y, t._direction));
-				file.write(String.format("%d,%d,", t._isStation, t._length));
+				file.write(String.format("0,%d,%d,%d,", t._position._x, t._position._y, t._direction.ordinal()));
+				file.write(String.format("%d,%d,", t._isStation ? 1 : 0, t._length));
 				file.write(String.format("%d,%d,%d,%d,", t._wlink._x, t._wlink._y, t._elink._x, t._elink._y));
 				if(t._speed != null && t._speed[0] != 0) {
 				    int ch = '@';
@@ -467,7 +470,7 @@ int	save_layout(const wxChar *name, Track *layout)
 		    if(it._nextitin != null && !it._nextitin.isEmpty())
 		    	file.write(String.format("@%s,", it._nextitin));
 		    for (ItinerarySwitch sw : it._switches)
-				file.write(String.format("%d,%d,%d,", sw._position._x, sw._position._y, sw._thrown));
+				file.write(String.format("%d,%d,%d,", sw._position._x, sw._position._y, sw._thrown ? 1 : 0));
 		    file.write(String.format("\n"));
 		}
 		

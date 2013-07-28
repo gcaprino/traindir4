@@ -1,5 +1,9 @@
 package com.traindirector.commands;
 
+import org.eclipse.swt.widgets.Display;
+
+import com.traindirector.Application;
+import com.traindirector.editors.InfoPage;
 import com.traindirector.model.TDPosition;
 import com.traindirector.model.Train;
 import com.traindirector.simulator.Simulator;
@@ -140,7 +144,12 @@ public class DoCommand extends SimulatorCommand {
 		} else if(_cmd.startsWith("itinerary")) {
 			
 		} else if(_cmd.startsWith("info")) {
-			
+			ShowInfoCommand cmd = new ShowInfoCommand(_simulator._baseFileName + ".htm");
+			_simulator.addCommand(cmd);
+		} else if(_cmd.startsWith("showinfo")) {
+			String name = _cmd.substring(8).trim();
+			ShowInfoCommand cmd = new ShowInfoCommand(name);
+			_simulator.addCommand(cmd);
 		} else if(_cmd.startsWith("sb-edit")) {
 			
 		} else if(_cmd.startsWith("sb-browser")) {
@@ -192,8 +201,6 @@ public class DoCommand extends SimulatorCommand {
 		} else if(_cmd.startsWith("split")) {
 			
 		} else if(_cmd.startsWith("script")) {
-			
-		} else if(_cmd.startsWith("showinfo")) {
 			
 		} else if(_cmd.startsWith("showalert")) {
 			offset = skipBlanks(_cmd, 9);

@@ -12,6 +12,11 @@ public class Alert {
 		_text = text;
 	}
 
+	public String toString() {
+		String s = TDTime.toString(_time) + ": " + _text;
+		return s;
+	}
+
 	public String[] getStrings() {
 		String[] s = new String[2];
 		s[0] = TDTime.toString(_time);

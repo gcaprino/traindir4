@@ -2,22 +2,18 @@ package com.traindirector.commands;
 
 import java.io.File;
 
-import com.bstreet.cg.events.CGEventDispatcher;
-import com.traindirector.events.LoadEndEvent;
-import com.traindirector.events.LoadStartEvent;
-import com.traindirector.files.SavFile;
 import com.traindirector.files.TrkFile;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Territory;
 import com.traindirector.simulator.SimulatorCommand;
 
-public class SaveGameCommand extends SimulatorCommand {
+public class SaveLayoutCommand extends SimulatorCommand {
 
 	String _fname;
 	Territory _territory;
 	Schedule _schedule;
 
-	public SaveGameCommand(String fname) {
+	public SaveLayoutCommand(String fname) {
 		_fname = fname;
 	}
 
@@ -28,10 +24,11 @@ public class SaveGameCommand extends SimulatorCommand {
 		File dir = new File(_fname);
 		_simulator.setBaseDirectory(dir.getParent()); // make relative file names from the
 													  // location of the .trk file
-		SavFile savFile = new SavFile(_simulator, _territory, _fname);
-		savFile.save();
+		TrkFile trkFile = new TrkFile(_simulator, _territory, _fname, null);
+		trkFile.save();
 		if (wasRunning) {
 			_simulator.startRunning();
 		}
 	}
+
 }

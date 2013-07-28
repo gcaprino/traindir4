@@ -78,7 +78,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     private IWorkbenchAction aboutAction;
     private IWorkbenchAction newWindowAction;
     private Action messagePopupAction;
-    IWorkbenchWindow _window;
+    public IWorkbenchWindow _window;
     public Label _statusLine;
     
     OpenSimulationAction openSimulationAction;

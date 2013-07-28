@@ -21,8 +21,10 @@ public class TextFile {
 	
 	public void setFileName(String path, String ext) {
 		IPath p = new Path(path);
-		p = p.removeFileExtension();
-		p = p.addFileExtension(ext);
+		if (ext != null && !ext.isEmpty()) {
+			p = p.removeFileExtension();
+			p = p.addFileExtension(ext);
+		}
 		_fileName = p.toOSString();
 	}
 	

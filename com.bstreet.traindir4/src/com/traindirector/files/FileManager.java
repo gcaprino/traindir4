@@ -1,6 +1,7 @@
 package com.traindirector.files;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -78,7 +79,13 @@ public class FileManager {
 			input = new BufferedReader(new FileReader(schName));
 			return input;
 		} catch (FileNotFoundException e) {
-			return null;
+			schName = _simulator._baseDir + File.separator + schName;
+			try {
+				input = new BufferedReader(new FileReader(schName));
+			} catch (FileNotFoundException e1) {
+				return null;
+			}
+			return input;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

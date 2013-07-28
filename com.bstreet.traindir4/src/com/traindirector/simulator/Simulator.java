@@ -72,6 +72,7 @@ public class Simulator {
 
 	private boolean _running;
 	public String _baseDir = "";
+	public String _baseFileName;
 	public boolean _gMustBeClearPath;
 	public int[] _lateData = new int[24 * 60]; // how many late minutes we accumulated for each minute in the day
 	
@@ -232,6 +233,11 @@ public class Simulator {
 		AlertEvent e = new AlertEvent(this);
 		CGEventDispatcher.getInstance().postEvent(e);
 	}
+	
+	public void removeAllAlerts() {
+		_alerts.clear();
+	}
+
 	public void stopTimer() {
 		_ignoreTimer = true;
 	}
@@ -516,4 +522,5 @@ public class Simulator {
 		_runPointBase = 0;
 		_runDay = 0;
 	}
+
 }

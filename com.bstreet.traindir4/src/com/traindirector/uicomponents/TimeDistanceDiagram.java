@@ -139,10 +139,10 @@ public class TimeDistanceDiagram {
 		}
 	}
 
-	int	km_to_y(int km) {
+	int	km_to_y(int _km) {
 		int	y;
 
-		y = (int) (HEADER_HEIGHT + (double)km / (double)highkm * 960);
+		y = (int) (HEADER_HEIGHT + (double)_km / (double)highkm * 960);
 		return y;
 	}
 
@@ -229,10 +229,10 @@ public class TimeDistanceDiagram {
 		return -1;
 	}
 
-	void	graph_xy(int km, int tim, TDPosition pos)
+	void	graph_xy(int _km, int tim, TDPosition pos)
 	{
 		pos._x = (int) (tim / 60 * 4 + STATION_WIDTH + KM_WIDTH);
-		pos._y = km_to_y(km);
+		pos._y = km_to_y(_km);
 	}
 
 	void	time_to_time(GC gc, int x, int y, int nx, int ny, int type)

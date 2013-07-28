@@ -126,7 +126,7 @@ public class Track {
 	}
 
 	public void onClick() {
-		
+		_script.handle("OnClicked", this, null);
 	}
 	
 	public void onRightClick() {

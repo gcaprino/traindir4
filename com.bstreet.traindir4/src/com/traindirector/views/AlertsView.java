@@ -8,10 +8,12 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -24,6 +26,8 @@ import org.eclipse.ui.part.ViewPart;
 import com.bstreet.cg.events.CGEvent;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
+import com.traindirector.Application;
+import com.traindirector.commands.SaveAlertsCommand;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.model.Alert;
 import com.traindirector.simulator.Simulator;
@@ -35,13 +39,14 @@ public class AlertsView extends ViewPart {
 	 */
 	public static final String ID = "com.bstreet.cg.traindirector.views.AlertsView";
 
-	private Action action1;
-	private Action action2;
+	private Action actionClear;
+	private Action actionSave;
+
+	Table	_table;
+	static FileDialog saveDialog;
 
 	public AlertsView() {
 	}
-
-	Table	_table;
 	
 	/**
 	 * This is a callback that will allow us
@@ -82,7 +87,8 @@ public class AlertsView extends ViewPart {
 	}
 
 	public void refreshTable(List<Alert> alerts) {
-		_table.clearAll();
+		// TODO: only add alerts which are not there, yet
+		_table.removeAll();
 		for(Alert a : alerts) {
 			TableItem item = new TableItem(_table, SWT.NONE);
 			item.setText(a.getStrings());
@@ -109,43 +115,44 @@ public class AlertsView extends ViewPart {
 	}
 
 	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(action1);
+		manager.add(actionClear);
 		manager.add(new Separator());
-		manager.add(action2);
+		manager.add(actionSave);
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(actionClear);
+		manager.add(actionSave);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(actionClear);
+		manager.add(actionSave);
 	}
 
 	private void makeActions() {
-		action1 = new Action() {
+		actionClear = new Action() {
 			public void run() {
-				showMessage("Action 1 executed");
+				Application.getSimulator().removeAllAlerts();
+				_table.removeAll();
 			}
 		};
-		action1.setText("Action 1");
-		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		actionClear.setText("Clear");
+		actionClear.setToolTipText("Remove all alerts");
+		actionClear.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+			getImageDescriptor(ISharedImages.IMG_TOOL_DELETE));
 		
-		action2 = new Action() {
+		actionSave = new Action() {
 			public void run() {
-				showMessage("Action 2 executed");
+				saveAlerts();
 			}
 		};
-		action2.setText("Action 2");
-		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		actionSave.setText("Save");
+		actionSave.setToolTipText("Save alerts to a text file");
+		actionSave.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+				getImageDescriptor(ISharedImages.IMG_OBJ_FILE));
 	}
 
 	private void hookDoubleClickAction() {
@@ -157,12 +164,6 @@ public class AlertsView extends ViewPart {
 		});
 		*/
 	}
-	private void showMessage(String message) {
-		MessageDialog.openInformation(
-			_table.getShell(),
-			"Schedule",
-			message);
-	}
 
 	/**
 	 * Passing the focus request to the viewer's control.
@@ -171,4 +172,19 @@ public class AlertsView extends ViewPart {
 		_table.setFocus();
 	}
 
+
+	public void saveAlerts() {
+		Shell shell = Display.getDefault().getActiveShell();
+		if (saveDialog == null) {
+			saveDialog = new FileDialog(shell, SWT.SAVE);
+			saveDialog.setFilterExtensions(new String[] { "*.txt", "*.*" });
+			saveDialog.setFilterNames(new String[] { "Text File (*.txt)", "All files (*.*)" });
+		}
+		String fname = saveDialog.open();
+		if (fname == null) {
+			return;
+		}
+		SaveAlertsCommand cmd = new SaveAlertsCommand(fname);
+		Application.getSimulator().addCommand(cmd);
+	}
 }

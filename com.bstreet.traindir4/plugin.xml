@@ -411,6 +411,13 @@
             id="com.traindirector.editor.report"
             name="Report">
       </editor>
+      <editor
+            class="com.traindirector.editors.InfoPage"
+            default="false"
+            icon="icons/question18x18black.png"
+            id="com.traindirector.editor.info"
+            name="Welcome">
+      </editor>
    </extension>
    <extension point="org.eclipse.help.contexts">
       <contexts file="contexts.xml">

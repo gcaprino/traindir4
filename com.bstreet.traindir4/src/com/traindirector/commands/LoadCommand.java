@@ -42,6 +42,7 @@ public class LoadCommand extends SimulatorCommand {
 
 		File dir = new File(_fname);
 		_simulator.setBaseDirectory(dir.getParent());	// make relative file names from the location of the .trk file
+		_simulator._baseFileName = dir.getName().toLowerCase().replace(".trk", "").replace(".zip", "");
 
 		BufferedReader rdr = _simulator.getReaderFor(".trk");
 		if (rdr == null) {

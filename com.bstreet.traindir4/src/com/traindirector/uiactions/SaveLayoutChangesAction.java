@@ -1,14 +1,22 @@
 package com.traindirector.uiactions;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 
+import com.traindirector.Application;
 import com.traindirector.ICommandIds;
+import com.traindirector.commands.SaveGameCommand;
+import com.traindirector.commands.SaveLayoutCommand;
 
 public class SaveLayoutChangesAction extends Action {
 
 	private final IWorkbenchWindow window;
 	private int instanceNum = 0;
+	private FileDialog saveDialog;
 	
 	public SaveLayoutChangesAction(IWorkbenchWindow window, String label) {
 		this.window = window;
@@ -21,12 +29,17 @@ public class SaveLayoutChangesAction extends Action {
 	}
 	
 	public void run() {
-		if(window != null) {	
-//			try {
-//				window.getActivePage().showView(viewId, Integer.toString(instanceNum++), IWorkbenchPage.VIEW_ACTIVATE);
-//			} catch (PartInitException e) {
-//				MessageDialog.openError(window.getShell(), "Error", "Error opening view:" + e.getMessage());
-//			}
+		Shell shell = Display.getDefault().getActiveShell();
+		if (saveDialog == null) {
+			saveDialog = new FileDialog(shell, SWT.SAVE);
+			saveDialog.setFilterExtensions(new String[] { "*.trk", "*.*" });
+			saveDialog.setFilterNames(new String[] { "Simulation Layout (*.trk)", "All files (*.*)" });
 		}
+		String fname = saveDialog.open();
+		if (fname == null) {
+			return;
+		}
+		SaveLayoutCommand cmd = new SaveLayoutCommand(fname);
+		Application.getSimulator().addCommand(cmd);
 	}
 }
