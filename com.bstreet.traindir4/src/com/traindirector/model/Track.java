@@ -9,7 +9,7 @@ import com.traindirector.simulator.Simulator;
 
 public class Track {
 
-	public static final int NSPEEDS = 8;
+	public static final int NSPEEDS = 10;
 
 	public static final int CHANGED = 1;		// needed to avoid accessing Simulator._updatedTime directly
 	
@@ -27,18 +27,15 @@ public class Track {
 	public String _scriptFile;
 	public Script _script;
 	public boolean _invisible;
+	public int _flags;
+	public long _updateTime;
+	public Signal _esignal, _wsignal;
 
 	// performance flags
 	public static final int TURNED = 1;
 	public static final int THROWN = 2;
 
 	public static final int DONTSTOPSHUNTERS = 1024; // don't stop here if train is shunting
-
-	public int _flags;
-	
-	public long _updateTime;
-
-	public Signal _esignal, _wsignal;
 
 	public Track() {
 		_position = new TDPosition();
@@ -143,6 +140,15 @@ public class Track {
 	
 	public void onCtrlClick() {
 		
+	}
+
+
+	public String speedsToString() {
+    	StringBuilder value = new StringBuilder(); 
+    	for(int i = 0; i < _speed.length; ++i) {
+    		value.append("/" + _speed[i]); 
+    	}
+    	return value.toString().substring(1);
 	}
 
 	public void readSpeeds(String string) {
@@ -594,4 +600,5 @@ VLine	itin_layout[] = {
 		Script script = factory.createInstance(cmd);
 		script.handle("OnEnter", this, train);
 	}
+	
 }

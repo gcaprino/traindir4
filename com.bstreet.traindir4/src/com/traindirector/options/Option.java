@@ -1,4 +1,4 @@
-package com.traindirector.files;
+package com.traindirector.options;
 
 public class Option {
 

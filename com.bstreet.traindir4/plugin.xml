@@ -430,6 +430,26 @@
             id="com.traindirector.preferences.AppearancePreferencePage"
             name="Appearance">
       </page>
+      <page
+            class="com.traindirector.preferences.OptionsPage"
+            id="com.bstreet.traindirector.preferences.options"
+            name="Options">
+      </page>
+      <page
+            class="com.traindirector.preferences.EnvironmentPage"
+            id="com.traindirector.preferences.environment"
+            name="Environment">
+      </page>
+      <page
+            class="com.traindirector.preferences.SkinPage"
+            id="com.traindirector.preferences.skin"
+            name="Skin">
+      </page>
+      <page
+            class="com.traindirector.preferences.ServerPage"
+            id="com.traindirector.preferences.server"
+            name="Server">
+      </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">

@@ -21,10 +21,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Widget;
 
-import com.traindirector.files.BooleanOption;
-import com.traindirector.files.FileOption;
-import com.traindirector.files.IntegerOption;
-import com.traindirector.files.Option;
+import com.traindirector.Application;
+import com.traindirector.options.BooleanOption;
+import com.traindirector.options.FileOption;
+import com.traindirector.options.IntegerOption;
+import com.traindirector.options.Option;
 
 public class PropertyDialog extends TitleAreaDialog {
 
@@ -63,77 +64,7 @@ public class PropertyDialog extends TitleAreaDialog {
 		// layout.horizontalAlignment = GridData.FILL;
 		parent.setLayout(layout);
 
-		GridData ld;
-		Label lbl;
-		Text txt;
-		Button checkBox;
-		for(Option o : _fields) {
-			if(o instanceof TextOption || o instanceof IntegerOption) {
-				lbl = new Label(parent, SWT.NONE);
-				lbl.setText(o._description);
-				txt = new Text(parent, SWT.BORDER);
-				if(o._value != null)
-					txt.setText(o._value);
-				ld = new GridData();
-				ld.horizontalSpan = 2;
-				ld.grabExcessHorizontalSpace = true;
-				ld.horizontalAlignment = GridData.FILL;
-				txt.setLayoutData(ld);
-				_widgets.put(o, txt);
-			} else if(o instanceof BooleanOption) {
-				checkBox = new Button(parent, SWT.CHECK);
-				checkBox.setText(o._description);
-				checkBox.setSelection(o._intValue != 0);
-				ld = new GridData();
-				ld.grabExcessHorizontalSpace = true;
-				ld.horizontalAlignment = GridData.FILL;
-				ld.horizontalSpan = 3;
-				checkBox.setLayoutData(ld);
-				_widgets.put(o, checkBox);
-			} else if(o instanceof FileOption) {
-				lbl = new Label(parent, SWT.NONE);
-				lbl.setText(o._description);
-				txt = new Text(parent, SWT.BORDER);
-				if(o._value != null)
-					txt.setText(o._value);
-				ld = new GridData();
-				ld.grabExcessHorizontalSpace = true;
-				ld.horizontalAlignment = GridData.FILL;
-				txt.setLayoutData(ld);
-				_widgets.put(o, txt);
-				Button browseButton = new Button(parent, SWT.PUSH);
-				browseButton.addSelectionListener(new SelectionListener() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-					}
-					
-					@Override
-					public void widgetDefaultSelected(SelectionEvent e) {
-					}
-				});
-			} else if(o instanceof ColorOption) {
-				lbl = new Label(parent, SWT.NONE);
-				lbl.setText(o._description);
-				txt = new Text(parent, SWT.BORDER);
-				if(o._value != null)
-					txt.setText(o._value);
-				ld = new GridData();
-				ld.grabExcessHorizontalSpace = true;
-				ld.horizontalAlignment = GridData.FILL;
-				txt.setLayoutData(ld);
-				_widgets.put(o, txt);
-				Button browseColorButton = new Button(parent, SWT.PUSH);
-				browseColorButton.addSelectionListener(new SelectionListener() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-					}
-					
-					@Override
-					public void widgetDefaultSelected(SelectionEvent e) {
-					}
-				});
-			}
-		}
+		_widgets = Application.getSimulator()._options.createOptionsWidgets(parent, _fields);
 		return parent;
 	}
 

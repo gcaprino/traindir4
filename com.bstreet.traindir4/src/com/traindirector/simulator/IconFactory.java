@@ -1,6 +1,7 @@
 package com.traindirector.simulator;
 
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,20 +96,20 @@ public class IconFactory {
 				return icon;
 			}
 		}
-		String iconFilePath = Simulator.INSTANCE.getFilePath(iconFileName);
-		if(iconFilePath == null) {
+		BufferedReader rdr = Simulator.INSTANCE._fileManager.getReaderForFile(iconFileName);
+		if (rdr == null)
 			return null;
+		TDIcon icon = null;
+		XPMFile xpmFile = new XPMFile(iconFileName);
+		if (xpmFile.load(rdr)) {
+			icon = new TDIcon(iconFileName);
+			icon._xpmBytes = xpmFile.getLines();
+			_icons.add(icon);
 		}
-		File iconFile = new File(iconFilePath);
-		if (!iconFile.canRead()) {
-			return null;
+		try {
+			rdr.close();
+		} catch (IOException e) {
 		}
-		XPMFile xpmFile = new XPMFile(iconFilePath);
-		if (!xpmFile.load())
-			return null;
-		TDIcon icon = new TDIcon(iconFileName);
-		icon._xpmBytes = xpmFile.getLines();
-		_icons.add(icon);
 		return icon;
 	}
 	

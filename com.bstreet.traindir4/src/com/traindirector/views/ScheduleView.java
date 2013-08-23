@@ -23,6 +23,7 @@ import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Train;
+import com.traindirector.options.OptionsManager;
 import com.traindirector.simulator.ColorFactory;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDTime;
@@ -58,23 +59,6 @@ public class ScheduleView extends ViewPart {
 	private Action showArrivedAction;
 	private Action doubleClickAction;
 
-	public Color readyColorFg;
-	public Color readyColorBg;
-	public Color runningColorFg;
-	public Color runningColorBg;
-	public Color stoppedColorFg;
-	public Color stoppedColorBg;
-	public Color waitingColorFg;
-	public Color waitingColorBg;
-	public Color delayedColorFg;
-	public Color delayedColorBg;
-	public Color derailedColorFg;
-	public Color derailedColorBg;
-	public Color arrivedColorFg;
-	public Color arrivedColorBg;
-	public Color cancelledColorFg;
-	public Color cancelledColorBg;
-	
 	public Simulator _simulator;
 	public ColorFactory _colorFactory;
 
@@ -129,8 +113,6 @@ public class ScheduleView extends ViewPart {
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(_table, "com.bstreet.traindirector.scheduleView");
 		_colorFactory = Simulator.INSTANCE._colorFactory;
 		
-		getColors();
-
 		makeActions();
 		hookContextMenu();
 		contributeToActionBars();
@@ -183,7 +165,7 @@ public class ScheduleView extends ViewPart {
 	private void fillScheduleTable() {
 		if(_simulator == null)
 			return;
-		synchronized(_simulator._schedule) {
+		synchronized(_simulator) {
 			Schedule schedule = _simulator._schedule;
 			// TODO: get currently selected item, to keep it visible after the table has been refilled
 			_table.removeAll();
@@ -218,6 +200,8 @@ public class ScheduleView extends ViewPart {
 	private void updateScheduleTable() {
 		if(_simulator == null)
 			return;
+		if(_table.isDisposed())
+			return;
 		synchronized(_simulator._schedule) {
 			int nRows = _table.getItemCount();
 			for (int i = 0; i < nRows; ++i) {
@@ -243,47 +227,48 @@ public class ScheduleView extends ViewPart {
 	private void setItemColors(TableItem item, Train train) {
 		Color fg = null;
 		Color bg = null;
+		OptionsManager options = _simulator._options;
 		
 		switch (train._status){ 
 		case WAITING:
-			fg = waitingColorFg;
-			bg = waitingColorBg;
+			fg = options._waitingColorFg._color;
+			bg = options._waitingColorBg._color;
 			break;
 		case DELAYED:
-			fg = delayedColorFg;
-			bg = delayedColorBg;
+			fg = options._delayedColorFg._color;
+			bg = options._delayedColorBg._color;
 			break;
 		case DERAILED:
-			fg = derailedColorFg;
-			bg = derailedColorBg;
+			fg = options._derailedColorFg._color;
+			bg = options._derailedColorBg._color;
 			break;
 		case ARRIVED:
-			fg = arrivedColorFg;
-			bg = arrivedColorBg;
+			fg = options._arrivedColorFg._color;
+			bg = options._arrivedColorBg._color;
 			break;
 		case STOPPED:
-			fg = stoppedColorFg;
-			bg = stoppedColorBg;
+			fg = options._stoppedColorFg._color;
+			bg = options._stoppedColorBg._color;
 			break;
 		case CANCELLED:
-			fg = cancelledColorFg;
-			bg = cancelledColorBg;
+			fg = options._cancelledColorFg._color;
+			bg = options._cancelledColorBg._color;
 			break;
 		case READY:
-			fg = readyColorFg;
-			bg = readyColorBg;
+			fg = options._readyColorFg._color;
+			bg = options._readyColorBg._color;
 			break;
 		case RUNNING:
-			fg = runningColorFg;
-			bg = runningColorBg;
+			fg = options._runningColorFg._color;
+			bg = options._runningColorBg._color;
 			break;
 		default:
-			fg = derailedColorFg;
-			bg = derailedColorBg;
+			fg = options._derailedColorFg._color;
+			bg = options._derailedColorBg._color;
 		}
 		if (!train.runsToday()) {
-			fg = cancelledColorFg;
-			bg = cancelledColorBg;
+			fg = options._cancelledColorFg._color;
+			bg = options._cancelledColorBg._color;
 		}
 		if(!item.getBackground().equals(bg))
 			item.setBackground(bg);
@@ -387,32 +372,6 @@ public class ScheduleView extends ViewPart {
 				_simulator.addCommand(cmd);
 			}
 		});
-	}
-
-	protected Color getColor(String pref, int r, int g, int b) {
-		Color col = _colorFactory.get(pref);
-		if (col == null)
-			col = _colorFactory.get(r, g, b);
-		return col;
-	}
-
-	protected void getColors() {
-		readyColorFg = getColor("schedule.colors.ready.fg", 0, 0, 255);
-		readyColorBg = getColor("schedule.colors.ready.bg", 255, 255, 255);
-		runningColorFg = getColor("schedule.colors.running.fg", 0, 0, 0);
-		runningColorBg = getColor("schedule.colors.running.bg", 255, 255, 255);
-		stoppedColorFg = getColor("schedule.colors.stopped.fg", 0, 0, 0);
-		stoppedColorBg = getColor("schedule.colors.stopped.bg", 255, 255, 255);
-		waitingColorFg = getColor("schedule.colors.waiting.fg", 0, 0, 0);
-		waitingColorBg = getColor("schedule.colors.waiting.bg", 255, 192, 0);
-		delayedColorFg = getColor("schedule.colors.delayed.fg", 0, 0, 0);
-		delayedColorBg = getColor("schedule.colors.delayed.bg", 255, 255, 0);
-		arrivedColorFg = getColor("schedule.colors.arrived.fg", 0, 192, 0);
-		arrivedColorBg = getColor("schedule.colors.arrived.bg", 255, 255, 255);
-		derailedColorFg = getColor("schedule.colors.derailed.fg", 255, 0, 0);
-		derailedColorBg = getColor("schedule.colors.derailed.bg", 255, 240, 240);
-		cancelledColorFg = getColor("schedule.colors.cancelled.fg", 192, 192, 192);
-		cancelledColorBg = getColor("schedule.colors.cancelled.bg", 255, 255, 255);
 	}
 
 	/**

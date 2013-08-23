@@ -66,6 +66,7 @@ public class LayoutCanvas {
 	Color blackColor;
 	Color whiteColor;
 	Color orangeColor;
+	Color blueColor;
 	Color bgColor;
 
 	private int _mouseDownX, _mouseDownY;
@@ -213,6 +214,7 @@ public class LayoutCanvas {
 			blackColor = _simulator._colorFactory.get(0, 0, 0);
 			whiteColor = _simulator._colorFactory.get(255, 255, 255);
 			orangeColor = _simulator._colorFactory.get(255, 140, 0);
+			blueColor = _simulator._colorFactory.get(0, 0, 255);
 			bgColor = _simulator._colorFactory.getBackgroundColor();
 		}
 
@@ -223,93 +225,96 @@ public class LayoutCanvas {
 		long mostRecentUpdate = lastUpdate;
 
 		synchronized (_simulator) {
-			Territory territory = _simulator._territory;
-
 			gc.setBackground(bgColor);
 			gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
-			for (Track trk : territory._tracks) {
-				try {
-					gc.setForeground(blackColor);
 
-					// if(trk._updateTime < lastUpdate)
-					// continue;
-					if (trk._updateTime > mostRecentUpdate)
-						mostRecentUpdate = trk._updateTime;
+			mostRecentUpdate = drawLayout(gc);
 
-					if (trk instanceof ImageTrack) {
-						drawImage(gc, trk._position, trk._station);
+			if(!Simulator.getEditing())
+				drawTrains(gc);
+			else
+				drawLinks(gc);
+		}
+		lastUpdate = mostRecentUpdate;
+	}
 
-					} else if (trk instanceof ItineraryButton) {
-						drawImage(gc, trk._position, ":icons:itinButton.xpm");
-						gc.drawText(trk._station, (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
-								trk._position._y * Simulator.VGRID * _yMultiplier);
-					} else if (trk instanceof PlatformTrack) {
+	// Draw all static elements of the layout (tracks, signals, platforms, etc.)
 
-					} else if (trk instanceof Signal) {
-						Signal sig = (Signal) trk;
-						SignalAspect aspect = sig.getAspect();
-						if (aspect == null) {
-							continue;
-						}
-						String iconFileName = aspect.getXpmStrings(sig._direction);
-						drawImage(gc, sig._position, iconFileName);
+	protected long drawLayout(GC gc) {
+		long mostRecentUpdate = lastUpdate;
+		Territory territory = _simulator._territory;
+		for (Track trk : territory._tracks) {
+			try {
+				gc.setForeground(blackColor);
 
-					} else if (trk instanceof Switch) {
-						Switch sw = (Switch) trk;
-						VLine[] segs = sw.getSegments();
-						if (segs != null)
-							drawSegments(gc, sw._position, segs, sw._status);
-						segs = sw.getBlockSegments();
-						if (segs != null)
-							drawSegments(gc, sw._position, segs, TrackStatus.FREE);
+				// if(trk._updateTime < lastUpdate)
+				// continue;
+				if (trk._updateTime > mostRecentUpdate)
+					mostRecentUpdate = trk._updateTime;
 
-					} else if (trk instanceof TextTrack) {
-                        gc.drawText(trk._station, trk._position._x * Simulator.HGRID * _xMultiplier, trk._position._y * Simulator.VGRID * _yMultiplier);
+				if (trk instanceof ImageTrack) {
+					drawImage(gc, trk._position, trk._station);
 
-					} else if (trk instanceof TriggerTrack) {
-						VLine[] segs = trk.getSegments();
-						if (segs != null)
-							drawSegments(gc, trk._position, segs, trk._status);
-
-					} else if (trk instanceof Track) {
-						VLine[] segs = trk.getSegments();
-						if (segs != null)
-							drawSegments(gc, trk._position, segs, trk._status);
+				} else if (trk instanceof ItineraryButton) {
+					drawImage(gc, trk._position, ":icons:itinButton.xpm");
+					gc.drawText(trk._station, (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
+							trk._position._y * Simulator.VGRID * _yMultiplier);
+				} else if (trk instanceof PlatformTrack) {
+					VLine[] segs = trk.getSegments();
+					if(segs != null)
+						drawSegments(gc, trk._position, segs, TrackStatus.FREE);
+				} else if (trk instanceof Signal) {
+					Signal sig = (Signal) trk;
+					SignalAspect aspect = sig.getAspect();
+					if (aspect == null) {
+						continue;
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
+					String iconFileName = aspect.getXpmStrings(sig._direction);
+					drawImage(gc, sig._position, iconFileName);
+
+				} else if (trk instanceof Switch) {
+					Switch sw = (Switch) trk;
+					VLine[] segs = sw.getSegments();
+					if (segs != null)
+						drawSegments(gc, sw._position, segs, sw._status);
+					segs = sw.getBlockSegments();
+					if (segs != null)
+						drawSegments(gc, sw._position, segs, TrackStatus.FREE);
+
+				} else if (trk instanceof TextTrack) {
+                    gc.drawText(trk._station, trk._position._x * Simulator.HGRID * _xMultiplier, trk._position._y * Simulator.VGRID * _yMultiplier);
+
+				} else if (trk instanceof TriggerTrack) {
+					VLine[] segs = trk.getSegments();
+					if (segs != null)
+						drawSegments(gc, trk._position, segs, trk._status);
+
+				} else if (trk instanceof Track) {
+					VLine[] segs = trk.getSegments();
+					if (segs != null)
+						drawSegments(gc, trk._position, segs, trk._status);
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+		}
+		return mostRecentUpdate;
+	}
 
-			for (Train train : _simulator._schedule._trains) {
-				switch (train._status) {
-				case ARRIVED:
-				case RUNNING:
-				case STOPPED:
-				case WAITING: {
-					if (train._position != null) {
-						if(train._direction == Direction.W)
-							drawImage(gc, train._position._position, train._westIcon);
-						else
-							drawImage(gc, train._position._position, train._eastIcon);
-					}
-					if(train._tail != null && train._tail._position != null) {
-						if(train._tail._direction == Direction.W)
-							drawImage(gc, train._tail._position._position, train._westCarIcon);
-						else
-							drawImage(gc, train._tail._position._position, train._eastCarIcon);
-					}
-				}
-				default:
-					break;
-				}
-			}
-			for (Train train : _simulator._schedule._stranded) {
+
+	
+	protected void drawTrains(GC gc) {
+		for (Train train : _simulator._schedule._trains) {
+			switch (train._status) {
+			case ARRIVED:
+			case RUNNING:
+			case STOPPED:
+			case WAITING: {
 				if (train._position != null) {
 					if(train._direction == Direction.W)
-						drawImage(gc, train._position._position, train._westCarIcon);
+						drawImage(gc, train._position._position, train._westIcon);
 					else
-						drawImage(gc, train._position._position, train._eastCarIcon);
+						drawImage(gc, train._position._position, train._eastIcon);
 				}
 				if(train._tail != null && train._tail._position != null) {
 					if(train._tail._direction == Direction.W)
@@ -318,10 +323,55 @@ public class LayoutCanvas {
 						drawImage(gc, train._tail._position._position, train._eastCarIcon);
 				}
 			}
+			default:
+				break;
+			}
 		}
-		lastUpdate = mostRecentUpdate;
+		for (Train train : _simulator._schedule._stranded) {
+			if (train._position != null) {
+				if(train._direction == Direction.W)
+					drawImage(gc, train._position._position, train._westCarIcon);
+				else
+					drawImage(gc, train._position._position, train._eastCarIcon);
+			}
+			if(train._tail != null && train._tail._position != null) {
+				if(train._tail._direction == Direction.W)
+					drawImage(gc, train._tail._position._position, train._westCarIcon);
+				else
+					drawImage(gc, train._tail._position._position, train._eastCarIcon);
+			}
+		}
 	}
+	
+	
+	protected void drawLinks(GC gc) {
+		Territory territory = _simulator._territory;
+		gc.setForeground(blueColor);
+		TDPosition pos;
+		for (Track trk : territory._tracks) {
+			try {
+				pos = null;
+				if(trk._elink == null || (trk._elink._x | trk._elink._y) == 0)
+					pos = trk._wlink;
+				else if(trk._elink != null)
+					pos = trk._elink;
+				if(pos == null || (pos._x | pos._y) == 0)
+					continue;
 
+				int xMult = Simulator.HGRID * _xMultiplier;
+				int yMult = Simulator.VGRID * _yMultiplier;
+				int x1 = pos._x * xMult;
+				int y1 = pos._y * yMult;
+				int x0 = trk._position._x * xMult;
+				int y0 = trk._position._y * yMult;
+				gc.drawLine(x0 + xMult / 2, y0 + yMult / 2 + yMult / 2, x1, y1 + yMult / 2);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
     private void drawImage(GC gc, TDPosition position, String iconFileName) {
 		TDIcon icon = _simulator._iconFactory.get(iconFileName);
 		if (icon == null) {
@@ -404,19 +454,21 @@ public class LayoutCanvas {
 			return;
 		// TODO: if editing we could draw a line
 		// if not editing, we could select an area
-		TDPosition pos = toLayoutCoord(e.x, e.y);
-		StringBuilder statusLine = new StringBuilder();
-		Track track = _simulator._territory.findTrack(pos);
-		Train train = null;
-		if (_simulator._schedule != null)
-			train = _simulator._schedule.findTrainAt(pos);
-		if (train != null) {
-			statusLine.append(train.toString());
-		} else if (track != null) {
-			statusLine.append(track.toString());
-		} else
-			statusLine.append(pos.toString());
-		_statusLine.setText(statusLine.toString());
+		synchronized(_simulator) {
+			TDPosition pos = toLayoutCoord(e.x, e.y);
+			StringBuilder statusLine = new StringBuilder();
+			Track track = _simulator._territory.findTrack(pos);
+			Train train = null;
+			if (_simulator._schedule != null)
+				train = _simulator._schedule.findTrainAt(pos);
+			if (train != null) {
+				statusLine.append(train.toString());
+			} else if (track != null) {
+				statusLine.append(track.toString());
+			} else
+				statusLine.append(pos.toString());
+			_statusLine.setText(statusLine.toString());
+		}
 	}
 
 	public void onMouseUp(MouseEvent e) {

@@ -13,13 +13,23 @@ import com.traindirector.simulator.Simulator;
 public class SwitchboardContent extends WebContent {
 
 	private Switchboard currentSwitchboard;
+	String _urlBase;
 	
 	public SwitchboardContent() {
 		List<Switchboard> swblist = Simulator.INSTANCE._switchboards;
 		if(swblist != null && !swblist.isEmpty())
 			currentSwitchboard = swblist.get(0);
+		_urlBase = "";
 	}
 	
+	public void setUrlBase(String base) {
+		_urlBase = base;
+	}
+
+	public void setCurrentSwitchboard(Switchboard swb) {
+		currentSwitchboard = swb;
+	}
+
 	@Override
 	public boolean doLink(String location) {
         if (location.startsWith("sb-edit")) {
@@ -57,14 +67,14 @@ public class SwitchboardContent extends WebContent {
         	    if(sb == currentSwitchboard) {
         			sblist.append("<tr><td bgcolor=\"#c0ffc0\">");
         			sblist.append(sb._name);
-        			sblist.append("&nbsp;&nbsp;&nbsp;<a href=\"sb-edit -e ");
+        			sblist.append("&nbsp;&nbsp;&nbsp;<a href=\"" + _urlBase + "sb-edit -e ");
         			sblist.append(sb._filename);
         			sblist.append("\">");
         			sblist.append("change");
         			sblist.append("</a></td></tr>\n");
         		} else {
         			sblist.append("<tr><td bgcolor=\"#e0e0e0\">");
-        			sblist.append("<a href=\"sb-edit ");
+        			sblist.append("<a href=\"" + _urlBase + "sb-edit ");
         			sblist.append(sb._filename);
         			sblist.append("\">");
         			sblist.append(sb._name);
@@ -86,7 +96,7 @@ public class SwitchboardContent extends WebContent {
             		cells.append("<tr><td width='40'>" + y + "</td>\n");
             		for (i = 0; i < Switchboard.MAX_SWBD_X; ++i) {
             			SwitchboardCell cell = currentSwitchboard.find(i, y);
-            			cells.append("<td width='70' align='center' valign='top'><a href='tdir:sb-cell " + i + "," + y + "'>");
+            			cells.append("<td width='70' align='center' valign='top'><a href='" + _urlBase + "tdir:sb-cell " + i + "," + y + "'>");
             			if(cell == null) {
             				cells.append("?</a></td>\n");
             			} else {

@@ -14,6 +14,7 @@ import com.traindirector.model.ItineraryButton;
 import com.traindirector.model.PlatformTrack;
 import com.traindirector.model.Signal;
 import com.traindirector.model.Switch;
+import com.traindirector.model.Switchboard;
 import com.traindirector.model.TDPosition;
 import com.traindirector.model.Territory;
 import com.traindirector.model.TerritoryInfo;
@@ -114,7 +115,11 @@ public class TrkFile {
 					continue;
 				}
 				if(line.startsWith("(switchboard ")) {
-					// TODO
+					String name = line.substring(13);
+					if(name.endsWith(")"))
+						name = name.substring(0, name.length() - 1);
+					name = name.trim();
+					createSwitchBoard(name);
 					continue;
 				}
 				Itinerary itin = null;
@@ -335,7 +340,7 @@ public class TrkFile {
 						trk.readSpeeds(elements[i]);
 						++i;
 					}
-					if(i < elements.length && elements[i].equalsIgnoreCase("noname"))
+					if(i < elements.length && !elements[i].equalsIgnoreCase("noname"))
 						trk._station = elements[i];
 					break;
 				}
@@ -346,6 +351,29 @@ public class TrkFile {
 	}
 	
 	
+	private void createSwitchBoard(String name) {
+		SwbFile swbFile = new SwbFile(_simulator);
+		swbFile.readFile(name);
+		/*
+		BufferedReader swbReader = null;
+		try {
+			swbReader = new BufferedReader(new FileReader(name));	// TODO: use FileManager
+			swb.load(swbReader);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (swbReader != null)
+				try {
+					swbReader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		}
+		*/
+	}
+
 	public void save() {
 		try {
 			writer = new BufferedWriter(new FileWriter(_fname));

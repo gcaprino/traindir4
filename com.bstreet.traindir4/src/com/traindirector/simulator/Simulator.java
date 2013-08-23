@@ -13,14 +13,12 @@ import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
+import com.traindirector.dialogs.ColorOption;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
-import com.traindirector.files.BooleanOption;
 import com.traindirector.files.FileManager;
-import com.traindirector.files.IntegerOption;
 import com.traindirector.model.Alert;
-import com.traindirector.model.OptionsManager;
 import com.traindirector.model.PerformanceCounters;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
@@ -30,7 +28,11 @@ import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
+import com.traindirector.options.Option;
+import com.traindirector.options.OptionsManager;
 import com.traindirector.scripts.ScriptFactory;
+import com.traindirector.uicomponents.SwitchboardContent;
+import com.traindirector.web.server.WebServer;
 
 public class Simulator {
 
@@ -50,6 +52,7 @@ public class Simulator {
 	public ColorFactory _colorFactory;
 	public ScriptFactory _scriptFactory;
 	public FileManager _fileManager;
+	public OptionsManager _options;
 
 	public static int VGRID = 9;
 	public static int HGRID = 9;
@@ -84,41 +87,12 @@ public class Simulator {
 	public int _runDay;
 
 	// TODO: move to options
-	public OptionsManager _optionsManager;
-	public BooleanOption _terseStatus;
-	public BooleanOption _statusOnTop;	// unused
-	public BooleanOption _showSeconds;
-	public BooleanOption _traditionalSignals;
-	public BooleanOption _autoLink;
-	public BooleanOption _showGrid;
-	public BooleanOption _hardCounters;
-	public boolean _showCanceled;
-	public BooleanOption _showLinks;
-	public BooleanOption _beepOnEnter;
-	public boolean _showCoords;
-	public BooleanOption _showIcons;
-	public boolean _showTooltip;
-	public BooleanOption _showScripts;
-	public BooleanOption _randomDelays;
-	public BooleanOption _linkToLeft;
-	public BooleanOption _playSynchronously;
-	public BooleanOption _showSpeeds;
-	public BooleanOption _showBlocks;
-	public BooleanOption _beepOnAlert;
-	public BooleanOption _savePreferences;
-	public BooleanOption _showTrackFirst;
-	public BooleanOption _traceScript;
-	public BooleanOption _useRealTime;// not implemented
-	public IntegerOption _enableTraining;	// not implemented
-	public IntegerOption _serverPort;
-	public BooleanOption _drawTrainNames;
-	public boolean _noTrainNamesColors;
-	public String _locale;
 	public int _currentTimeMultiplier;
 	public int _timeMult;
 	public List<String> _oldSimulations;
     private int _editorTrackType;
     private int _editorTrackDirection;
+    public WebServer _webServer;
 	
 	public Simulator() {
 
@@ -128,12 +102,21 @@ public class Simulator {
 		_signalFactory = new SignalFactory();
 		_colorFactory = new ColorFactory(Application._display);
 		_scriptFactory = new ScriptFactory();
+		_options = new OptionsManager();
+
+		_webServer = new WebServer();
+		try {
+			_webServer.startServer();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		_commands = new LinkedList<SimulatorCommand>();
 		_alerts = new LinkedList<Alert>();
 		_territory = new Territory();
 		_schedule = new Schedule();
-		
+		_switchboards = new ArrayList<Switchboard>();
+
 		_oldSimulations = new ArrayList<String>();
 
 		_timedExecutor = new MyScheduler();
@@ -143,9 +126,16 @@ public class Simulator {
 		_timeSlice = 10;			// user-visible update every second
 		_timer = new Timer();
 		_timer.schedule(_timedExecutor, 500, 100);
-		_locale = "en";
+		_options._locale = "en";
 		
-		initOptions();
+		_options.initOptions();
+		for(Option o : _options._colorOptions) {
+			ColorOption col = (ColorOption)o;
+			col._color = _colorFactory.get(o._name);
+			if (col._color == null)
+				col._color = _colorFactory.set(o._name, o._intValue >> 16, (o._intValue >> 8) & 0xff, o._intValue & 0xff);
+		}
+
 		/*
 		Runnable runner = new Runnable() {
 
@@ -377,35 +367,6 @@ public class Simulator {
 		return _version;
 	}
 
-	public void initOptions() {
-		_terseStatus = new BooleanOption("fullstatus", "Show full status");
-		_statusOnTop = new BooleanOption("statusontop", "Show status line at the top of the screen");
-		_showSeconds = new BooleanOption("showsecs", "Show seconds");
-		_beepOnAlert = new BooleanOption("alertsound", "Play a sound when an alert is issued");
-		_beepOnEnter = new BooleanOption("entersound", "Play a sound when a train enters the territory");
-		_showSpeeds  = new BooleanOption("viewspped", "Show speed limit markers in the layout");
-		_autoLink    = new BooleanOption("autolink", "Automatically link signals to the adjacent track when editing the scenario");
-		_linkToLeft  = new BooleanOption("linktoleft", "Link signals to the adjacent track to the left of the signal");
-		_showGrid	 = new BooleanOption("showgrid", "Show layout grid");
-		_showBlocks	 = new BooleanOption("showblocks", "Show long blocks");
-		_traditionalSignals = new BooleanOption("standardsigs", "Show traditional icons for automatic signals");
-		_hardCounters = new BooleanOption("hardcounters", "Strict tracking of simulation performance");
-		_showLinks	 = new BooleanOption("showlinks", "Show links between tracks when editing");
-		_showScripts = new BooleanOption("showscripts", "Show whether a script is associated to track elements");
-		_savePreferences = new BooleanOption("saveprefs", "Automatically save preferences when the program exits");
-		_showTrackFirst = new BooleanOption("ShowTrkFirst", "ShowTrackFirst");
-		_traceScript = new BooleanOption("traceScript", "Show execution of script instructions");
-		_showIcons   = new BooleanOption("ShowIcons", "Show train icons on the layout");
-		_useRealTime = new BooleanOption("RealTimeData", "Get real time train data");
-		_enableTraining = new IntegerOption("EnableTraining", "Training mode");
-		_randomDelays = new BooleanOption("RandomDelays", "Add random delays to trains arrival times");
-		_playSynchronously = new BooleanOption("PlaySynchronously", "Stop simulation while playing sounds");
-		_serverPort  = new IntegerOption("ServerPort", "Port to use for the web server");
-		_drawTrainNames = new BooleanOption("TrainNames", "Show train names instead of train icons");
-		_optionsManager = new OptionsManager();
-		_optionsManager.add(_terseStatus);
-	}
-
 	public void setNewProject(String fname) {
 		if (_fileManager != null) {
 			_fileManager.close();
@@ -457,7 +418,7 @@ public class Simulator {
     
     public Switchboard findSwitchboard(String name) {
         for (Switchboard swb : _switchboards) {
-            if (swb.equals(name)) {
+            if (swb._filename.equals(name)) {
                 return swb;
             }
         }
@@ -504,7 +465,8 @@ public class Simulator {
 		if(_switchboards != null)
 			_switchboards.clear();
 		_iconFactory.clear();
-		_fileManager.close();
+		if(_fileManager != null)
+			_fileManager.close();
 		_fileManager = null;
 		_alerts.clear();
 		_simulatedTime = 0;
@@ -521,6 +483,29 @@ public class Simulator {
 		_totalLate = 0;
 		_runPointBase = 0;
 		_runDay = 0;
+	}
+
+	// Format of cmd:
+	//	 (/switchboard/)name/x/y   select cell x,y in switchboard name
+
+	public String getSwitchboardPage(String cmd, String urlBase) {
+		String result = "";
+		SwitchboardContent content = new SwitchboardContent();
+		content.setUrlBase(urlBase);
+		String[] elems = cmd.split("/");
+		if(elems.length > 0) {
+			Switchboard swb = Application.getSimulator().findSwitchboard(elems[0]);
+			if(swb != null) {
+				content.setCurrentSwitchboard(swb);
+				if (elems.length > 2) {
+					int x = Integer.parseInt(elems[1]);
+					int y = Integer.parseInt(elems[2]);
+					swb.select(x, y);
+				}
+			}
+		}
+		result = content.getHTML();
+		return result;
 	}
 
 }

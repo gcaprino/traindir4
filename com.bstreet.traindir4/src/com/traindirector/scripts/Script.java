@@ -27,11 +27,14 @@ public class Script {
 		String line;
 		StringBuilder sb = new StringBuilder();
 
-		String scriptPath = Simulator.INSTANCE.getFilePath(_name);
-		if (scriptPath == null)
+		input = Simulator.INSTANCE._fileManager.getReaderForFile(_name);
+		if(input == null)
 			return false;
+//		String scriptPath = Simulator.INSTANCE.getFilePath(_name);
+//		if (scriptPath == null)
+//			return false;
 		try {
-			input = new BufferedReader(new FileReader(scriptPath));
+//			input = new BufferedReader(new FileReader(scriptPath));
 			while((line = input.readLine()) != null) {
 				sb.append(line.replace('\t', ' '));
 				sb.append('\n');

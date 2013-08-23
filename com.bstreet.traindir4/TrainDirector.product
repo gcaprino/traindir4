@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Train Director" uid="com.bstreet.cg.traindirector4" id="com.traindirector.product" application="com.traindirector.application" version="1.0.0.qualifier" useFeatures="false" includeLaunchers="true">
+<product name="Train Director" uid="com.traindirector.product" id="com.traindirector.product" application="com.traindirector.application" version="1.0.0.qualifier" useFeatures="false" includeLaunchers="true">
 
    <aboutInfo>
       <image path="product_lg.gif"/>

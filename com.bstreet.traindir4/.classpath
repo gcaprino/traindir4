@@ -7,5 +7,25 @@
 	<classpathentry kind="lib" path="lib/httpcore-4.2.3.jar"/>
 	<classpathentry kind="lib" path="lib/jcifs-1.3.14.jar"/>
 	<classpathentry kind="lib" path="lib/org.apache.httpcomponents.httpclient_4.2.3.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.ajp_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.annotations_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.continuation_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.deploy_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.http_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.io_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.jaspi_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.jmx_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.jndi_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.monitor_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.nested_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.policy_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.rewrite_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.security_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.server_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlet_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlets_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.util_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.webapp_7.6.12.v20130726.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.xml_7.6.12.v20130726.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

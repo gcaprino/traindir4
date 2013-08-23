@@ -55,8 +55,10 @@ public class ColorFactory {
 		return get(192, 192, 192);
 	}
 
-	public void set(String prefName, int r, int g, int b) {
-		_colorPreferences.put(prefName, get(r, g, b));
+	public Color set(String prefName, int r, int g, int b) {
+		Color col = get(r, g, b);
+		_colorPreferences.put(prefName, col);
+		return col;
 	}
 
 	public void set(String prefName, int rgb) {

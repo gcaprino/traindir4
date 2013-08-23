@@ -1,6 +1,6 @@
 package com.traindirector.dialogs;
 
-import com.traindirector.files.Option;
+import com.traindirector.options.Option;
 
 public class TextOption extends Option {
 

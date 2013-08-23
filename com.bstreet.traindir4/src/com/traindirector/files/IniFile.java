@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.traindirector.options.BooleanOption;
+import com.traindirector.options.IntegerOption;
+import com.traindirector.options.Option;
 import com.traindirector.simulator.Simulator;
 
 public class IniFile extends TextFile {
@@ -78,17 +81,17 @@ public class IniFile extends TextFile {
 		_simulator._colorFactory.set("schedule.colorDerailed", getColor(_mainView.get("colorDerailed")));
 		_simulator._colorFactory.set("schedule.colorRunning", getColor(_mainView.get("colorRunning")));
 
-		for (Option option : _simulator._optionsManager._options) {
+		for (Option option : _simulator._options._options) {
 			if (option instanceof BooleanOption) {
 				((BooleanOption) option).set(getBooleanPref(option._name));
 			} else if (option instanceof IntegerOption) {
 				((IntegerOption) option)._intValue = Integer.parseInt(_preferences.get(option._name));
 			}
 		}
-		_simulator._noTrainNamesColors = getBooleanPref("NoTrainNamesColors");
-		_simulator._locale = _preferences.get("locale");
-		if (_simulator._locale == null)
-			_simulator._locale = "en";
+		_simulator._options._noTrainNamesColors.set(getBooleanPref("NoTrainNamesColors"));
+		_simulator._options._locale = _preferences.get("locale");
+		if (_simulator._options._locale == null)
+			_simulator._options._locale = "en";
 	}
 
 	public String getPreference(String option) {

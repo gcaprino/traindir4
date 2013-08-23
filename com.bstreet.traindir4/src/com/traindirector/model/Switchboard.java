@@ -1,6 +1,8 @@
 package com.traindirector.model;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class Switchboard {
             else
                 str.append("locked");
             str.append("\"><a href=\"");
-            str.append(String.format("%s/%d/%d", urlBase, "" + _pos._x, "" + _pos._y));
+            str.append(String.format("%s/%d/%d\">", urlBase, _pos._x, _pos._y));
             str.append(_text);
             str.append("</a></td>\n");
             return str.toString();
@@ -153,41 +155,41 @@ public class Switchboard {
     }
 
     public String toHTML(String urlBase) {
-            int xMax = 0;
-            int yMax = 0;
-            int x, y;
-            SwitchboardCell[][] grid = new SwitchboardCell[MAX_SWBD_X][MAX_SWBD_Y];
+        int xMax = 0;
+        int yMax = 0;
+        int x, y;
+        SwitchboardCell[][] grid = new SwitchboardCell[MAX_SWBD_X][MAX_SWBD_Y];
 
-            for(SwitchboardCell cell : _cells) {
-                if(cell._pos._x < MAX_SWBD_X && cell._pos._y < MAX_SWBD_Y) {
-                grid[cell._pos._x][cell._pos._y] = cell;
-                if(cell._pos._x + 1 > xMax)
-                    xMax = cell._pos._x + 1;
-                if(cell._pos._y + 1 > yMax)
-                    yMax = cell._pos._y + 1;
-                }
+        for(SwitchboardCell cell : _cells) {
+            if(cell._pos._x < MAX_SWBD_X && cell._pos._y < MAX_SWBD_Y) {
+            grid[cell._pos._x][cell._pos._y] = cell;
+            if(cell._pos._x + 1 > xMax)
+                xMax = cell._pos._x + 1;
+            if(cell._pos._y + 1 > yMax)
+                yMax = cell._pos._y + 1;
             }
-            if(xMax == 0 || yMax == 0)
-                return "No cells";
+        }
+        if(xMax == 0 || yMax == 0)
+            return "No cells";
 
-            StringBuilder str = new StringBuilder();
-            SwitchboardCell cell;
-            ++xMax;
-            ++yMax;
-            str.append("<table class=\"switchboard\">\n");
-            for(y = 0; y < yMax; ++y) {
-                str.append("<tr>\n");
-                for(x = 0; x < xMax; ++x) {
-                    cell = grid[x][y];
-                    if(cell == null)
-                        str.append("<td class=\"empty\">&nbsp;</td>\n");
-                    else
-                        str.append(cell.toHTML(urlBase));
-                }
-                str.append("</tr>\n");
+        StringBuilder str = new StringBuilder();
+        SwitchboardCell cell;
+        ++xMax;
+        ++yMax;
+        str.append("<table class=\"switchboard\">\n");
+        for(y = 0; y < yMax; ++y) {
+            str.append("<tr>\n");
+            for(x = 0; x < xMax; ++x) {
+                cell = grid[x][y];
+                if(cell == null)
+                    str.append("<td class=\"empty\">&nbsp;</td>\n");
+                else
+                    str.append(cell.toHTML(urlBase));
             }
-            str.append("</table>\n");
-            return str.toString();
+            str.append("</tr>\n");
+        }
+        str.append("</table>\n");
+        return str.toString();
     }
     
     public SwitchboardCell find(int x, int y) {
@@ -235,6 +237,27 @@ public class Switchboard {
         _cells.remove(oldCell);
     }
 
+	public void load(BufferedReader swbReader) {
+		String line;
+		
+		try {
+			line = swbReader.readLine();
+			while(line != null) {
+				line = line.replace("\t", " ").trim();
+				if(line.startsWith("Aspect:")) {
+					line = parseAspect(swbReader, line.substring(7).trim());
+				} else if (line.startsWith("Cell:")) {
+					line = parseCell(swbReader, line.substring(5).trim());
+				} else if (line.startsWith("Name:")) {
+					_name = line.substring(5).trim();
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
 /*
 int pathIsBusy(Train *tr, Vector *path, int dir);
 Vector  *findPath(Track *t, int dir);
@@ -247,59 +270,6 @@ extern  bool    file_create(const wxChar *name, const wxChar *ext, wxFFile& fp);
 SwitchBoard *switchBoards;
 
 SwitchBoard *curSwitchBoard;        // TODO: move to a SwitchBoardCell field
-
-bool    SwitchBoard::Load(const wxChar *fname)
-{
-    const Char  *p;
-        Char    buff[256];
-        wxStrcpy(buff, fname);
-        wxStrcat(buff, wxT(".swb"));
-    Script  *s = new Script();
-    s->_next = 0;
-    s->_path = wxStrdup(buff);
-    s->_text = 0;
-    if(!s->ReadFile()) {
-        free(s->_path);
-        s->_path = 0;
-        delete s;
-        return false;
-    }
-
-    _fname = fname;
-
-    p = s->_text;
-    while(*p) {
-        const Char  *p1 = p;
-        while(*p1 == ' ' || *p1 == '\t' || *p1 == '\r' || *p1 == '\n')
-        ++p1;
-        p = p1;
-        if(match(&p, wxT("Aspect:"))) {
-        p1 = p;
-        ParseAspect(&p);
-        } else if(match(&p, wxT("Cell:"))) {
-        p1 = p + 5;
-        ParseCell(&p);
-            } else if(match(&p, wxT("Name:"))) {
-                while(*p == ' ' || *p == '\t') ++p;
-                p1 = p;
-                if(*p) {
-                    int i = 0;
-                    while(*p && *p != '\r' && *p != '\n')
-                        buff[i++] = *p++;
-                    buff[i] = 0;
-                    this->_name = buff;
-                    if(!*p++)
-                        break;
-                }
-        }
-        if(p1 == p)     // error! couldn't parse token
-        break;
-    }
-    free(s->_path);
-    s->_path = 0;
-    delete s;
-    return true;
-}
 
 
 bool    SwitchBoard::Select(int x, int y)

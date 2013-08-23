@@ -89,9 +89,9 @@ public class SavFile extends TextFile {
 			values = readIntArray(line, 10);
 			_simulator._currentTimeMultiplier = values[0];
 			schedule._startTime = values[1];
-			_simulator._showSpeeds.set(values[2] != 0);
-			_simulator._showBlocks.set(values[3] != 0);
-			_simulator._beepOnAlert.set(values[4] != 0);
+			_simulator._options._showSpeeds.set(values[2] != 0);
+			_simulator._options._showBlocks.set(values[3] != 0);
+			_simulator._options._beepOnAlert.set(values[4] != 0);
 			_simulator._runPoints = values[5];
 			_simulator._totalDelay = values[6];
 			_simulator._totalLate = values[7];
@@ -443,17 +443,17 @@ public class SavFile extends TextFile {
 			if (line != null) {
 				values = readIntArray(line, 5);
 				schedule._runDay = values[0];
-				_simulator._terseStatus.set(values[1] != 0);
-				_simulator._statusOnTop.set(values[2] != 0);
-				_simulator._showSeconds.set(values[3] != 0);
-				_simulator._traditionalSignals.set(values[4] != 0);
+				_simulator._options._terseStatus.set(values[1] != 0);
+				_simulator._options._statusOnTop.set(values[2] != 0);
+				_simulator._options._showSeconds.set(values[3] != 0);
+				_simulator._options._traditionalSignals.set(values[4] != 0);
 			}
 			
 			line = in.readLine();
 			if (line != null) {
 				values = readIntArray(line, 2);
-				_simulator._autoLink.set(values[0] != 0);
-				_simulator._showGrid.set(values[1] != 0);
+				_simulator._options._autoLink.set(values[0] != 0);
+				_simulator._options._showGrid.set(values[1] != 0);
 			}
 			
 			line = in.readLine();
@@ -474,17 +474,17 @@ public class SavFile extends TextFile {
 				cnt.wrong_assign = values[11];
 			}
 			
-			_simulator._hardCounters.set(readIntegerLine(in) != 0);
-			_simulator._showCanceled = readIntegerLine(in) != 0;
-			_simulator._showLinks.set(readIntegerLine(in) != 0);
-			_simulator._beepOnEnter.set(readIntegerLine(in) != 0);
-			_simulator._showCoords = readIntegerLine(in) != 0;
-			_simulator._showIcons.set(readIntegerLine(in) != 0);
-			_simulator._showTooltip  = readIntegerLine(in) != 0;
-			_simulator._showScripts.set(readIntegerLine(in) != 0);
-			_simulator._randomDelays.set(readIntegerLine(in) != 0);
-			_simulator._linkToLeft.set(readIntegerLine(in) != 0);
-			_simulator._playSynchronously.set(readIntegerLine(in) != 0);
+			_simulator._options._hardCounters.set(readIntegerLine(in) != 0);
+			_simulator._options._showCanceled = readIntegerLine(in) != 0;
+			_simulator._options._showLinks.set(readIntegerLine(in) != 0);
+			_simulator._options._beepOnEnter.set(readIntegerLine(in) != 0);
+			_simulator._options._showCoords = readIntegerLine(in) != 0;
+			_simulator._options._showIcons.set(readIntegerLine(in) != 0);
+			_simulator._options._showTooltip.set(readIntegerLine(in) != 0);
+			_simulator._options._showScripts.set(readIntegerLine(in) != 0);
+			_simulator._options._randomDelays.set(readIntegerLine(in) != 0);
+			_simulator._options._linkToLeft.set(readIntegerLine(in) != 0);
+			_simulator._options._playSynchronously.set(readIntegerLine(in) != 0);
 			
 
 			/* needs to be here, after we reloaded the list
@@ -647,9 +647,9 @@ public class SavFile extends TextFile {
 			out.append(String.format("%d,%ld,%d,%d,%d,%d,%d,%d,%d,%ld\n",
 					_simulator._currentTimeMultiplier,	// cur_time_mult
 					schedule._startTime,	// start_time
-					_simulator._showSpeeds._intValue,	// show_speeds
-					_simulator._showBlocks._intValue,	// show_blocks
-					_simulator._beepOnAlert._intValue,// beep_on_alert
+					_simulator._options._showSpeeds._intValue,	// show_speeds
+					_simulator._options._showBlocks._intValue,	// show_blocks
+					_simulator._options._beepOnAlert._intValue,// beep_on_alert
 					_simulator._runPoints,// run_points
 					_simulator._totalDelay,// total_delay
 					_simulator._totalLate,// total_late
@@ -872,10 +872,10 @@ public class SavFile extends TextFile {
 			// other statistics and options
 			
 			out.append(String.format("%d,%d,%d,%d,%d\n",
-					schedule._runDay, _simulator._terseStatus, _simulator._statusOnTop,
-					_simulator._showSeconds, _simulator._traditionalSignals));
+					schedule._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
+					_simulator._options._showSeconds, _simulator._options._traditionalSignals));
 			
-			out.append(String.format("%d,%d\n", _simulator._autoLink, _simulator._showGrid));
+			out.append(String.format("%d,%d\n", _simulator._options._autoLink, _simulator._options._showGrid));
 	
 			PerformanceCounters perf_tot = _simulator._performanceCounters;
 			out.append(String.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
@@ -885,17 +885,17 @@ public class SavFile extends TextFile {
 			    perf_tot.ntrains_late, perf_tot.ntrains_wrong,
 			    perf_tot.nmissed_stops, perf_tot.wrong_assign));
 			
-			out.append(String.format("%d\n", _simulator._hardCounters.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showCanceled ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showLinks.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._beepOnEnter.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showCoords ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showIcons.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showTooltip ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._showScripts.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._randomDelays.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._linkToLeft.isSet() ? 1 : 0));
-			out.append(String.format("%d\n", _simulator._playSynchronously.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._hardCounters.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showCanceled ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showLinks.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._beepOnEnter.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showCoords ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showIcons.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showTooltip.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._showScripts.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._randomDelays.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._linkToLeft.isSet() ? 1 : 0));
+			out.append(String.format("%d\n", _simulator._options._playSynchronously.isSet() ? 1 : 0));
 	
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1003,15 +1003,15 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("ShowSpeeds")) {
-				_simulator._showSpeeds.set(bvalue);
+				_simulator._options._showSpeeds.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowBlocks")) {
-				_simulator._showBlocks.set(bvalue);
+				_simulator._options._showBlocks.set(bvalue);
 				continue;
 			}
 			if(key.equals("BeepOnAlert")) {
-				_simulator._beepOnAlert.set(bvalue);
+				_simulator._options._beepOnAlert.set(bvalue);
 				continue;
 			}
 			if(key.equals("RunPoints")) {
@@ -1444,27 +1444,27 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("TerseStatus")) {
-				_simulator._terseStatus.set(bvalue);
+				_simulator._options._terseStatus.set(bvalue);
 				continue;
 			}
 			if(key.equals("StatusOnTop")) {
-				_simulator._statusOnTop.set(bvalue);
+				_simulator._options._statusOnTop.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowSeconds")) {
-				_simulator._showSeconds.set(bvalue);
+				_simulator._options._showSeconds.set(bvalue);
 				continue;
 			}
 			if(key.equals("TraditionalSignals")) {
-				_simulator._traditionalSignals.set(bvalue);
+				_simulator._options._traditionalSignals.set(bvalue);
 				continue;
 			}
 			if(key.equals("AutoLink")) {
-				_simulator._autoLink.set(bvalue);
+				_simulator._options._autoLink.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowGrid")) {
-				_simulator._showGrid.set(bvalue);
+				_simulator._options._showGrid.set(bvalue);
 				continue;
 			}
 			if(key.equals("WrongDest")) {
@@ -1516,47 +1516,47 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("HardCounters")) {
-				_simulator._hardCounters.set(bvalue);
+				_simulator._options._hardCounters.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowCanceled")) {
-				_simulator._showCanceled = bvalue;
+				_simulator._options._showCanceled = bvalue;
 				continue;
 			}
 			if(key.equals("ShowLinks")) {
-				_simulator._showLinks.set(bvalue);
+				_simulator._options._showLinks.set(bvalue);
 				continue;
 			}
 			if(key.equals("BeepOnEnter")) {
-				_simulator._beepOnEnter.set(bvalue);
+				_simulator._options._beepOnEnter.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowCoords")) {
-				_simulator._showCoords = bvalue;
+				_simulator._options._showCoords = bvalue;
 				continue;
 			}
 			if(key.equals("ShowIcons")) {
-				_simulator._showIcons.set(bvalue);
+				_simulator._options._showIcons.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowToolTip")) {
-				_simulator._showTooltip = bvalue;
+				_simulator._options._showTooltip.set(bvalue);
 				continue;
 			}
 			if(key.equals("ShowScripts")) {
-				_simulator._hardCounters.set(bvalue);
+				_simulator._options._hardCounters.set(bvalue);
 				continue;
 			}
 			if(key.equals("RandomDelay")) {
-				_simulator._randomDelays.set(bvalue);
+				_simulator._options._randomDelays.set(bvalue);
 				continue;
 			}
 			if(key.equals("LinkToLeft")) {
-				_simulator._linkToLeft.set(bvalue);
+				_simulator._options._linkToLeft.set(bvalue);
 				continue;
 			}
 			if(key.equals("PlaySynchronously")) {
-				_simulator._playSynchronously.set(bvalue);
+				_simulator._options._playSynchronously.set(bvalue);
 				continue;
 			}
 		}
@@ -1651,9 +1651,9 @@ public class SavFile extends TextFile {
 		out.append(String.format("CurrentTimeMultiplier:%d\nStartTime:%ld\nShowSpeeds:%d\nShowBlocks:%d\nBeenOnAlert:%d\nRunPoints:%d\nTotalDelay:%d\nTotalLate:%d\nTimeMultiplier:%d\nSimulatedTime:%ld\n",
 				_simulator._currentTimeMultiplier,	// cur_time_mult
 				schedule._startTime,	// start_time
-				_simulator._showSpeeds._intValue,	// show_speeds
-				_simulator._showBlocks._intValue,	// show_blocks
-				_simulator._beepOnAlert._intValue,// beep_on_alert
+				_simulator._options._showSpeeds._intValue,	// show_speeds
+				_simulator._options._showBlocks._intValue,	// show_blocks
+				_simulator._options._beepOnAlert._intValue,// beep_on_alert
 				_simulator._runPoints,// run_points
 				_simulator._totalDelay,// total_delay
 				_simulator._totalLate,// total_late
@@ -1837,10 +1837,10 @@ public class SavFile extends TextFile {
 		// other statistics and options
 		
 		out.append(String.format("RunDay:%d\nTerseStatus:%d\nStatusOnTop:%d\nShowSeconds:%d\nTraditionalSignals:%d\n",
-				schedule._runDay, _simulator._terseStatus, _simulator._statusOnTop,
-				_simulator._showSeconds, _simulator._traditionalSignals));
+				schedule._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
+				_simulator._options._showSeconds, _simulator._options._traditionalSignals));
 		
-		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._autoLink, _simulator._showGrid));
+		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._options._autoLink, _simulator._options._showGrid));
 
 		PerformanceCounters perf_tot = _simulator._performanceCounters;
 		out.append(String.format("WrongDest:%d\nLateTrains:%d\nThrownSwitches:%d\nClearedSignals:%d\nDenied:%d\nTurnedTrains:%d\nWaitingTrains:%d\nWrongPlatform:%d\nNTrainsLate:%d\nNTrainsWrong:%d\nNMissedStops:%d\nNWrongAssign:%d\n",
@@ -1850,17 +1850,17 @@ public class SavFile extends TextFile {
 		    perf_tot.ntrains_late, perf_tot.ntrains_wrong,
 		    perf_tot.nmissed_stops, perf_tot.wrong_assign));
 
-		out.append(String.format("HardCounters:%d\n", _simulator._hardCounters.isSet() ? 1 : 0));
-		out.append(String.format("ShowCanceled:%d\n", _simulator._showCanceled ? 1 : 0));
-		out.append(String.format("ShowLinks:%d\n", _simulator._showLinks.isSet() ? 1 : 0));
-		out.append(String.format("BeepOnEnter:%d\n", _simulator._beepOnEnter.isSet() ? 1 : 0));
-		out.append(String.format("ShowCoords:%d\n", _simulator._showCoords ? 1 : 0));
-		out.append(String.format("ShowIcons:%d\n", _simulator._showIcons.isSet() ? 1 : 0));
-		out.append(String.format("ShowToolTip:%d\n", _simulator._showTooltip ? 1 : 0));
-		out.append(String.format("ShowScripts:%d\n", _simulator._showScripts.isSet() ? 1 : 0));
-		out.append(String.format("RandomDelays:%d\n", _simulator._randomDelays.isSet() ? 1 : 0));
-		out.append(String.format("LinkToLeft:%d\n", _simulator._linkToLeft.isSet() ? 1 : 0));
-		out.append(String.format("PlaySynchronously:%d\n", _simulator._playSynchronously.isSet() ? 1 : 0));
+		out.append(String.format("HardCounters:%d\n", _simulator._options._hardCounters.isSet() ? 1 : 0));
+		out.append(String.format("ShowCanceled:%d\n", _simulator._options._showCanceled ? 1 : 0));
+		out.append(String.format("ShowLinks:%d\n", _simulator._options._showLinks.isSet() ? 1 : 0));
+		out.append(String.format("BeepOnEnter:%d\n", _simulator._options._beepOnEnter.isSet() ? 1 : 0));
+		out.append(String.format("ShowCoords:%d\n", _simulator._options._showCoords ? 1 : 0));
+		out.append(String.format("ShowIcons:%d\n", _simulator._options._showIcons.isSet() ? 1 : 0));
+		out.append(String.format("ShowToolTip:%d\n", _simulator._options._showTooltip.isSet() ? 1 : 0));
+		out.append(String.format("ShowScripts:%d\n", _simulator._options._showScripts.isSet() ? 1 : 0));
+		out.append(String.format("RandomDelays:%d\n", _simulator._options._randomDelays.isSet() ? 1 : 0));
+		out.append(String.format("LinkToLeft:%d\n", _simulator._options._linkToLeft.isSet() ? 1 : 0));
+		out.append(String.format("PlaySynchronously:%d\n", _simulator._options._playSynchronously.isSet() ? 1 : 0));
 
 		return true;
 	}

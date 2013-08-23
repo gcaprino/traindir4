@@ -30,6 +30,7 @@ public class TriggerTrack extends Track {
 	};
 
 	@SuppressWarnings("incomplete-switch")
+	@Override
 	public VLine[] getSegments() {
 		switch(_direction) {
 		case W_E:

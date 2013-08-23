@@ -12,9 +12,7 @@ import com.traindirector.dialogs.AssignDialog;
 import com.traindirector.dialogs.ItineraryProperties;
 import com.traindirector.dialogs.PropertyDialog;
 import com.traindirector.dialogs.TextOption;
-import com.traindirector.files.BooleanOption;
-import com.traindirector.files.FileOption;
-import com.traindirector.files.Option;
+import com.traindirector.dialogs.TriggerPropertiesDialog;
 import com.traindirector.model.Itinerary;
 import com.traindirector.model.ItineraryButton;
 import com.traindirector.model.Signal;
@@ -27,6 +25,9 @@ import com.traindirector.model.TrackDirection;
 import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TriggerTrack;
+import com.traindirector.options.BooleanOption;
+import com.traindirector.options.FileOption;
+import com.traindirector.options.Option;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.SimulatorCommand;
 
@@ -38,6 +39,7 @@ public class ClickCommand extends SimulatorCommand {
 	boolean _ctrlKey;
 	TDPosition _pos;
 	List<Option> _options;
+	static TriggerPropertiesDialog _triggerPropertiesDialog;
 
 	public ClickCommand(TDPosition pos) {
 		_pos = pos;
@@ -210,7 +212,7 @@ public class ClickCommand extends SimulatorCommand {
                 if(dir >= 4)
                     signal._fleeted = true;
                 territory.add(signal);
-                if(!_simulator._autoLink.isSet())
+                if(!_simulator._options._autoLink.isSet())
                     break;
                 int dx = 0;
                 int dy = 0;
@@ -236,7 +238,7 @@ public class ClickCommand extends SimulatorCommand {
                     dy = 0;
                     break;
                 }
-                if(_simulator._linkToLeft.isSet()) {
+                if(_simulator._options._linkToLeft.isSet()) {
                     dx *= -1;
                     dy *= -1;
                 }
@@ -267,11 +269,7 @@ public class ClickCommand extends SimulatorCommand {
     	o = new TextOption("speeds", "Speed(s) :");
     	if(track._speed == null)
     		track._speed = new int[Track.NSPEEDS];
-    	o._value = "";
-    	for(int i = 0; i < track._speed.length; ++i) {
-    		o._value = o._value + "/" + track._speed[i]; 
-    	}
-    	o._value = o._value.substring(1);
+    	o._value = track.speedsToString();
     	_options.add(o); // 3
     	o = new TextOption("eastlink", "Linked to east :");
     	if(track._elink != null)
@@ -325,6 +323,15 @@ public class ClickCommand extends SimulatorCommand {
 	}
 
 	private void editTriggerProperties(TriggerTrack track) {
+		if (_triggerPropertiesDialog == null) {
+			Display.getDefault().syncExec(new Runnable() {
+				@Override
+				public void run() {
+					_triggerPropertiesDialog = new TriggerPropertiesDialog(Application._display.getActiveShell());
+				}
+			});
+		}
+		_triggerPropertiesDialog.open(track);
 	}
 
 	private void editSignalProperties(Signal signal) {

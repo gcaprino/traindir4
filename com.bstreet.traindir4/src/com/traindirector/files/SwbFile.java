@@ -21,7 +21,8 @@ public class SwbFile extends TextFile {
 	public void readFile(String fname) {
 		BufferedReader input;
 		try {
-			input = new BufferedReader(new FileReader(fname));
+			_switchboard = _simulator.createSwitchboard(fname);
+			input = _simulator._fileManager.getReaderForFile(fname + ".swb");
 			readFile(input);
 			input.close();
 		} catch (FileNotFoundException e) {
@@ -42,6 +43,8 @@ public class SwbFile extends TextFile {
 					line = _switchboard.parseCell(input, line.substring(6).trim());
 				} else if(line.startsWith("Aspect:")) {
 					line = _switchboard.parseAspect(input, line.substring(6).trim());
+				} else {
+					line = input.readLine();
 				}
 			}
 		} catch (Exception e) {

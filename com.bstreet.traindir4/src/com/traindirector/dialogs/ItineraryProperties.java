@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.eclipse.swt.widgets.Display;
 
-import com.traindirector.files.Option;
 import com.traindirector.model.Itinerary;
+import com.traindirector.options.Option;
 
 public class ItineraryProperties {
 
