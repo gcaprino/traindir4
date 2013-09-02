@@ -15,6 +15,7 @@ public class DoCommand extends SimulatorCommand {
 	
 	public DoCommand(String cmd) {
 		_cmd = cmd;
+		_simulator = Application.getSimulator();
 	}
 	
 	public void handle() {

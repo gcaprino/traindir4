@@ -17,6 +17,7 @@ public class Script {
 	String _name;							// could be null for scripts embedded in the .trk file
 	public String _body;
 	Map<String, Statement> _handlers;		// handlers for the various events
+	int _lineno;
 	
 	public Script(String name) {
 		_name = name;
@@ -33,9 +34,14 @@ public class Script {
 //		String scriptPath = Simulator.INSTANCE.getFilePath(_name);
 //		if (scriptPath == null)
 //			return false;
+		_lineno = 0;
 		try {
 //			input = new BufferedReader(new FileReader(scriptPath));
+			int indxOfComment;
 			while((line = input.readLine()) != null) {
+				indxOfComment = line.indexOf('#');
+				if(indxOfComment >= 0)
+					line = line.substring(0, indxOfComment);
 				sb.append(line.replace('\t', ' '));
 				sb.append('\n');
 			}
@@ -74,6 +80,8 @@ public class Script {
 			}
 			if (ch != ' ' && ch != '\n')
 				break;
+			if (ch == '\n')
+				++_lineno;
 			++offset;
 		}
 		return offset;
@@ -85,6 +93,7 @@ public class Script {
 	// and parse the aspects before parsing the handlers
 
 	public boolean parse() {
+		_lineno = 0;
 		_handlers = parseHandlers(0);
 		return _handlers != null;
 	}
@@ -101,7 +110,7 @@ public class Script {
 			s = line.toString();
 			if(s.endsWith(":")) {
 				String handlerName = s.substring(0, s.length() - 1);	// remove end ':'
-				Statement handlerBody = new Statement();
+				Statement handlerBody = new Statement(_lineno);
 				offset = parse(_body, offset, handlerBody);
 				handlers.put(handlerName, handlerBody);
 			}
@@ -109,21 +118,31 @@ public class Script {
 		return handlers;
 	}
 	
+	String str;
 	public int parse(String s, int offset, Statement body) {
 		Statement stmt = null;
-		
+		int lastOffset;
 		body._type = 'B';
 		while(offset < s.length()) {
+			if(offset < 0)
+				break;
+			lastOffset = offset;
+			str = s.substring(lastOffset);
 			offset = skipBlank(s, offset);
-			if (offset >= s.length())
+			if (offset >= s.length() || offset < 0)
 				break;
 			if (s.charAt(offset) == '\n') {
 				++offset;
+				++_lineno;
+				continue;
+			}
+			if (s.charAt(offset) == '#') {
+				offset = scanLine(s, offset, null);
 				continue;
 			}
 			if (s.startsWith("if", offset)) {
 				offset = skipBlank(s, offset + 2);
-				stmt = addStatement(body);
+				stmt = addStatement(body, _lineno);
 				stmt._type = 'I';
 				offset = parseExpression(stmt, s, offset);	// fill stmt._expr
 				body = stmt;
@@ -145,17 +164,17 @@ public class Script {
 				body = body._parent;
 				offset = skipToNextToken(s, offset);
 			} else if(s.startsWith("return", offset)) {
-				stmt = addStatement(body);
+				stmt = addStatement(body, _lineno);
 				stmt._type = 'R';
 				offset = skipToNextToken(s, offset + 6);
 			} else if(s.startsWith("do", offset)) {
-				stmt = addStatement(body);
+				stmt = addStatement(body, _lineno);
 				stmt._type = 'D';
 				StringBuilder sb = new StringBuilder();
 				offset = scanLine(s, offset + 2, sb);
 				stmt._text = sb.toString();
 			} else {		// treat as an expression
-				stmt = addStatement(body);
+				stmt = addStatement(body, _lineno);
 				stmt._type = 'E';
 				offset = parseExpression(stmt, s, offset);
 				offset = scanLine(s, offset, null);	// ignore illegal characters or EOL after expression
@@ -165,10 +184,13 @@ public class Script {
 	}
 
 	protected int scanLine(String s, int i, StringBuilder sb) {
+		if(i < 0)
+			return -1;
 		while(i < s.length()) {
 			char ch = s.charAt(i);
 			++i;
 			if (ch == '\n') {
+				++_lineno;
 				break;
 			}
 			if(sb != null)
@@ -359,10 +381,10 @@ public class Script {
 			n._op = NodeOp.SignalRef;
 		} else if(word.startsWith("Train")) {
 			n._op = NodeOp.TrainRef;
-		} else if(word.startsWith("next")) {
-			n._op = NodeOp.NextSignalRef;
 		} else if(word.startsWith("nextApproach")) {
 			n._op = NodeOp.NextApproachRef;
+		} else if(word.startsWith("next")) {
+			n._op = NodeOp.NextSignalRef;
 		} else if(word.startsWith("and")) {
 			n._op = NodeOp.And;
 		} else if(word.startsWith("or")) {
@@ -394,10 +416,18 @@ public class Script {
 
 	private int scanWord(String s, int offset, StringBuilder sb) {
 		char ch;
-		offset = skipBlank(s, offset);
-		if (offset >= s.length())
-			return offset;
-		ch = s.charAt(offset);
+		while(true) {
+			offset = skipBlank(s, offset);
+			if (offset >= s.length())
+				return offset;
+			ch = s.charAt(offset);
+			if (ch != '#') {
+				break;
+			}
+			while((offset < s.length()) && (ch = s.charAt(offset)) != '\n')
+				++offset;
+			++offset;
+		}
 		if (isAlnum(ch) || ch == '@') {
 			while(offset < s.length() && isAlnum(ch = s.charAt(offset)) || ch == '@') {
 				sb.append(s.charAt(offset));
@@ -425,8 +455,8 @@ public class Script {
 		return false;
 	}
 
-	private Statement addStatement(Statement body) {
-		Statement s = new Statement();
+	private Statement addStatement(Statement body, int lineno) {
+		Statement s = new Statement(lineno);
 		if (body._isElse)
 			body.addElseStatement(s);
 		else
@@ -442,10 +472,11 @@ public class Script {
 		if(stmt == null)
 			return false;
 		Interpreter interpreter = new Interpreter();
-		if (track instanceof Signal)
+		if (track instanceof Signal) {
 			interpreter._signal = (Signal)track;
-		else
+		} else {
 			interpreter._track = track;
+		}
 		interpreter._train = train;
 		interpreter.Execute(stmt);
 		return true;

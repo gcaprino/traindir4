@@ -72,6 +72,7 @@ public class WebContent {
                 line = t;
             }
             output.append(line);
+            output.append('\n');
         }
         return output.toString();
     }

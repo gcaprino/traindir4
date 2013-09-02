@@ -4,6 +4,8 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 
+import com.traindirector.files.TextScanner;
+
 public class XPM {
 
 	public int		width;
@@ -24,17 +26,29 @@ public class XPM {
 	}
 
 	public void parse(String[] xpm) {
-		String[] spec = xpm[0].split(" ");
-		width = Integer.parseInt(spec[0]);
-		height = Integer.parseInt(spec[1]);
-		nColors = Integer.parseInt(spec[2]);
-		nChars = Integer.parseInt(spec[3]);
-		colors = new RGB[nColors];
+		int	i, j, d = 0;
+		
+		String[] spec = new String[4];
+		TextScanner scan = new TextScanner(xpm[0]);
+		for(i = 0; i < spec.length; ++i) {
+			scan.skipBlanks();
+			scan.scanString();
+			spec[i] = scan._stringValue;
+		}
+		try {
+			width = Integer.parseInt(spec[0]);
+			height = Integer.parseInt(spec[1]);
+			nColors = Integer.parseInt(spec[2]);
+			nChars = Integer.parseInt(spec[3]);
+			colors = new RGB[nColors];
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
 		char[] colorChar = new char[nColors]; 
 		int transparentIndex = -1;
 		int transparentRGB = 0x000000;
 
-		int	i, j, d = 0;
 		for(i = 0; i < nColors; ++i) {
 			int r = 0;
 			int g = 0;
@@ -91,6 +105,9 @@ public class XPM {
 		for(i = 0; i < height; ++i) {
 			int iw;
 			for(iw = 0; iw < width; ++iw) {
+				int iy = 1 + nColors + i;
+				if(iy >= xpm.length)	// less rows than specified in xpm header
+					continue;
 				char cc = xpm[1 + nColors + i].charAt(iw);
 				for(int xx = 0; xx < d; ++xx) {
 					if(colorChar[xx] == cc) {

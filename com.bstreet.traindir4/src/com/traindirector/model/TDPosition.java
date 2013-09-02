@@ -21,6 +21,10 @@ public class TDPosition {
 		return pos._x == _x && pos._y == _y;
 	}
 
+	public boolean sameAs(int x, int y) {
+		return _x == x && _y == y;
+	}
+
 	public boolean isNull() {
 		return _x == 0 || _y == 0;
 	}

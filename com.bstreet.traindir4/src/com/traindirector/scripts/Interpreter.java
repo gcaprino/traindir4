@@ -57,6 +57,8 @@ public class Interpreter {
 		_stackPtr = 0;
 		while(curStmt < body.size()) {
 			stmt = body.get(curStmt);
+			expr_buff = new StringBuilder("" + stmt._lineno);	// TODO: how to clear without creating a new object?
+			expr_buff.append(": ");
 		    _scopesIndexes[_stackPtr] = curStmt;
 
 		    switch(stmt._type) {
@@ -147,9 +149,9 @@ public class Interpreter {
 
 	}
 
-	private void Trace(StringBuilder expr_buff2) {
+	private void Trace(StringBuilder buff) {
 		// TODO Auto-generated method stub
-		
+		System.out.println(buff.toString());
 	}
 
 	boolean Evaluate(ExprNode n, ExprValue result) {
@@ -161,6 +163,8 @@ public class Interpreter {
 		int val;
 		boolean oldForAddress;
 		
+		if(n == null)
+			return false;
 		switch(n._op) {
 		case SignalRef:
 			if(n._txt != null && !n._txt.isEmpty()) {
@@ -177,19 +181,24 @@ public class Interpreter {
 			if(n._x == 0 && n._y == 0) {
 				result._op = n._op;
 				result._track = _track;
+				expr_buff.append(result._track._position.toString());
 				return true;
 			}
 
 		    track = find_track(n._x, n._y);
 		    if(track == null) {
-		    	expr_buff.append("=no track");
+		    	expr_buff.append("=no track(" + n._x + "," + n._y + ")");
 		    	return false;
 		    }
 		    result._op = n._op;
-		    if(result._op == NodeOp.SignalRef && track instanceof Signal)
+		    if(result._op == NodeOp.SignalRef && track instanceof Signal) {
+			    expr_buff.append("Signal");
 		    	result._signal = (Signal )track;
-		    else
+		    } else {
+			    expr_buff.append(track instanceof Switch ? "Switch" : "Track");
 		    	result._track = track;
+		    }
+			expr_buff.append(track._position.toString());
 		    return true;
 
 		case TrainRef:
@@ -236,12 +245,14 @@ public class Interpreter {
 
 		    result._op = NodeOp.Number;
 		    /// TODO: result._val = Random.rand() % 100;
+		    expr_buff.append("random ");
 		    return true;
 
 		case Time:
 
 		    result._op = NodeOp.Number;
 		    /// TODO result._val = ((current_time / 3600) % 24) * 100 + ((current_time / 60) % 60);
+		    expr_buff.append("time ");
 		    return true;
 
 		case Equal:
@@ -318,22 +329,22 @@ public class Interpreter {
 		    result._op = NodeOp.Number;
 		    result._val = 0;
 		    if(!Evaluate(n._left, left)) {
-			result._val = 1;	// invalid expressions never match
-			return true;
+				result._val = 1;	// invalid expressions never match
+				return true;
 		    }
 		    expr_buff.append(" != ");
 		    if(!Evaluate(n._right, right))
 		    	return true;
 		    val = 0;
 		    if(left._op == right._op) {
-			switch(left._op) {
-			case String:
-			    val = left._txt.compareTo(right._txt) != 0 ? 1 : 0;
-			    break;
-
-			case Number:
-			    val = left._val != right._val ? 1 : 0;
-			}
+				switch(left._op) {
+				case String:
+				    val = left._txt.compareTo(right._txt) != 0 ? 1 : 0;
+				    break;
+	
+				case Number:
+				    val = left._val != right._val ? 1 : 0;
+				}
 		    }
 		    result._val = val;
 		    expr_buff.append("{");
@@ -439,15 +450,23 @@ public class Interpreter {
 				return false;
 			result._op = NodeOp.SignalRef;
 			result._signal = nextSignal;
+		    expr_buff.append("NextSignal");
+		    expr_buff.append(result._signal._position.toString());
 			return true;
 
 		case NextApproachRef:
 			
 			if (_signal == null)
 				return false;
-			if (!getApproach(_signal, result))
+			expr_buff.append("NextApproach");
+			expr_buff.append(_signal._position.toString());
+			if (!getApproach(_signal, result)) {
+				expr_buff.append(" - not found ");
 				return false;
+			}
 			result._op = NodeOp.SignalRef;
+			expr_buff.append(" - found ");
+		    expr_buff.append(result._signal._position.toString());
 			return true;
 
 		case Dot:
@@ -473,6 +492,7 @@ public class Interpreter {
 				if(!Evaluate(n._left, result))
 					return false;
 			}
+			expr_buff.append(".");
 			if(n._right != null) {
 				switch(n._right._op){ 
 				case SignalRef:
@@ -482,6 +502,8 @@ public class Interpreter {
 						// No next signal for .
 						return false;
 					}
+				    expr_buff.append(n._right._op == NodeOp.SignalRef ? "Signal" : "NextSignal");
+				    expr_buff.append(result._signal._position.toString());
 					break;
 					
 				case NextApproachRef:
@@ -489,15 +511,21 @@ public class Interpreter {
 						return false;
 					}
 					result._op = NodeOp.SignalRef;
+				    expr_buff.append("NextApproach");
+				    expr_buff.append(result._signal._position.toString());
 					break;
 				}
 			}
 			result._txt = (n._right != null && n._right._txt != null) ? n._right._txt : n._txt;
-			if(_forAddr)
-				return true;
 			String property = result._txt;
+			if(_forAddr) {
+				if (property != null)
+					expr_buff.append("." + property);
+				return true;
+			}
 			if (property == null || property.isEmpty())
 				return false;
+			expr_buff.append(property);
 			switch(result._op) {
 			case SwitchRef:
 				if(property.compareTo("thrown") == 0) {

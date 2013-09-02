@@ -157,4 +157,13 @@ public class TrackPath {
 		_dirs.remove(index);
 	}
 
+	public String toString() {
+		StringBuilder sb = new StringBuilder("nItems: " + _tracks.size() + " ");
+		int i;
+		for (i = 0; i < _tracks.size(); ++i) {
+			sb.append(" ");
+			sb.append(_tracks.get(i)._position.toString());
+		}
+		return sb.toString();
+	}
 }

@@ -51,6 +51,7 @@ import com.traindirector.uiactions.ShowAlertsViewAction;
 import com.traindirector.uiactions.ShowEditToolsAction;
 import com.traindirector.uiactions.ShowInfoPageAction;
 import com.traindirector.uiactions.ShowLayoutPageAction;
+import com.traindirector.uiactions.ShowMapAction;
 import com.traindirector.uiactions.ShowPerformanceAction;
 import com.traindirector.uiactions.ShowScheduleViewAction;
 import com.traindirector.uiactions.ShowTrainStopsViewAction;
@@ -94,6 +95,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     ShowAlertsViewAction showAlertsViewAction;
     ShowEditToolsAction showEditToolsAction;
     ShowTrainStopsViewAction showTrainStopsViewAction;
+    ShowMapAction showMapAction;
     ChangeLanguageAction changeLanguageAction;
     PreferencesAction preferencesAction;
     ItineraryAction itineraryAction;
@@ -150,6 +152,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(showScheduleViewAction = new ShowScheduleViewAction(window, "Show schedule"));
         register(showTrainStopsViewAction = new ShowTrainStopsViewAction(window, "Show train stops"));
         register(showEditToolsAction = new ShowEditToolsAction(window, "Show edit tools"));
+        register(showMapAction = new ShowMapAction(window, "Show map"));
         register(changeLanguageAction = new ChangeLanguageAction(window, "Change language"));
         register(preferencesAction = new PreferencesAction(window, "Edit preferences..."));
         register(itineraryAction = new ItineraryAction(window, "Itineraries..."));
@@ -237,6 +240,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         viewMenu.add(showTrainStopsViewAction);
         viewMenu.add(showInfoPageAction);
         viewMenu.add(platformOccupancyAction);
+        viewMenu.add(showMapAction);
         //viewMenu.add(showEditToolsAction);
         fileMenu.add(new Separator());
         viewMenu.add(zoomInAction);

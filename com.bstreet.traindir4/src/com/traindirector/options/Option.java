@@ -16,5 +16,12 @@ public class Option {
 		_name = name;
 		_description = descr;
 	}
+
+	public void set(String value) {
+		_value = value;
+	}
 	
+	public void set(int value) {
+		_intValue = value;
+	}
 }

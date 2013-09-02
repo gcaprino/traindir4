@@ -3,13 +3,15 @@ package com.traindirector.editors;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.traindirector.Application;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.uicomponents.WebContent;
 
-public class InfoContent extends WebContent {
-
+public class MapContent extends WebContent {
 	String _name;
 	String _html = "";
 
@@ -31,8 +33,9 @@ public class InfoContent extends WebContent {
     		location = location.substring(9);
     	if(location.equals("blank"))
     		return false;
-    	if(sim._fileManager == null)
-    		return false;
+//    	if(sim._fileManager == null)
+//    		return false;
+    	/*
     	BufferedReader rdr = sim._fileManager.getReaderForFile(location);
     	if (rdr == null) {
     		_html = "<html><body>This scenario has no additional information.</body></html>\n";
@@ -60,6 +63,17 @@ public class InfoContent extends WebContent {
     		if (!_html.substring(indx).startsWith("http"))
     			_html = _html.substring(0, indx) + sim._baseDir + File.separator + _html.substring(indx);
     	}
+    	*/
+    	String center = "-34.397, 150.644";
+    	String zoom = "8";
+    	File mapFile = getResourceFile("/html/en/map1.html");
+    	List<String> lines = getFileContent(mapFile);
+    	Map<String, String> values = new HashMap<String, String>();
+    	
+    	values.put("$center", center);
+    	values.put("$zoom", zoom);
+    	_html = replaceContent(lines, values);
     	return true;
     }
+
 }

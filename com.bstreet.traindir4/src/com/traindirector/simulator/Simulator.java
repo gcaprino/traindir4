@@ -330,7 +330,7 @@ public class Simulator {
 					signal.onUpdate();
 				}
 			} while(_signalsChanged);
-			
+			// TODO: onIconUpdateAll()
 		}
 	}
 

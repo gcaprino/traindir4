@@ -1,5 +1,7 @@
 package com.traindirector.model;
 
+import org.eclipse.ui.internal.SwitchToWindowMenu;
+
 import com.traindirector.commands.ClickCommand;
 import com.traindirector.scripts.ExprValue;
 import com.traindirector.scripts.NodeOp;
@@ -107,6 +109,29 @@ public class Track {
 		return dir;
 	}
 
+    public boolean getNextTrack(Direction dir, TrackAndDirection out) {
+    	Territory territory = Simulator.INSTANCE._territory;
+		Track newTrack = null;
+		if (!(this instanceof Switch)) {
+			newTrack = territory.findTrackLinkedTo(this, dir);
+			if (newTrack != null) {
+				out._track = newTrack;
+				out._direction = dir;
+				// TODO: set direction based on old and new track positions
+				return true;
+			}
+		}
+		Direction newDir = walk(dir);
+		TDPosition newPos = newDir.offset(_position);
+		//System.out.println(">> " + track.toString() + " [" + oldDir.toString() + " -> " + newDir.toString() + "] -> " + newPos.toString());
+		newTrack = territory.findTrack(newPos);
+		if (newTrack == null)
+			return false;
+		out._track = newTrack;
+		out._direction = newDir;
+		return true;
+    }
+    
 	public void setStatus(TrackStatus status) {
 		if(_status != status) {
 			_flags |= CHANGED;
@@ -123,7 +148,8 @@ public class Track {
 	}
 
 	public void onClick() {
-		_script.handle("OnClicked", this, null);
+		if(_script != null)
+			_script.handle("OnClicked", this, null);
 	}
 	
 	public void onRightClick() {
@@ -578,6 +604,11 @@ VLine	itin_layout[] = {
 	public void onClicked() {
 		if (_script != null)
 			_script.handle("OnClicked", this, null);
+	}
+
+	public void onInit() {
+		if (_script != null)
+			_script.handle("OnInit", this, null);
 	}
 
 	public void DoEnter(Train train) {

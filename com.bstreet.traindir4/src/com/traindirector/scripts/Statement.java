@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Statement {
 
-	public Statement() {
+	public Statement(int lineno) {
 		_parent = null;
 		_isElse = false;
 		_type = 0;
@@ -13,6 +13,7 @@ public class Statement {
 		_expr = null;
 		_body = null;
 		_elseBody = null;
+		_lineno = lineno;
 	}
 
 	public void dispose() {
@@ -43,5 +44,6 @@ public class Statement {
 	boolean _isElse;
 	String _text;
 	ExprNode _expr;
+	int _lineno;
 
 }

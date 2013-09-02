@@ -53,17 +53,18 @@ public class SchFile extends TextFile {
 	
 	public void readFile(BufferedReader input) {
 		String	line;
+		String originalLine;
 		TrainStop lastStop = null;
 		try {
 			Train	train = null;
-			while((line = input.readLine()) != null) {
+			while((originalLine = input.readLine()) != null) {
 				int i;
 				char ch;
-				if(line.length() > 0 && line.charAt(0) == '.') {
+				if(originalLine.length() > 0 && originalLine.charAt(0) == '.') {
 					train = null;
 					continue;
 				}
-				line = line.replace("\t", " ");
+				line = originalLine.replace("\t", " ");
 				i = skipBlanks(line, 0);
 				if(i < 0 || line.charAt(i) == '#')
 					continue;
@@ -117,6 +118,11 @@ public class SchFile extends TextFile {
 				}
 				if(line.startsWith("Train:", i)) {
 					i = skipBlanks(line, 6);
+					if(i < 0) {
+						System.out.println("No train name after Train: '" + originalLine + "'");
+						train = null;
+						continue;
+					}
 					train = _simulator._schedule.findTrainNamed(line.substring(i));
 					if (train == null) {
 						train = new Train(line.substring(i));
@@ -130,6 +136,10 @@ public class SchFile extends TextFile {
 					if(!line.startsWith("Type:", i))
 						continue;
 					i = skipBlanks(line, 5);
+					if(i < 0) {
+						System.out.println("No type information after Type: '" + originalLine + "'");
+						continue;
+					}
 					i = scanInteger(line, i);
 					if(--_intValue >= Track.NSPEEDS || _intValue < 0)
 						_intValue = 0;

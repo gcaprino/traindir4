@@ -39,6 +39,8 @@ public class Territory {
 	}
 
 	public Track findTrack(TDPosition pos) {
+		if (pos == null)
+			return null;
 		for (Track track : _tracks) {
 			if (track._position.sameAs(pos))
 				return track;
@@ -82,6 +84,10 @@ public class Territory {
 		return null;
 	}
 
+	public Signal findSignalLinkedTo(TrackAndDirection td) {
+		return findSignalLinkedTo(td._track, td._direction);
+	}
+
 	public TextTrack findTextLinkedTo(Track track, Direction dir) {
 		for (Track trk : _tracks) { // TODO: use textTrack list
 			if (!(trk instanceof TextTrack)) {
@@ -92,6 +98,22 @@ public class Territory {
 				return txt;
 			if (dir == Direction.E && txt.linkedToWest(track))
 				return txt;
+		}
+		return null;
+	}
+
+	public Track findTrackLinkedTo(Track track, Direction dir) {
+		switch(dir) {
+		case E:
+		case NE:
+		case SE:
+		case S:
+			return findTrack(track._elink);
+		case W:
+		case NW:
+		case SW:
+		case N:
+			return findTrack(track._wlink);
 		}
 		return null;
 	}
@@ -191,7 +213,7 @@ public class Territory {
 			if (!(track instanceof Signal))
 				continue;
 			Signal signal = (Signal) track;
-			if (signal._scriptFile == null)
+			if (signal._scriptFile == null || signal._scriptFile.isEmpty())
 				continue;
 			signal._script = scriptFactory.createInstance(signal._scriptFile);
 			if (signal._script instanceof TDSScript) {
@@ -200,6 +222,9 @@ public class Territory {
 				// override default aspects with the one from the .tds file
 				signal._aspects = tdsScript.getAspects();
 			}
+		}
+		for (Track track : _tracks) {
+			track.onInit();
 		}
 	}
 

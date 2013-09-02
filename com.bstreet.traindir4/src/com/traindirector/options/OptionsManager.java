@@ -173,7 +173,7 @@ public class OptionsManager {
 
 		_alertSoundPath = new FileOption("path.sound.alert", "Path to sound file for alert notifications");
 		_enterSoundPath = new FileOption("path.sound.entry", "Path to sound file for train entry");
-		_scriptsPaths = new TextOption("path.scripts", "Directories with signal scripts");
+		_scriptsPaths = new TextOption("SearchPath", "Directories with signal scripts");
 		
 		_options.add(_alertSoundPath);
 		_options.add(_enterSoundPath);

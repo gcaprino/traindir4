@@ -418,6 +418,13 @@
             id="com.traindirector.editor.info"
             name="Welcome">
       </editor>
+      <editor
+            class="com.traindirector.editors.MapPage"
+            default="false"
+            icon="icons/question18x18black.png"
+            id="com.traindirector.editor.map"
+            name="Map">
+      </editor>
    </extension>
    <extension point="org.eclipse.help.contexts">
       <contexts file="contexts.xml">

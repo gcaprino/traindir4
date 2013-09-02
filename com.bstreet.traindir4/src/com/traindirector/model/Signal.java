@@ -164,7 +164,7 @@ public class Signal extends Track {
 
 		if (this._script != null && _script instanceof TDSScript) {
 			// try to set the signal's aspect using the associated script, if any
-			if (!_script.handle("onCleared", this, null))
+			if (!_script.handle("OnCleared", this, null))
 				setAspectFromName(SignalAspect.GREEN);
 		} else
 			setAspectFromName(SignalAspect.GREEN);
@@ -379,7 +379,7 @@ public class Signal extends Track {
 
 	public boolean isApproach() {
 		// is signal an approach signal?
-		return _isApproach;
+		return _isShunting || _currentAspect != null && _currentAspect._action.equals("none");
 	}
 
 	public boolean isShuntingSignal() {
@@ -389,6 +389,12 @@ public class Signal extends Track {
 
 	public void onClear() {
 		// set signal to green
+		// some other signal changed, see if we need to change, too
+		if (_aspectChanged)
+			return;
+		if (_script == null)
+			return;
+		_script.handle("OnCleared", this, null);
 	}
 
 	public void onUnclear() {
@@ -422,6 +428,10 @@ public class Signal extends Track {
 
 	public void onInit() {
 		// initial setting (when load or restart)
+		// some other signal changed, see if we need to change, too
+		if (_script == null)
+			return;
+		_script.handle("OnInit", this, null);
 	}
 
 	public void onFlash() {
@@ -475,6 +485,8 @@ public class Signal extends Track {
 			Signal sig;
 			sig = Simulator.INSTANCE._territory.findSignalLinkedTo(trk,
 					path.getDirectionAt(i));
+			if (sig == null)
+				return false;
 			if (sig != this && !sig.isShuntingSignal() && sig.isApproach()) {
 				result._op = NodeOp.Addr;
 				result._signal = sig;
@@ -492,9 +504,16 @@ public class Signal extends Track {
 	public String toString() {
 		if (_position == null)
 			return "Null position.";
+		String out = _position.toString() + " -> ";
 		if (_controls == null)
-			return _position.toString() + " -> ? aspect: " + _currentAspect._name;
-		return _position.toString() + " -> " + _controls._position.toString() + " aspect: " + _currentAspect._name;
+			out += "?";
+		else
+			out += _controls._position.toString();
+		if(this._scriptFile != null)
+			out += "   script: " + this._scriptFile;
+		if(_currentAspect != null && _currentAspect._name != null)
+			out += "   aspect: " + _currentAspect._name;
+		return out;
 	}
 
 	public boolean isFleeted() {

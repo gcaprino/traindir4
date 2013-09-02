@@ -18,9 +18,11 @@ public class TDSScript extends Script {
 		if(!load())
 			return false;
 		int offset = 0;
+		_lineno = 1;
 		String s = _body;
 		while(offset < s.length()) {
 			offset = skipBlank(s, offset);
+			String sub = s.substring(offset);
 			if (s.charAt(offset) == '#') {
 				offset = scanLine(s, offset, null);
 				continue;
