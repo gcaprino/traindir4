@@ -150,8 +150,8 @@ public class Interpreter {
 	}
 
 	private void Trace(StringBuilder buff) {
-		// TODO Auto-generated method stub
-		System.out.println(buff.toString());
+		// TODO: use preferences to enable/disable tracing
+		//System.out.println(buff.toString());
 	}
 
 	boolean Evaluate(ExprNode n, ExprValue result) {

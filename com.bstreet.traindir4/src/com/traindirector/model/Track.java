@@ -20,6 +20,7 @@ public class Track {
 	public TDPosition _position;
 	public TDPosition _wlink;
 	public TDPosition _elink;
+	public Track _wlinkTrack, _elinkTrack;	// computed for internal use
 	public boolean _isStation;
 	public int _length;
 	public int[] _speed;
@@ -43,18 +44,21 @@ public class Track {
 		_position = new TDPosition();
 		_wlink = new TDPosition();
 		_elink = new TDPosition();
+		_speed = new int[NSPEEDS];
 	}
 	
 	public Track(int x, int y) {
 		_position = new TDPosition(x, y);
 		_wlink = new TDPosition();
 		_elink = new TDPosition();
+		_speed = new int[NSPEEDS];
 	}
 
 	public Track(TDPosition pos) {
 	    _position = pos;
         _wlink = new TDPosition();
         _elink = new TDPosition();
+		_speed = new int[NSPEEDS];
     }
 
     public Direction walk(Direction dir) {

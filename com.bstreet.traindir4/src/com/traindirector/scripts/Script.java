@@ -373,35 +373,35 @@ public class Script {
 		
 		offset = scanWord(s, offset, sb);
 		word = sb.toString();
-		if (word.startsWith("Switch", offset)) {
+		if (word.equals("Switch")) {
 			n._op = NodeOp.SwitchRef;
-		} else if(word.startsWith("Track")) {
+		} else if(word.equals("Track")) {
 			n._op = NodeOp.TrackRef;
-		} else if(word.startsWith("Signal")) {
+		} else if(word.equals("Signal")) {
 			n._op = NodeOp.SignalRef;
-		} else if(word.startsWith("Train")) {
+		} else if(word.equals("Train")) {
 			n._op = NodeOp.TrainRef;
-		} else if(word.startsWith("nextApproach")) {
+		} else if(word.equals("nextApproach")) {
 			n._op = NodeOp.NextApproachRef;
-		} else if(word.startsWith("next")) {
+		} else if(word.equals("next")) {
 			n._op = NodeOp.NextSignalRef;
-		} else if(word.startsWith("and")) {
+		} else if(word.equals("and")) {
 			n._op = NodeOp.And;
-		} else if(word.startsWith("or")) {
+		} else if(word.equals("or")) {
 			n._op = NodeOp.Or;
-		} else if(word.startsWith("random")) {
+		} else if(word.equals("random")) {
 			n._op = NodeOp.Random;
-		} else if(word.startsWith("time")) {
+		} else if(word.equals("time")) {
 			n._op = NodeOp.Time;
-		} else if(word.startsWith("=")) {
+		} else if(word.equals("=")) {
 			n._op = NodeOp.Equal;
-		} else if(word.startsWith("!")) {
+		} else if(word.equals("!")) {
 			n._op = NodeOp.NotEqual;
-		} else if(word.startsWith(">")) {
+		} else if(word.equals(">")) {
 			n._op = NodeOp.Greater;
-		} else if(word.startsWith("<")) {
+		} else if(word.equals("<")) {
 			n._op = NodeOp.Less;
-		} else if(word.startsWith(".")) {
+		} else if(word.equals(".")) {
 			n._op = NodeOp.Dot;
 		} else if(word.charAt(0) >= '0' && word.charAt(0) <= '9') {
 			n._op = NodeOp.Number;

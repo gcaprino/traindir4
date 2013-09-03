@@ -22,15 +22,15 @@ public class Signal extends Track {
 	public List<SignalAspect> _aspects = new ArrayList<SignalAspect>();
 	public Track _controls;
 	public boolean _aspectChanged;
-	private boolean _isApproach;
 	private boolean _isShunting;
 	private boolean _nowfleeted;
 	public TDPosition _blockedBy;
 	public boolean _intermediate;
 	public int _nReservations;
+	public TrackPath _nextPath;
 
 	public Signal() {
-	    
+	    _nextPath = new TrackPath();
 	}
 
 	public Signal(TDPosition pos) {
@@ -55,6 +55,10 @@ public class Signal extends Track {
 
 	public boolean isClear() {
 		return _currentAspect._action.compareTo(SignalAspect.STOP) != 0;
+	}
+
+	public void clearCache() {
+		_nextPath.clear();
 	}
 
 	public Direction getDirectionFrom(TrackDirection direction) {
@@ -318,9 +322,12 @@ public class Signal extends Track {
 			for (i = 0; i < path.getTrackCount(0); ++i) {
 				Track trk = path.getTrackAt(i);
 
-				for (j = 0; j < trk._length; ++j)
+				if(trk._speed == null)
+					continue;
+				for (j = 0; j < trk._speed.length; ++j) {
 					if (trk._speed[j] != 0 && trk._speed[j] < lowSpeed)
 						lowSpeed = trk._speed[j];
+				}
 			}
 			result._val = lowSpeed;
 			// wxSnprintf(expr_buff + wxStrlen(expr_buff),
@@ -434,10 +441,6 @@ public class Signal extends Track {
 		_script.handle("OnInit", this, null);
 	}
 
-	public void onFlash() {
-		// display next flashing aspect
-	}
-
 	public void onAuto() {
 		// automatic signal has been enabled/disabled
 	}
@@ -453,11 +456,14 @@ public class Signal extends Track {
 			// sizeof(expr_buff)-1);
 			return null;
 		}
+		if(!_nextPath.isEmpty())
+			return _nextPath;
 		PathFinder finder = new PathFinder();
 		TDPosition position = _controls._position;
 		TrackPath path = finder.find(position, getDirectionFrom(_direction));
 		if (path == null)
 			return null;
+		_nextPath = path;
 		if (Simulator.INSTANCE._gMustBeClearPath) {
 			// if(!s->IsClear()) { // t->status == ST_GREEN) {
 			// Vector_delete(path);

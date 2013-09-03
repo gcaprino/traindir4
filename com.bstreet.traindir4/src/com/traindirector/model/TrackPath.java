@@ -18,6 +18,11 @@ public class TrackPath {
 		_dirs.add(dir);
 	}
 
+	public void clear() {
+		_tracks.clear();
+		_dirs.clear();
+	}
+
 	public Track getTrackAt(int i) {
 		return _tracks.get(i);
 	}
@@ -46,6 +51,10 @@ public class TrackPath {
 		return true;
 	}
 
+	public boolean isEmpty() {
+		return _tracks.size() == 0;
+	}
+	
 	public int getTrackCount(int offset) {
 		return _tracks.size() - offset;
 	}

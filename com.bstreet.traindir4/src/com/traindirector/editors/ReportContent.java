@@ -64,12 +64,7 @@ public class ReportContent extends WebContent {
             }
             values.put("$table", sb.toString());
         } else if(_type != null && _type.startsWith("/stations/")) {
-        	List<Track> stations = new ArrayList<Track>();
-        	for(Track track : sim._territory._tracks) {
-        		if (!track._isStation)
-        			continue;
-        		stations.add(track);
-        	}
+        	List<Track> stations = sim._territory.getAllStations();
         	// TODO: sort
         	for (Track station : stations) {
         		sb.append("<tr>");

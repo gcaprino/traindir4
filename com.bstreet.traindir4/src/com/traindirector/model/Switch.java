@@ -29,6 +29,7 @@ public class Switch extends Track {
 			linkedSwitch.setThrown();
 			linkedSwitch.setUpdated(Simulator.INSTANCE._updateCounter++);
 		}
+		Simulator.INSTANCE.clearCachedPaths();
 		_switched = !_switched;
 		
 		// TODO: if was thrown, count penalty

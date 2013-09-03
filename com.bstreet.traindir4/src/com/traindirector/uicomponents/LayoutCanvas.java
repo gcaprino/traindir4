@@ -243,7 +243,7 @@ public class LayoutCanvas {
 	protected long drawLayout(GC gc) {
 		long mostRecentUpdate = lastUpdate;
 		Territory territory = _simulator._territory;
-		for (Track trk : territory._tracks) {
+		for (Track trk : territory.getTracks()) {
 			try {
 				gc.setForeground(blackColor);
 
@@ -348,7 +348,7 @@ public class LayoutCanvas {
 		Territory territory = _simulator._territory;
 		gc.setForeground(blueColor);
 		TDPosition pos;
-		for (Track trk : territory._tracks) {
+		for (Track trk : territory.getTracks()) {
 			try {
 				pos = null;
 				if(trk._elink == null || (trk._elink._x | trk._elink._y) == 0)

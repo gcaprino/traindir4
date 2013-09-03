@@ -50,7 +50,7 @@ public class LoadCommand extends SimulatorCommand {
 		}
 		TrkFile trkFile = new TrkFile(_simulator, _territory, _fname, rdr);
 		trkFile.loadTracks(rdr);
-		_territory.linkSignals();
+		_territory.updateReferences();
 		_territory.loadSignalAspects(_simulator._scriptFactory);
 		_schedule = _simulator._schedule;
 		_simulator._runDay = 0;

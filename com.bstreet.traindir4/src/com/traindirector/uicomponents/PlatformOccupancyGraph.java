@@ -165,7 +165,7 @@ public class PlatformOccupancyGraph {
 	void	drawStations(GC gc) {
 		int	y = HEADER_HEIGHT;
 
-		for(Track track : _simulator._territory._tracks) {
+		for(Track track : _simulator._territory.getTracks()) {
 		    if(!track._isStation || track._station == null || track._station.isEmpty())
 		    	continue;
 		    _stations.add(track);
@@ -231,7 +231,7 @@ public class PlatformOccupancyGraph {
 		    if(t._days != 0 && _simulator._runDay != 0 && (t._days & _simulator._runDay) == 0)
 		    	continue;
 		    trk = null;
-		    for(Track track1 : _simulator._territory._tracks) {
+		    for(Track track1 : _simulator._territory.getTracks()) {
 				if(track1 instanceof Track && track1._isStation &&
 							samestation(track1._station, t._entrance)) {
 					trk = track1;
@@ -262,7 +262,7 @@ public class PlatformOccupancyGraph {
 		    }
 		    if(t._stock != null) {
 		    	trk = null;
-				for(Track trk1 : _simulator._territory._tracks) {
+				for(Track trk1 : _simulator._territory.getTracks()) {
 				    if(trk instanceof Track && trk1._isStation &&
 							    samestation(trk1._station, t._exit)) {
 				    	trk = trk1;

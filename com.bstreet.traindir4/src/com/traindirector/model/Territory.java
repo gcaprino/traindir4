@@ -1,7 +1,10 @@
 package com.traindirector.model;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.traindirector.commands.DoCommand;
 import com.traindirector.scripts.ScriptFactory;
@@ -12,9 +15,13 @@ public class Territory {
 
 	public static final char PLATFORM_SEP = '@';
 
-	public List<Track> _tracks;
+	private List<Track> _tracks;
 	public List<Itinerary> _itineraries;
 	public List<EntryExitPath> _paths;
+	private Map<TDPosition, Track> _posMap;
+
+	private LinkedList<Signal> _signals;
+	private static boolean[] _useEastLink;	// lookup table for findTrackLinkedTo() - faster than a switch
 
 	// private HashMap<String, SignalAspect> _signalAspects;
 
@@ -22,12 +29,19 @@ public class Territory {
 		_tracks = new LinkedList<Track>();
 		_itineraries = new LinkedList<Itinerary>();
 		_paths = new LinkedList<EntryExitPath>();
+		_posMap = new HashMap<TDPosition, Track>();
+		_useEastLink = new boolean[8];
+		_useEastLink[Direction.E.ordinal()] = true;
+		_useEastLink[Direction.NE.ordinal()] = true;
+		_useEastLink[Direction.SE.ordinal()] = true;
+		_useEastLink[Direction.S.ordinal()] = true;
 	}
 
 	public void clear() {
 		_tracks.clear();
 		_itineraries.clear();
 		_paths.clear();
+		_posMap.clear();
 	}
 
 	public void add(Track trk) {
@@ -41,15 +55,66 @@ public class Territory {
 	public Track findTrack(TDPosition pos) {
 		if (pos == null)
 			return null;
+		Track result = _posMap.get(pos);
+		if (result != null)
+			return result;
 		for (Track track : _tracks) {
 			if (track._position.sameAs(pos))
 				return track;
 		}
 		return null;
 	}
+	
+	public void remove(Track track) {
+		_tracks.remove(track);
+	}
+
+	public List<Track> getTracks() {
+		return _tracks;
+	}
+
+	public void updateReferences() {
+		_posMap.clear();
+		for(Track track : _tracks) {
+			if (track._position == null || track._position.isNull()) {
+				System.out.println("Attempted to put null into position map!");
+				continue;
+			}
+			_posMap.put(track._position, track);
+		}
+		linkSignals();
+		for(Track track : _tracks) {
+			if(track._elink != null && !track._elink.isNull())
+				track._elinkTrack = findTrack(track._elink);
+			if(track._wlink != null && !track._wlink.isNull())
+				track._wlinkTrack = findTrack(track._wlink);
+		}
+	}
+
+	public List<Signal> getAllSignals() {
+		return _signals;
+		/*
+		List<Signal> list = new ArrayList<Signal>();
+		for (Track track : _tracks) {
+			if (track instanceof Signal)
+				list.add((Signal)track);
+		}
+		return list;
+		*/
+	}
+	
+	public List<Track> getAllStations() {
+		List<Track> list = new ArrayList<Track>();
+		for (Track track : _tracks) {
+			if (track._isStation)
+				list.add(track);
+		}
+		return list;
+	}
 
 	public void linkSignals() {
 
+		_signals = new LinkedList<Signal>();
 		for (Track track : _tracks) {
 			track._wsignal = null; // in case signal was relinked during editing
 			track._esignal = null;
@@ -59,6 +124,8 @@ public class Territory {
 			if (!(track instanceof Signal))
 				continue;
 			Signal signal = (Signal) track;
+			signal.clearCache();
+			_signals.add(signal);
 			Track linked = findTrack(signal._wlink);
 			if (linked == null)
 				continue;
@@ -71,14 +138,10 @@ public class Territory {
 		}
 	}
 
+	
 	public Signal findSignalLinkedTo(Track track, Direction dir) {
-		for (Track trk : _tracks) { // TODO: use signals list
-			if (!(trk instanceof Signal)) {
-				continue;
-			}
-			Signal signal = (Signal) trk;
-			if (signal.linkedTo(track)
-					&& signal.getDirectionFrom(signal._direction) == dir)
+		for (Signal signal : _signals) {
+			if (signal.linkedTo(track) && signal.getDirectionFrom(signal._direction) == dir)
 				return signal;
 		}
 		return null;
@@ -103,19 +166,9 @@ public class Territory {
 	}
 
 	public Track findTrackLinkedTo(Track track, Direction dir) {
-		switch(dir) {
-		case E:
-		case NE:
-		case SE:
-		case S:
-			return findTrack(track._elink);
-		case W:
-		case NW:
-		case SW:
-		case N:
-			return findTrack(track._wlink);
-		}
-		return null;
+		if(_useEastLink[dir.ordinal()])
+			return track._elinkTrack;
+		return track._wlinkTrack;
 	}
 
 	public TextTrack findTextTrack(String name) {
@@ -278,6 +331,7 @@ public class Territory {
 		_tracks.clear();
 		_itineraries.clear();
 		_paths.clear();
+		_posMap.clear();
 	}
 
 	public static boolean sameStation(String st1, String st2) {

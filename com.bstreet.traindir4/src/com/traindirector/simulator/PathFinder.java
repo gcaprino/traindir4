@@ -46,7 +46,7 @@ public class PathFinder {
 				newDir = track.walk(newDir);
 				newPos = newDir.offset(track._position);
 				_error = "No track from " + track._position.toString() + " to " + newPos.toString();
-				System.out.println(_error);
+				//System.out.println(_error);
 				return null;
 			}
 			newDir = td._direction;
@@ -77,7 +77,7 @@ public class PathFinder {
 			Track backTrack = path.getTrackAt(i - 1);
 			if(td._track != backTrack) {
 				_error = "Cannot travel back from " + td._track._position.toString() + " to " + backTrack._position.toString();
-				System.out.println(_error);
+				//System.out.println(_error);
 				return null;
 			}
 			track = td._track;

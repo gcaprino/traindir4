@@ -183,7 +183,7 @@ public class TimeDistanceDiagram {
 		String buff = "";
 
 		highkm = 0;
-		for(Track t : _simulator._territory._tracks) {
+		for(Track t : _simulator._territory.getTracks()) {
 		    if(t instanceof TextTrack) {
 				if(!islinkedtext(t))
 				    continue;
@@ -196,7 +196,7 @@ public class TimeDistanceDiagram {
 		    if(t._km > highkm)
 		    	highkm = t._km;
 		}
-		for(Track t : _simulator._territory._tracks) {
+		for(Track t : _simulator._territory.getTracks()) {
 		    if(t instanceof TextTrack) {
 				if(t._km == 0 || !islinkedtext(t))
 				    continue;
@@ -274,7 +274,7 @@ public class TimeDistanceDiagram {
 		    TDPosition pos = new TDPosition();
 		    TDPosition npos = new TDPosition();
 		    if (t._entrance != null) {
-    		    for(Track trk1 : _simulator._territory._tracks) {
+    		    for(Track trk1 : _simulator._territory.getTracks()) {
     				if((trk1 instanceof TextTrack) && islinkedtext(trk1) && trk1._km > 0 && samestation(trk1._station, t._entrance)) {
     					trk = trk1;
     				    break;
@@ -305,7 +305,7 @@ public class TimeDistanceDiagram {
 		    }
 		    if(x != -1 && t._exit != null) {
 		    	trk = null;
-			    for(Track trk1 : _simulator._territory._tracks) {
+			    for(Track trk1 : _simulator._territory.getTracks()) {
 					if((trk1 instanceof TextTrack) && islinkedtext(trk1) && trk1._km > 0 && samestation(trk1._station, t._exit)) {
 						trk = trk1;
 					    break;

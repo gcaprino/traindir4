@@ -241,12 +241,12 @@ public class TrkFile {
 
 				case '5':		// IMAGE
 					trk = new ImageTrack();
-					_territory.add(trk);
 					trk._position = new TDPosition(x, y);
 					if (elements.length > 4)
 						trk._station = elements[4];
 					else
 						trk._station = "?";
+					_territory.add(trk);
 					break;
 					
 				case '6':		// INFO
@@ -414,7 +414,7 @@ int	save_layout(const wxChar *name, Track *layout)
 	private void saveTracks(BufferedWriter file) throws IOException {
 		int	i;
 
-		for (Track t : _territory._tracks) {
+		for (Track t : _territory.getTracks()) {
 			if (t instanceof Switch) {
 				file.write(String.format("1,%d,%d,%d,", t._position._x, t._position._y, t._direction.ordinal()));
 				file.write(String.format("%d,%d\n", t._wlink._x, t._wlink._y));
@@ -502,7 +502,7 @@ int	save_layout(const wxChar *name, Track *layout)
 		    file.write(String.format("\n"));
 		}
 		
-		for (Track track : _territory._tracks) {
+		for (Track track : _territory.getTracks()) {
 			if (track instanceof ItineraryButton || track instanceof ImageTrack) {
 				// TODO
 				/*

@@ -31,6 +31,7 @@ public class EditAction extends Action {
         if(Simulator.getEditing()) {
             perspectiveId = SimulationPerspective.ID;
             Simulator.INSTANCE.setEditing(false);
+            Simulator.INSTANCE._territory.updateReferences();
         } else {
             Simulator.INSTANCE.setEditing(true);
         }

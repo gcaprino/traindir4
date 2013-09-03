@@ -131,6 +131,7 @@ public class ClickCommand extends SimulatorCommand {
 					signal._aspectChanged = true;
 				_simulator._signalsChanged = true;
 				_simulator.updateSignals(signal);
+				_simulator._signalsChanged = true;
 			} else
 				track.onClick();
 		}
@@ -188,7 +189,7 @@ public class ClickCommand extends SimulatorCommand {
 	        int dir = _simulator.getEditorTrackDirection();
 	        track = territory.findTrack(_pos);
 	        if(track != null) {
-	            territory._tracks.remove(track);
+	            territory.remove(track);
 	        }
 	        switch(type) {
 	        case 0:    // delete

@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -665,7 +666,7 @@ public class SavFile extends TextFile {
 			// when the layout is loaded from disk
 			//
 			
-			for (Track track : _territory._tracks) {
+			for (Track track : _territory.getTracks()) {
 				if (!(track instanceof Switch))
 					continue;
 				Switch sw = (Switch) track;
@@ -677,7 +678,7 @@ public class SavFile extends TextFile {
 			
 			// Save the state of every signal
 			
-			for (Track track : _territory._tracks) {
+			for (Track track : _territory.getTracks()) {
 				if (!(track instanceof Signal))
 					continue;
 				Signal signal = (Signal) track;
@@ -808,7 +809,7 @@ public class SavFile extends TextFile {
 			// save white tracks (to allow merging trains)
 	
 			boolean found = false;
-			for (Track track : _territory._tracks) {
+			for (Track track : _territory.getTracks()) {
 				if (track instanceof Track || track instanceof Switch) {
 					if (track._status == TrackStatus.BUSYSHUNTING) {
 						found = true;
@@ -819,7 +820,7 @@ public class SavFile extends TextFile {
 	
 			if (found) {
 				out.append("(white tracks\n");
-				for (Track track : _territory._tracks) {
+				for (Track track : _territory.getTracks()) {
 					if (track instanceof Track || track instanceof Switch) {
 						if (track._status == TrackStatus.BUSYSHUNTING) {
 							out.append(String.format("%d,%d\n", track._position._x, track._position._y));
@@ -1074,12 +1075,10 @@ public class SavFile extends TextFile {
 
 		// post-process signals
 
-		for(Track track : _territory._tracks) {
-			if(!(track instanceof Signal))
-				continue;
-			signal = (Signal)track;
-			if (!signal.isApproach() && signal.isClear())
-				signal.unlock();
+		List<Signal> signals = _territory.getAllSignals();
+		for(Signal sig : signals) {
+			if (!sig.isApproach() && sig.isClear())
+				sig.unlock();
 		}
 
 
@@ -1669,7 +1668,7 @@ public class SavFile extends TextFile {
 		// when the layout is loaded from disk
 		//
 
-		for (Track track : _territory._tracks) {
+		for (Track track : _territory.getTracks()) {
 			if (!(track instanceof Switch))
 				continue;
 			Switch sw = (Switch) track;
@@ -1681,10 +1680,8 @@ public class SavFile extends TextFile {
 		
 		// Save the state of every signal
 		
-		for (Track track : _territory._tracks) {
-			if (!(track instanceof Signal))
-				continue;
-			Signal signal = (Signal) track;
+		List<Signal> signals = _territory.getAllSignals();
+		for (Signal signal : signals) {
 			if (!signal.isClear() && !signal.isFleeted())	// signal is in the default state,
 				continue;									// so no need to save it
 			out.append(String.format("Signal:%d,%d\n  Clear:%d\n  Fleeted:%d\n",
@@ -1780,7 +1777,7 @@ public class SavFile extends TextFile {
 		// save white tracks (to allow merging trains)
 
 		boolean found = false;
-		for (Track track : _territory._tracks) {
+		for (Track track : _territory.getTracks()) {
 			if (track instanceof Track || track instanceof Switch) {
 				if (track._status == TrackStatus.BUSYSHUNTING) {
 					found = true;
@@ -1790,7 +1787,7 @@ public class SavFile extends TextFile {
 		}
 
 		if (found) {
-			for (Track track : _territory._tracks) {
+			for (Track track : _territory.getTracks()) {
 				if (track instanceof Track || track instanceof Switch) {
 					if (track._status == TrackStatus.BUSYSHUNTING) {
 						out.append(String.format("WhiteTrack:%d,%d\n", track._position._x, track._position._y));

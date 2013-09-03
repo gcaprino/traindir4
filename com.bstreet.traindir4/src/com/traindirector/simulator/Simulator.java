@@ -244,6 +244,10 @@ public class Simulator {
 
 	public class MyScheduler extends TimerTask {
 
+		public MyScheduler() {
+			super();
+		}
+
 		@Override
 		public void run() {
 			// we run every 100 ms
@@ -283,16 +287,18 @@ public class Simulator {
 	}
 
 	public void flashSignals() {
-		for(Track track : _territory._tracks) {
-			if (!(track instanceof Signal))
-				continue;
-			Signal signal = (Signal) track;
-			SignalAspect aspect = signal.getAspect();
-			if (aspect == null)		// impossible
-				continue;
-			// TODO: optimize, since we don't need to have a local counter for each aspect.
-			// We could have a global flashing counter, since each aspect uses count % aspects.length
-			aspect.nextFlashing();
+		synchronized (_territory) {
+			List<Signal> signals = _territory.getAllSignals();
+			if(signals == null)	// not set up, yet
+				return;
+			for (Signal signal : signals) {
+				SignalAspect aspect = signal.getAspect();
+				if (aspect == null)		// impossible
+					continue;
+				// TODO: optimize, since we don't need to have a local counter for each aspect.
+				// We could have a global flashing counter, since each aspect uses count % aspects.length
+				aspect.nextFlashing();
+			}
 		}
 	}
 
@@ -312,19 +318,14 @@ public class Simulator {
 		if(_signalsChanged) {
 			if (ignore != null)
 				ignore._aspectChanged = true;
-			for(Track track : _territory._tracks) {
-				if(!(track instanceof Signal))
-					continue;
-				Signal signal = (Signal)track;
+			List<Signal> signals = _territory.getAllSignals();
+			for(Signal signal : signals) {
 				if(signal != ignore)
 					signal._aspectChanged = false;
 			}
 			do {
 				_signalsChanged = false;
-				for(Track track : _territory._tracks) {
-					if(!(track instanceof Signal))
-						continue;
-					Signal signal = (Signal)track;
+				for(Signal signal : signals) {
 					if (signal == ignore)
 						continue;
 					signal.onUpdate();
@@ -506,6 +507,12 @@ public class Simulator {
 		}
 		result = content.getHTML();
 		return result;
+	}
+
+	public void clearCachedPaths() {
+		List<Signal> signals = _territory.getAllSignals();
+		for (Signal signal : signals)
+			signal.clearCache();
 	}
 
 }

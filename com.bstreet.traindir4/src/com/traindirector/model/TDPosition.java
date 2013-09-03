@@ -26,7 +26,7 @@ public class TDPosition {
 	}
 
 	public boolean isNull() {
-		return _x == 0 || _y == 0;
+		return _x == 0 && _y == 0;
 	}
 	
 	public int fromString(String s, int offset) {
@@ -63,4 +63,9 @@ public class TDPosition {
 		return "(" + _x + "," + _y + ")";
 	}
 
+	public boolean equals(TDPosition other) {
+		if(other == null)
+			return false;
+		return _x == other._x && _y == other._y;
+	}
 }
