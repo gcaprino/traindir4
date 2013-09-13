@@ -162,7 +162,7 @@ public class SavFile extends TextFile {
 				line = in.readLine().trim();
 				values = readIntArray(line, 10);
 				train._timeExited = values[0];
-				train._wrongDest = values[1];
+				train._wrongDest = values[1] != 0;
 				train._speed = values[2];
 				train._maxspeed = values[3];
 				train._curmaxspeed = values[4];
@@ -715,7 +715,7 @@ public class SavFile extends TextFile {
 				
 				// 3rd line
 				out.append(String.format("  %d,%d,%d,%d,%d,%d,%d,%d,%d", train._timeExited,
-						train._wrongDest, train._speed, train._maxspeed,
+						train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
 						train._curmaxspeed, train._trackpos, train._timeLate,
 						train._timeDelay, train._timeRed));
 				if (train._entryDelay != null)
@@ -1120,7 +1120,7 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("WrongDest")) {
-				train._wrongDest = ivalue;
+				train._wrongDest = ivalue != 0;
 				continue;
 			}
 			if(key.equals("Speed")) {
@@ -1704,7 +1704,7 @@ public class SavFile extends TextFile {
 			out.append(String.format("  Status:%d\n  Direction:%d\n  Exited:%s\n", train._status.ordinal(), train._direction.ordinal(),
 				train._exited != null ? train._exited : ""));
 			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackPos:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
-					train._timeExited, train._wrongDest, train._speed, train._maxspeed,
+					train._timeExited, train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
 					train._curmaxspeed, train._trackpos, train._timeLate,
 					train._timeDelay, train._timeRed));
 			if (train._entryDelay != null)

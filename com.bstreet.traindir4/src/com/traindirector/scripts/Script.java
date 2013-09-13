@@ -267,6 +267,7 @@ public class Script {
 				
 			case NextSignalRef:
 			case NextApproachRef:
+			case LinkedRef:
 				
 				if (root == null)
 					root = n;
@@ -287,6 +288,7 @@ public class Script {
 					case SignalRef:
 					case NextSignalRef:
 					case NextApproachRef:
+					case LinkedRef:
 					case TrainRef:
 					case Dot:
 						
@@ -306,6 +308,13 @@ public class Script {
 						n._left = root;
 						n._right = n2;
 						n2._txt = (n2._op == NodeOp.NextSignalRef) ? "next" : "nextApproach";
+						root = n;
+						continue;
+					}
+					if (n2._op == NodeOp.LinkedRef) {
+						n._left = root;
+						n._right = n2;
+						n2._txt = "linked";
 						root = n;
 						continue;
 					}
@@ -383,6 +392,8 @@ public class Script {
 			n._op = NodeOp.TrainRef;
 		} else if(word.equals("nextApproach")) {
 			n._op = NodeOp.NextApproachRef;
+		} else if(word.equals("linked")) {
+			n._op = NodeOp.LinkedRef;
 		} else if(word.equals("next")) {
 			n._op = NodeOp.NextSignalRef;
 		} else if(word.equals("and")) {

@@ -46,4 +46,8 @@ public class SignalAspect {
 		// TODO: override
 		return 0;
 	}
+	
+	public String toString() {
+		return _name + "=" + _action;
+	}
 }

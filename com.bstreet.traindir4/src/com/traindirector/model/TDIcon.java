@@ -15,4 +15,8 @@ public class TDIcon {
 		_xpmFile = xpmFile;
 		_xpmBytes = xpmBytes;
 	}
+	
+	public String toStrign() {
+		return _name + "(" + _xpmFile + ")";
+	}
 }

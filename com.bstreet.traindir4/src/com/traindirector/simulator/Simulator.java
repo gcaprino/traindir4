@@ -19,6 +19,7 @@ import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.files.FileManager;
 import com.traindirector.model.Alert;
+import com.traindirector.model.ImageTrack;
 import com.traindirector.model.PerformanceCounters;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
@@ -331,7 +332,7 @@ public class Simulator {
 					signal.onUpdate();
 				}
 			} while(_signalsChanged);
-			// TODO: onIconUpdateAll()
+			updateAllIcons();
 		}
 	}
 
@@ -513,6 +514,15 @@ public class Simulator {
 		List<Signal> signals = _territory.getAllSignals();
 		for (Signal signal : signals)
 			signal.clearCache();
+	}
+
+	public void updateAllIcons() {
+		for (Track track : _territory.getTracks()) {
+			if (!(track instanceof ImageTrack))
+				continue;
+			ImageTrack image = (ImageTrack) track;
+			image.onIconUpdate();
+		}
 	}
 
 }

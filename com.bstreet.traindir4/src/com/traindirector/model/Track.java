@@ -129,7 +129,7 @@ public class Track {
 		TDPosition newPos = newDir.offset(_position);
 		//System.out.println(">> " + track.toString() + " [" + oldDir.toString() + " -> " + newDir.toString() + "] -> " + newPos.toString());
 		newTrack = territory.findTrack(newPos);
-		if (newTrack == null)
+		if (newTrack == null || (newTrack instanceof TextTrack))
 			return false;
 		out._track = newTrack;
 		out._direction = newDir;
@@ -621,7 +621,7 @@ VLine	itin_layout[] = {
 		}
 	}
 
-	public void DoStopped(Train train) {
+	public void doStopped(Train train) {
 		if (_script != null) {
 			_script.handle("OnStopped", this, train);
 		}

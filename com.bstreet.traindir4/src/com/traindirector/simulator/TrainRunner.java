@@ -1,5 +1,7 @@
 package com.traindirector.simulator;
 
+import com.traindirector.commands.AssignCommand;
+import com.traindirector.commands.ReverseCommand;
 import com.traindirector.model.Direction;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
@@ -69,7 +71,7 @@ public class TrainRunner {
 				if (train._timeIn + train._inDelay > _simulator._simulatedTime)
 					continue;
 				if (train._waitFor != null) {
-
+					// TODO: waitfor
 				}
 
 				// we can start the train
@@ -151,6 +153,13 @@ public class TrainRunner {
 				findSlowPoint(train);
 				advance(train);
 				break;
+
+			case STARTING:
+				
+				if (--train._startDelay > 0)
+					continue;
+				train._startDelay = 0;
+				// fall through
 
 			case WAITING:
 
@@ -332,12 +341,11 @@ public class TrainRunner {
 		PathFinder finder = new PathFinder();
 		Direction dir = track.walk(path.getDirectionAt(nPathElements - 1));
 		TDPosition nextPos = dir.offset(track._position);
-		TrackPath nextPath = finder.find(nextPos, dir);
-		if (nextPath == null)
+		Track next = _simulator._territory.findTrack(nextPos);
+		if (next == null)
 			return null;
-		track = nextPath.getFirstTrack();
 		Signal signal;
-		signal = _simulator._territory.findSignalLinkedTo(track, nextPath.getDirectionAt(0));
+		signal = _simulator._territory.findSignalLinkedTo(next, dir);
 		if (signal == null) {
 			return null;
 		}
@@ -508,7 +516,7 @@ public class TrainRunner {
 			}
 		}
 		if (track1 != null && track1._isStation)
-			track1.DoStopped(train);
+			track1.doStopped(train);
 		return true;
 	}
 
@@ -530,6 +538,7 @@ public class TrainRunner {
 		if(train._curmaxspeed < train._speed)
 			train._speed = train._curmaxspeed;
 		train._position = train.getHeadTrack();
+		train._direction = train._path.getDirectionAt(0);
 		train._trackDistance = 0;
 		findStopPoint(train);
 		findSlowPoint(train);
@@ -538,7 +547,13 @@ public class TrainRunner {
 			Track tt = train._path.getTrackAt(i);
 			tt.setStatus(TrackStatus.BUSY);
 		}
-		advance(train);
+		findStopPoint(train);
+		findSlowPoint(train);
+//		t->pathpos = 1;
+		train.onEntry();
+		if(train._position._isStation)
+		    trainAtStation(train, train._position);
+		//advance(train);
 	}
 
 	public void advance(Train train) {
@@ -660,7 +675,7 @@ public class TrainRunner {
 					return;
 				}
 				if (train._shunting && train._merging != null) {
-					train.merge();
+					merge(train);
 					return;
 				}
 				
@@ -842,6 +857,113 @@ public class TrainRunner {
 		} // end while true
 	}
 
+	private void merge(Train train) {
+		Train	t2;
+		boolean	doDelete = false;
+		int	i;
+
+		//Vector_dump(trn, _name);
+		train._status = train._oldstatus;
+		train._shunting = false;
+		train._speed = 0;
+		t2 = train._merging;
+		train._position._status = TrackStatus.FREE;
+		leaveTrack(train._position);
+		t2.clearFlag(Train.WAITINGMERGE);
+		train._position = null;
+		if(t2.isStranded()) {
+			train._length += t2._length;
+		    if(t2._length > 0) {
+				if(train._direction != t2._direction) {
+					ReverseCommand reverse = new ReverseCommand(t2);
+					reverse.handle();
+				}
+	//			Vector_dump(trn, "loco");
+	//			Vector_dump(t2, "materiale");
+				// incoming train always attaches to the tail of previous train.
+				AssignCommand assign = new AssignCommand(train, t2);
+				assign.handle();
+	//			Vector_dump(trn, "dopo assign");
+				train._merging = null;
+				Train tail = train._tail;
+				// t2 is deleted here, so nothing else to do
+				if(tail == null || tail._path == null) {
+				    if(train._position == null || !train._position._isStation || train._position == train._outOf)
+				    	return;
+				    if(Territory.sameStation(train._position._station, train._exit) || train.isArrived()) {
+						// in case we were shunted to our destination
+				    	train.arrived();
+				    }
+				    return;
+				}
+				for(i = 0 /*tail._pathpos*/; i < tail._path.getTrackCount(0); ++i) {
+				    Track trk = tail._path.getTrackAt(i);
+				    if(trk._isStation && Territory.sameStation(trk._station, train._exit) && trk != train._outOf) {
+				    	train.arrived();
+				    }
+				    if(trk == train._position)
+				    	break;
+				    trk.setStatus(TrackStatus.OCCUPIED);
+				}
+				return;
+		    }
+		    train._position = t2._position;
+		    _simulator._schedule.removeStranded(t2);
+		    
+			PathFinder finder = new PathFinder();
+			TrackPath path = finder.find(train._position._position, train._direction);
+			train._path = path;
+		    train._path.setStatus(TrackStatus.BUSY, 1);
+//		    _pathpos = 0;
+		    findStopPoint(train);
+		    findSlowPoint(train);
+//		    _pathpos = 1;
+	    	trainAtStation(train, train._position);
+		    train._merging = null;
+		    return;
+		}
+		train._merging = null;
+		t2._length += train._length;
+
+		if(t2.isArrived()) {
+		    // we want to keep train, and remove t2
+		    train._path = t2._path;
+		    t2._path = null;
+		    if(t2._length > 0) {
+		    	train._length = t2._length;
+			if(t2._tail != null) {
+			    if(train._tail != null && train._tail._path != null) {
+			    	train._tail._path.append(t2._tail._path);
+					t2._tail._path = null;
+			    } else {
+			    	train._tail = t2._tail;
+			    }
+			    // TODO: train._ecarpix = t2._ecarpix;
+			    // TODO: train._wcarpix = t2._wcarpix;
+			}
+		    }
+		    train._position = t2._position;
+		    t2._position = null;
+		    t2._tail = null;
+		    return;
+		}
+		// else we want to keep t2 and remove trn
+		if(train._length > 0) {
+		    if(t2._tail == null)
+		    	t2._tail = train._tail;
+		    else {
+				// the append is to trn instead of t2
+				// so that the tail's path of the merging tain
+				// will appear before the path of the stationary train
+		    	train._tail._path.append(t2._tail._path);
+				t2._tail._path = train._tail._path;
+				t2._tail._position = train._tail._position;
+				train._tail._path = null;
+		    }
+		    train._tail = null;
+		}
+	}
+
 	private int fetchPath(Train train) {
 		Track position = train._position;
 		if (position == null || (position instanceof TextTrack && !position._isStation)) {
@@ -950,7 +1072,7 @@ public class TrainRunner {
 				if (!signal._nopenalty)
 					++_simulator._performanceCounters.waiting_train;
 			}
-			train.DoWaiting(signal);
+			train.doWaiting(signal);
 			if (train._trackDistance > train._position._length)
 				train._trackDistance = 0;
 			// TODO: set train status changed
@@ -992,7 +1114,7 @@ public class TrainRunner {
 		
 		if (position != null && position._station != null && !Territory.sameStation(position._station, train._exit)) {
 			Simulator.INSTANCE._performanceCounters.wrong_dest++;
-			train._wrongDest = 1;
+			train._wrongDest = true;
 			train._exited = position._station;
 		}
 		
@@ -1017,7 +1139,7 @@ public class TrainRunner {
 		train.arrived();
 		// TODO: bstreet_train_arrived(train)
 		train._speed = 0;
-		train.doExit();
+		train.onExit();
 	}
 
 }

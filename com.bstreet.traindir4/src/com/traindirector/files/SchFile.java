@@ -55,6 +55,7 @@ public class SchFile extends TextFile {
 		String	line;
 		String originalLine;
 		TrainStop lastStop = null;
+		_simulator._simulatedTime = 0;
 		try {
 			Train	train = null;
 			while((originalLine = input.readLine()) != null) {
@@ -112,7 +113,8 @@ public class SchFile extends TextFile {
 					i = skipBlanks(line, i + 6);
 					if (i < 0)
 						continue;
-					_simulator._schedule._startTime = parseTime(line, i);
+					parseTime(line, i);
+					_simulator._schedule._startTime = _time;
 					_simulator._simulatedTime = _simulator._schedule._startTime;
 					continue;
 				}

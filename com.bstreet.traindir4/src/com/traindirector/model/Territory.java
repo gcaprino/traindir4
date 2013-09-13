@@ -354,14 +354,14 @@ public class Territory {
 			station = name.substring(0, index);
 		}
 		for (Track track : _tracks) {
-			if (!track._isStation)
-				continue;
 			if (track instanceof TextTrack) {
 				if (track._station.equals(station)
 						&& (!track._wlink.isNull() || !track._elink.isNull())) {
 					return track;
 				}
 			}
+			if (!track._isStation)
+				continue;
 			String s1 = track._station;
 			index = s1.indexOf(PLATFORM_SEP);
 			if (index >= 0)
@@ -447,7 +447,7 @@ public class Territory {
 			if (!track._wlink.sameAs(train._position._position))
 				continue;
 			TriggerTrack trigger = (TriggerTrack) track;
-			trigger.DoCrossed(train);
+			trigger.doCrossed(train);
 			
 		    //
 		    //	check to see if this trigger applies to a list of

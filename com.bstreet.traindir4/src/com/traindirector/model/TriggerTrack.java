@@ -45,7 +45,7 @@ public class TriggerTrack extends Track {
 		return null;
 	}
 
-	public void DoCrossed(Train train) {
+	public void doCrossed(Train train) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -26,6 +26,6 @@ public class SelectItineraryCommand extends SimulatorCommand {
 		if (itin != null) {
 			itin.select();
 		}
-		
+		_simulator.updateAllIcons();
 	}
 }

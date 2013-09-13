@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.swt.widgets.Display;
 
 import com.bstreet.cg.events.CGEventDispatcher;
@@ -132,11 +133,11 @@ public class LoadCommand extends SimulatorCommand {
 		boolean found = false;
 
 		if (t._entrance == null) {
-			System.out.println("No entrance for " + t._name);
+			_simulator.alert("No entrance for " + t._name);
 			return;
 		}
 		if (t._exit == null) {
-			System.out.println("No exit for " + t._name);
+			_simulator.alert("No exit for " + t._name);
 			return;
 		}
 		if(_territory.findStationNamed(t._entrance) != null) {
@@ -189,12 +190,11 @@ public class LoadCommand extends SimulatorCommand {
 		pth = null;
 		int tt, ts; 
 		found = false;
-		for(tt = 0; tt < t._stops.size() && !found; ++tt) {
-		    for(ts = tt + 1; ts < t._stops.size() && !found; ++ts) {
+		for(tt = 0; tt < t._stops.size(); ++tt) {
+		    for(ts = tt + 1; ts < t._stops.size(); ++ts) {
 				if((pt = _territory.findPath(t._stops.get(tt)._station, t._stops.get(ts)._station)) != null) {
 				    t0 = t._stops.get(tt)._departure;
 				    pth = pt;
-				    found = true;
 				}
 		    }
 		}

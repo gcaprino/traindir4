@@ -182,5 +182,8 @@ public class Itinerary {
 		}
 		return false;
 	}
-	
+
+	public String toString() {
+		return _name + " from " + _signame + " to " + _endsig + " next: " + (_nextitin == null ? "none" : _nextitin); 
+	}
 }

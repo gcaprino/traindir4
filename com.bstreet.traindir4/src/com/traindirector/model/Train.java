@@ -8,6 +8,7 @@ import com.traindirector.scripts.NodeOp;
 import com.traindirector.scripts.Script;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDDelay;
+import com.traindirector.simulator.TDTime;
 
 public class Train {
 
@@ -54,6 +55,8 @@ public class Train {
 	public int  _minDel;
 	public int  _minLate;
 	public int  _inDelay;
+    public short   _startDelay;     // TODO: seconds to wait until starting after stop (runtime - set from train schedule or train type)
+    public short   _myStartDelay;   // TODO: seconds this train should wait (from schedule file)
 	public boolean _shunting;
 	public TrackPath _path;
 	public TDDelay _entryDelay;
@@ -70,7 +73,7 @@ public class Train {
 	public String _exited;		// the station where the train exited, if not the correct one
 	public int  _timeExited;
 
-	public int  _wrongDest;
+	public boolean  _wrongDest;
 
 	public int  _trackpos;		// should be unused, here for backward compatibility with .sav files
 
@@ -109,7 +112,92 @@ public class Train {
 	}
 
 	public String getStatusAsString() {
-		return _status.toString();
+		int i, j;
+		boolean finalStop;
+		StringBuilder sb = new StringBuilder(_status.toString());
+		switch (_status) {
+		
+		case ARRIVED:
+			if (_wrongDest) {
+				sb.append("  Arrived at ");
+				sb.append(_exited);
+				sb.append(" instead of ");
+				sb.append(_exit);
+			} else if (_timeExited / 60 > _timeOut / 60) {
+				sb.append("  Arrived " + (_timeExited / 60 - _timeOut / 60));
+				sb.append(" min. late at ");
+				sb.append(_exit);
+			} else {
+				sb.append("  Arrived on time");
+			}
+			if (_stock != null && !_stock.isEmpty()) {
+				sb.append(" - stock for ");
+				sb.append(_stock);
+			}
+			break;
+		
+		case CANCELLED:
+			sb.append("  Canceled - runs on ");
+			for(i = 1, j = 1; i < 0x80; i <<= 1, ++j)
+			    if((_days & i) != 0)
+			    	sb.append("0" + j);
+			break;
+		
+		case DELAYED:
+			return "Delayed entry at " + _entrance;
+
+		case DERAILED:
+			break;
+
+		case READY:
+		    if(_entryDelay == null || _entryDelay._nSeconds == 0)
+		    	break;
+		    sb.append(" ETA ");
+		    sb.append(TDTime.toString(_timeIn + _entryDelay._nSeconds));
+			break;
+
+		case RUNNING:
+			finalStop = nextStop(sb);
+			if (_shunting) {
+				sb.append(" (shunting)");
+			}
+			sb.append(" Speed: " + _speed);
+			sb.append(" km/h");
+			if (!finalStop) {
+				sb.append(" to ");
+				sb.append(_exit);
+			}
+			break;
+
+		case STOPPED:
+		    int timedep = _timeDep;
+		    TrainStop stp = findStop(_position);
+		    if(stp != null && stp._depDelay != null && stp._depDelay._nSeconds != 0)
+		    	timedep += stp._depDelay._nSeconds;
+		    else if(_position._isStation && Territory.sameStation(_entrance, _position._station) && _entryDelay != null)
+		    	timedep += _entryDelay._nSeconds;
+		    sb.append("  ETD ");
+		    sb.append(TDTime.toString(timedep));
+		    boolean isFinalStop = nextStop(sb);
+		    if(!isFinalStop) {
+		    	sb.append(" Dest. ");
+		    	sb.append(_exit);
+		    }
+			break;
+
+		case WAITING:
+			finalStop = nextStop(sb);
+			if (!finalStop) {
+				sb.append(" Dest. ");
+				sb.append(_exit);
+			}
+			break;
+			
+		case STARTING:
+			sb.append(" (-" + _startDelay);
+			sb.append(")");
+		}
+		return sb.toString();
 	}
 
 	public void addNote(String s) {
@@ -184,6 +272,46 @@ public class Train {
 		sb.append(" m, stop: ");
 		sb.append(_distanceToStop);
 		return sb.toString();
+	}
+
+	/**
+	 * nextStop
+	 *
+	 * @param sb buffer to fill with stop information
+	 * @return true if next is final stop
+	 */
+
+	public boolean nextStop(StringBuilder sb) {
+		if(_status != TrainStatus.RUNNING && _status != TrainStatus.WAITING && _status != TrainStatus.STOPPED)
+		    return false;
+		Track tr;
+		TrainStop last = null;
+		for(TrainStop ts : _stops) {
+		    if(ts._minstop == 0)
+		    	continue;
+			tr = Simulator.INSTANCE._territory.findStationNamed(ts._station);
+		    if(tr == null || (tr instanceof TextTrack))
+		    	continue;
+		    if(ts._stopped)
+		    	continue;
+			last = ts;
+			break;
+		}
+		if(last == null) {
+			tr = Simulator.INSTANCE._territory.findStationNamed(_exit);
+		    if(tr == null || (tr instanceof TextTrack))
+	    		return false;
+		    sb.append(" Final stop ");
+		    sb.append(_exit);
+		    sb.append(" at ");
+		    sb.append(TDTime.toString(_timeOut));
+		    return true;
+		}
+		sb.append(" Next stop ");
+		sb.append(last._station);
+		sb.append(" at ");
+		sb.append(TDTime.toString(last._arrival));
+		return false;
 	}
 
 	public void SetPropertyValue(String prop, ExprValue value) {
@@ -372,7 +500,7 @@ public class Train {
 
 		_exited = null;		// the station where the train exited, if not the correct one
 		_timeExited = 0;
-		_wrongDest = 0;
+		_wrongDest = false;
 
 		_trackpos = 0;		// should be unused, here for backward compatibility with .sav files
 
@@ -402,7 +530,7 @@ public class Train {
 		// TODO: penalty: check late arrival
 		if (_position != null && _position instanceof TextTrack)
 			_position = null;	// remove it from the territory
-		OnArrived();
+		onArrived();
 	}
 
 	public void derailed() {
@@ -413,19 +541,22 @@ public class Train {
 	}
 
 	public void merge() {
-		// TODO Auto-generated method stub
-		
 	}
 
-	public void DoWaiting(Signal signal) {
-		OnWaiting(signal);
+	public boolean isStranded() {
+		// TODO stranded
+		return false;
+	}
+
+	public void doWaiting(Signal signal) {
+		onWaiting(signal);
 		_status = TrainStatus.WAITING;
 	}
 
 	public void stopped() {
 		_status = TrainStatus.STOPPED;
 		_speed = 0;
-		OnStopped();
+		onStopped();
 	}
 
 	public TrainStop findStop(Track station) {
@@ -460,24 +591,29 @@ public class Train {
 		return false;
 	}
 
-	private void OnArrived() {
+	private void onArrived() {
 		if (_script == null)
 			return;
 		_script.handle("OnArrived", null, this);
 	}
 
-	private void OnStopped() {
+	private void onStopped() {
 		if (_script == null)
 			return;
 		_script.handle("OnStopped", null, this);
 	}
 
-	public void OnWaiting(Signal signal) {
+	public void onWaiting(Signal signal) {
 		if(_script != null)
 			_script.handle("OnWaiting", signal, this);
 	}
 
-	public void doExit() {
+	public void onEntry() {
+		if(_script != null)
+			_script.handle("OnExit", null, this);
+	}
+
+	public void onExit() {
 		if(_script != null)
 			_script.handle("OnExit", null, this);
 	}

@@ -35,6 +35,7 @@ public class Switch extends Track {
 		// TODO: if was thrown, count penalty
 		setThrown();
 		setUpdated(Simulator.INSTANCE._updateCounter++);
+		Simulator.INSTANCE.updateAllIcons();
 	}
 
 	public void setThrown() {

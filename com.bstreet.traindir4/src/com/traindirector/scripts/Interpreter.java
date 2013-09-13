@@ -166,6 +166,20 @@ public class Interpreter {
 		if(n == null)
 			return false;
 		switch(n._op) {
+		
+		case LinkedRef:
+			if (_track == null || _track._wlink == null || _track._wlink.isNull()) {
+				return false;
+			}
+			result._track = find_track(_track._wlink._x, _track._wlink._y);
+			if(result._track == null)
+				return false;
+	        result._op = result._track instanceof Switch ? NodeOp.SwitchRef : NodeOp.SignalRef;
+	        expr_buff.append(_track._position.toString());
+	        expr_buff.append(" linked to ");
+			expr_buff.append(result._track._position.toString());
+	        return true;
+        
 		case SignalRef:
 			if(n._txt != null && !n._txt.isEmpty()) {
 				// signal by name
@@ -494,7 +508,8 @@ public class Interpreter {
 			}
 			expr_buff.append(".");
 			if(n._right != null) {
-				switch(n._right._op){ 
+				switch(n._right._op) {
+				// TODO: LinkedRef?
 				case SignalRef:
 				case NextSignalRef:
 					result._signal = getNextSignal(result._signal);

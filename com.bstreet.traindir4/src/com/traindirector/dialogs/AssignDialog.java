@@ -8,6 +8,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -78,6 +79,17 @@ public class AssignDialog extends TitleAreaDialog {
 		
 		_table = new Table(parent, SWT.V_SCROLL | SWT.H_SCROLL);
 		_table.setLayoutData(gridData);
+		_table.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				saveInput();
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
 		TableColumn col = new TableColumn(_table, SWT.NONE);
 		col.setText("Train");
 		col.setWidth(140);
@@ -122,7 +134,6 @@ public class AssignDialog extends TitleAreaDialog {
 		assignButton = createButton(parent, ASSIGN, "&Assign", false);
 		assignButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(ASSIGN);
 				close();
 			}
@@ -132,7 +143,6 @@ public class AssignDialog extends TitleAreaDialog {
 		shuntButton = createButton(parent, SHUNT, "S&hunt", false);
 		shuntButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(SHUNT);
 				close();
 			}
@@ -142,7 +152,6 @@ public class AssignDialog extends TitleAreaDialog {
 		assignAndShuntButton = createButton(parent, ASSIGN_AND_SHUNT, "Assign&+Shunt", false);
 		assignAndShuntButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(ASSIGN_AND_SHUNT);
 				close();
 			}
@@ -153,7 +162,6 @@ public class AssignDialog extends TitleAreaDialog {
 		reverseAndAssignButton = createButton(parent, REVERSE_AND_ASSIGN, "&Reverse+Assign", false);
 		reverseAndAssignButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(REVERSE_AND_ASSIGN);
 				close();
 			}
@@ -163,7 +171,6 @@ public class AssignDialog extends TitleAreaDialog {
 		splitButton = createButton(parent, SPLIT, "Sp&lit", false);
 		splitButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(SPLIT);
 				close();
 			}
@@ -173,7 +180,6 @@ public class AssignDialog extends TitleAreaDialog {
 		propertiesButton = createButton(parent, PROPERTIES, "&Properties", false);
 		propertiesButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				saveInput();
 				setReturnCode(PROPERTIES);
 				close();
 			}

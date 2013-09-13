@@ -9,6 +9,7 @@ public enum TrainStatus {
 	WAITING,
 	DERAILED,		// couldn't place on territory!
 	ARRIVED,		// reached some destination
+	STARTING,		// delayed starting
 	CANCELLED;		// does not run some days of the week
 	
 	public String toString() {
@@ -20,6 +21,7 @@ public enum TrainStatus {
 		case RUNNING:	return "running";
 		case STOPPED:	return "stopped";
 		case WAITING:	return "waiting";
+		case STARTING:	return "starting";
 		case CANCELLED:	return "cancelled";
 		default:		return "?";
 		
@@ -35,7 +37,8 @@ public enum TrainStatus {
 		case 4: return WAITING;
 		case 5: return DERAILED;
 		case 6: return ARRIVED;
-		case 7: return CANCELLED;
+		case 7: return STARTING;
+		case 8: return CANCELLED;
 		}
 		return DERAILED;
 	}
