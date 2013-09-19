@@ -314,7 +314,7 @@ public class Train {
 		return false;
 	}
 
-	public void SetPropertyValue(String prop, ExprValue value) {
+	public void setPropertyValue(String prop, ExprValue value) {
 		if (prop.equalsIgnoreCase("shunt")) {
 			if (_status != TrainStatus.STOPPED
 					&& _status != TrainStatus.WAITING

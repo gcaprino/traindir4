@@ -1,5 +1,7 @@
 package com.traindirector.model;
 
+import com.traindirector.scripts.ExprValue;
+import com.traindirector.scripts.NodeOp;
 import com.traindirector.simulator.Simulator;
 
 public class Switch extends Track {
@@ -21,13 +23,20 @@ public class Switch extends Track {
     public void onClick() {
 		
 		// if _status != FREE return
-		
+
 		Track linkedTrack = Simulator.INSTANCE._territory.findTrack(_wlink);
 		if (linkedTrack != null && linkedTrack instanceof Switch) {
 			Switch linkedSwitch = (Switch) linkedTrack;
+			if (linkedSwitch._status != TrackStatus.FREE || this._status != TrackStatus.FREE) {
+				// TODO: alert path is busy
+				return;
+			}
 			linkedSwitch._switched = !linkedSwitch._switched;
 			linkedSwitch.setThrown();
 			linkedSwitch.setUpdated(Simulator.INSTANCE._updateCounter++);
+		} else if (this._status != TrackStatus.FREE) {
+			// TODO: alert path is busy
+			return;
 		}
 		Simulator.INSTANCE.clearCachedPaths();
 		_switched = !_switched;
@@ -36,6 +45,26 @@ public class Switch extends Track {
 		setThrown();
 		setUpdated(Simulator.INSTANCE._updateCounter++);
 		Simulator.INSTANCE.updateAllIcons();
+	}
+
+	public boolean getPropertyValue(String property, ExprValue result) {
+		if(property.compareTo("thrown") == 0) {
+			result._op = NodeOp.Number;
+			result._val = isThrown() ? 1 : 0;
+			return true;
+		}
+		return false;
+	}
+
+	public void setPropertyValue(String property, ExprValue result) {
+		if(property.compareTo("thrown") == 0) {
+			boolean newStatus = (result._val != 0);
+			if (_switched != newStatus) {
+				onClick();
+			}
+			return;
+		}
+		super.setPropertyValue(property, result);
 	}
 
 	public void setThrown() {

@@ -197,7 +197,7 @@ public class Territory {
 	// We need to infer the direction based on the
 	// relative positions of the entry text and
 	// the linked entry track
-	public Direction findEntryDirection(TextTrack text, Track track) {
+	public Direction findEntryDirection(Track text, Track track) {
 		TDPosition ptext = text._position;
 		TDPosition ptrack = track._position;
 		switch (track._direction) {

@@ -217,7 +217,7 @@ public class Signal extends Track {
 		return false;
 	}
 
-	public void SetPropertyValue(String prop, ExprValue val) {
+	public void setPropertyValue(String prop, ExprValue val) {
 		Signal s = this;
 		ClickCommand ccmd = null;
 

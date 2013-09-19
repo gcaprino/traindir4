@@ -242,9 +242,15 @@ public class TrkFile {
 				case '5':		// IMAGE
 					trk = new ImageTrack();
 					trk._position = new TDPosition(x, y);
-					if (elements.length > 4)
-						trk._station = elements[4];
-					else
+					if (elements.length > 4) {
+						String s = elements[4];
+						if (s.charAt(0) == '@' && elements.length > 6) {
+							trk._wlink = new TDPosition(Integer.parseInt(s.substring(1)),
+									Integer.parseInt(elements[5]));
+							s = elements[6];
+						}
+						trk._station = s;
+					} else
 						trk._station = "?";
 					_territory.add(trk);
 					break;

@@ -118,7 +118,7 @@ public class Track {
 		Track newTrack = null;
 		if (!(this instanceof Switch)) {
 			newTrack = territory.findTrackLinkedTo(this, dir);
-			if (newTrack != null) {
+			if (newTrack != null && newTrack != this) {// newTrack != this in case this has links to itself!
 				out._track = newTrack;
 				out._direction = dir;
 				// TODO: set direction based on old and new track positions
@@ -515,7 +515,7 @@ VLine	itin_layout[] = {
 		return null;
 	}
 
-	public void SetPropertyValue(String prop, ExprValue val) {
+	public void setPropertyValue(String prop, ExprValue val) {
 		if(prop.equalsIgnoreCase("click")) {
 //		    wxSnprintf(expr_buff + wxStrlen(expr_buff), sizeof(expr_buff)/sizeof(wxChar) - wxStrlen(expr_buff), wxT("=%d"), val._val);
 			ClickCommand ccmd = new ClickCommand(_position);

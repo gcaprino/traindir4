@@ -103,7 +103,7 @@ public class Script {
 	
 	public Map<String, Statement> parseHandlers(int offset) {
 		Map<String, Statement> handlers = new HashMap<String, Statement>();
-		while(offset < _body.length()) {
+		while(offset != -1 && offset < _body.length()) {
 			StringBuilder line = new StringBuilder();
 			String s;
 			offset = scanLine(_body, offset, line);
@@ -439,6 +439,24 @@ public class Script {
 				++offset;
 			++offset;
 		}
+        if(ch == '\'' || ch == '"') {
+            int sep = s.charAt(offset++);
+            while(offset < s.length()) {
+            	ch = s.charAt(offset);
+                if(ch == '\\' && offset + 1 < s.length()) {
+                    sb.append(s.charAt(offset + 1));
+                    offset += 2;
+                    continue;
+                }
+                if(ch == sep) {
+                    ++offset;
+                    break;
+                }
+                sb.append(s.charAt(offset++));
+            }
+            offset = skipBlank(s, offset);
+            return offset;
+        }
 		if (isAlnum(ch) || ch == '@') {
 			while(offset < s.length() && isAlnum(ch = s.charAt(offset)) || ch == '@') {
 				sb.append(s.charAt(offset));

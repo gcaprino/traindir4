@@ -316,7 +316,7 @@ public class Interpreter {
 		    case SignalRef:
 				if(result._signal == null)
 				    return false;
-				result._signal.SetPropertyValue(result._txt, right);
+				result._signal.setPropertyValue(result._txt, right);
 				break;
 
 		    case TrackRef:
@@ -325,14 +325,14 @@ public class Interpreter {
 			
 				if(result._track == null)
 				    return false;
-				result._track.SetPropertyValue(result._txt, right);
+				result._track.setPropertyValue(result._txt, right);
 				return true;
 	
 			    case TrainRef:
 	
 				if(result._train == null)
 				    return false;
-				result._train.SetPropertyValue(result._txt, right);
+				result._train.setPropertyValue(result._txt, right);
 				return false;
 	
 		    }
@@ -485,12 +485,19 @@ public class Interpreter {
 
 		case Dot:
 			
-			if (_signal == null)
-				return false;
 			result._op = NodeOp.Addr;
 			if (n._left == null) {
-				result._signal = this._signal;	// .property -> this._signal
-				result._op = NodeOp.SignalRef;
+				// TODO: use Interpreter._op to know the default object
+				if (this._signal != null) {
+					result._signal = this._signal;	// .property -> this._signal
+					result._op = NodeOp.SignalRef;
+				} else if (this._train != null) {
+					result._train = this._train;
+					result._op = NodeOp.TrainRef;
+				} else if (this._track != null) {
+					result._track = this._track;
+					result._op = NodeOp.TrackRef;
+				}
 			} else if(n._left != null && n._left._op == NodeOp.Dot) {
 				boolean oldForAddr = _forAddr;
 				_forAddr = true;
@@ -499,9 +506,9 @@ public class Interpreter {
 					return false;
 				}
 				_forAddr = oldForAddr;
-				if (result._op != NodeOp.SignalRef) {
-					return false;
-				}
+				//if (result._op != NodeOp.SignalRef) {
+					//return false;
+				//}
 			} else {
 				if(!Evaluate(n._left, result))
 					return false;
@@ -529,6 +536,25 @@ public class Interpreter {
 				    expr_buff.append("NextApproach");
 				    expr_buff.append(result._signal._position.toString());
 					break;
+				
+				case LinkedRef:
+                    if(result._track == null) {
+                        return false;
+                    }
+                    result._signal = null;
+                    Track linkedTrack = result._track._wlinkTrack;
+                    if(linkedTrack == null) {
+                    	expr_buff.append("no linked track for " + result._track._position.toString());
+                    	return false;
+                    }
+                	expr_buff.append("linked to " + result._track._position.toString());
+                    if(linkedTrack instanceof Signal) {
+                    	result._signal = (Signal)linkedTrack;
+                    	result._op = NodeOp.SignalRef;
+                    } else {
+	                    result._track = linkedTrack;
+	                    result._op = NodeOp.TrackRef;
+                    }
 				}
 			}
 			result._txt = (n._right != null && n._right._txt != null) ? n._right._txt : n._txt;

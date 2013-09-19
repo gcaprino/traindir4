@@ -75,19 +75,20 @@ public class TrainRunner {
 				}
 
 				// we can start the train
-				TextTrack text = territory.findTextTrack(train._entrance);
+				Track text = territory.findTextTrack(train._entrance);
+				text = territory.findStationNamed(train._entrance);
 				if (text == null || text._wlink == null) {
 					_simulator.alert(String.format("Train %s derailed: entry point %s not found",
 							train._name, train._entrance));
 					train.derailed();
 					continue;
 				}
-				Track entryTrack = territory.findTrack(text._wlink);
+				Track entryTrack = territory.findTrack(text._elink);
 				if (entryTrack == null) {
-					entryTrack = territory.findTrack(text._elink);
+					entryTrack = territory.findTrack(text._wlink);
 					if (entryTrack == null) {
-						_simulator.alert(String.format("Train %s derailed: entry point %s not linked to any track",
-								train._name, train._entrance));
+						_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to any track",
+								train._name, train._entrance, text._position.toString()));
 						train.derailed();
 						continue;
 					}
@@ -95,15 +96,15 @@ public class TrainRunner {
 				PathFinder finder = new PathFinder();
 				Direction dir = territory.findEntryDirection(text, entryTrack);
 				if (dir == null) {
-					_simulator.alert(String.format("Train %s derailed: entry point %s not linked to horizontal or vertical track",
-							train._name, train._entrance));
+					_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to horizontal or vertical track",
+							train._name, train._entrance, text._position.toString()));
 					train.derailed();
 					continue;
 				}
 				TrackPath path = finder.find(entryTrack._position, dir);
 				if (path == null) {
-					_simulator.alert(String.format("Train %s derailed: cannot create path from entry point %s",
-							train._name, train._entrance));
+					_simulator.alert(String.format("Train %s derailed: cannot create path from entry point %s %s",
+							train._name, train._entrance, text._position.toString()));
 					train.derailed();
 					continue;
 				}
