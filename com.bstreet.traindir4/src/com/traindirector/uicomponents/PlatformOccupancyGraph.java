@@ -24,7 +24,6 @@ import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
 import com.traindirector.events.ResetEvent;
 import com.traindirector.model.TDPosition;
-import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;

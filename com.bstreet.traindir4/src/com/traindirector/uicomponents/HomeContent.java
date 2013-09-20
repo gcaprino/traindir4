@@ -37,15 +37,16 @@ public class HomeContent extends WebContent {
             if (sim._oldSimulations.size() == 0) {
             	sb.append("You have not simulated any scenario, yet.");
             } else {
-            	sb.append("You have played the following simulations:<br><br>");
+            	sb.append("You have played the following simulations:<br><blockquote><blockquote><div style=\"line-height:100%\">\n");
 	            for (int i = 0; i < sim._oldSimulations.size(); ++i) {
 	            	String s = sim._oldSimulations.get(i);
-	            	sb.append("<a href=\"/read/");
+	            	sb.append("<div class=\"oldsim\"><a href=\"/read/");
 	            	sb.append(s);
 	            	sb.append("\">");
 	            	sb.append(s);
-	            	sb.append("</a><br>");
+	            	sb.append("</a></div><br>\n");
 	            }
+	            sb.append("</div></blockquote></blockquote>\n");
             }
             values.put("$oldsims", sb.toString());
             return replaceContent(content, values);
@@ -55,7 +56,7 @@ public class HomeContent extends WebContent {
 	
 	@Override
 	public boolean doLink(String location) {
-		if (location.equals("tdir:open")) {
+		if (location.equals("trdir:open")) {
 			OpenSimulationAction act = new OpenSimulationAction("Open");
 			act.run();
 			return true;

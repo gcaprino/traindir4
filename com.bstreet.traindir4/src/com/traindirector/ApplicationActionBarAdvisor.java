@@ -55,6 +55,7 @@ import com.traindirector.uiactions.ShowMapAction;
 import com.traindirector.uiactions.ShowPerformanceAction;
 import com.traindirector.uiactions.ShowScheduleViewAction;
 import com.traindirector.uiactions.ShowTrainStopsViewAction;
+import com.traindirector.uiactions.ShowWelcomePageAction;
 import com.traindirector.uiactions.SkipAheadAction;
 import com.traindirector.uiactions.SlowSimulationAction;
 import com.traindirector.uiactions.StationScheduleAction;
@@ -95,6 +96,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     ShowAlertsViewAction showAlertsViewAction;
     ShowEditToolsAction showEditToolsAction;
     ShowTrainStopsViewAction showTrainStopsViewAction;
+    ShowWelcomePageAction showWelcomePageAction;
     ShowMapAction showMapAction;
     ChangeLanguageAction changeLanguageAction;
     PreferencesAction preferencesAction;
@@ -152,7 +154,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(showScheduleViewAction = new ShowScheduleViewAction(window, "Show schedule"));
         register(showTrainStopsViewAction = new ShowTrainStopsViewAction(window, "Show train stops"));
         register(showEditToolsAction = new ShowEditToolsAction(window, "Show edit tools"));
-        register(showMapAction = new ShowMapAction(window, "Show map"));
+        register(showMapAction = new ShowMapAction(window, "Show Map"));
         register(changeLanguageAction = new ChangeLanguageAction(window, "Change language"));
         register(preferencesAction = new PreferencesAction(window, "Edit preferences..."));
         register(itineraryAction = new ItineraryAction(window, "Itineraries..."));
@@ -163,6 +165,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     	register(zoomOutAction = new ZoomOutAction(window, "Zoom Out"));
     	register(zoomInAction = new ZoomInAction(window, "Zoom In"));
     	register(showInfoPageAction = new ShowInfoPageAction(window, "Show Info"));
+    	register(showWelcomePageAction = new ShowWelcomePageAction(window, "Show Welcome Page"));
     	register(showLayoutViewAction = new ShowLayoutPageAction(window, "Show Layout"));
     	register(performanceAction = new ShowPerformanceAction(window, "Performance..."));
     	register(setSignalToGreenAction = new SetSignalsToGreenAction(window, "Set Signals to Green"));
@@ -234,13 +237,14 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         runMenu.add(performanceAction);
         runMenu.add(assignAction);
         
+        viewMenu.add(showWelcomePageAction);
         viewMenu.add(showLayoutViewAction);
         viewMenu.add(showScheduleViewAction);
         viewMenu.add(showAlertsViewAction);
         viewMenu.add(showTrainStopsViewAction);
         viewMenu.add(showInfoPageAction);
         viewMenu.add(platformOccupancyAction);
-        viewMenu.add(showMapAction);
+        //viewMenu.add(showMapAction);
         //viewMenu.add(showEditToolsAction);
         fileMenu.add(new Separator());
         viewMenu.add(zoomInAction);

@@ -1,6 +1,18 @@
 body {
         background-color: white;
-        line-height: 140%;
+        line-height: 120%;
         font-family: Arial, Helvetica, sans-serif;
+        width: 900px;
+        margin: auto;
 }
+
+a:link {color:#0000FF;text-decoration:none;}    /* unvisited link */
+a:visited {color:#0000FF;text-decoration:none;} /* visited link */
+a:hover {background-color:#e0e0e0;text-decoration:underline;}   /* mouse over link */
+a:active {color:#0000FF;text-decoration:none;}  /* selected link */
+
+.oldsim {
+}
+
+
 

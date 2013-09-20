@@ -258,6 +258,12 @@
       </command>
       <command
             categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Welcome Page"
+            id="com.traindirector.showwelcomepage"
+            name="WelcomePage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
             description="Show the Info page"
             id="com.traindirector.infopage"
             name="InfoPage">
@@ -315,6 +321,18 @@
             description="Show the Time-Distance graph"
             id="com.traindirector.timedistance"
             name="TimeDistance">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Time-Distance graph"
+            id="com.traindirector.platformoccupancy"
+            name="PlatformOccupancy">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Time-Distance graph"
+            id="com.traindirector.showmap"
+            name="ShowMap">
       </command>
       <command
             categoryId="com.bstreet.cg.traindirector.category"

@@ -1,5 +1,7 @@
 package com.traindirector.simulator;
 
+import java.util.Random;
+
 import com.traindirector.commands.AssignCommand;
 import com.traindirector.commands.ReverseCommand;
 import com.traindirector.model.Direction;
@@ -54,69 +56,17 @@ public class TrainRunner {
 	public void timeStep() {
 		Signal signal;
 		Schedule schedule = _simulator._schedule;
-		Territory territory = _simulator._territory;
 
 		for (Train train : schedule._trains) {
 			switch (train._status) {
 			case READY:
 
-				// check time in
-				if (train._entrance == null)
-					continue;
-				if(train._days != 0 && (_simulator._schedule._runDay & train._days) == 0)
-					continue;
-				if (train._timeIn < schedule._startTime)
-					continue;
-				// check random delay 3 minutes
-				if (train._timeIn + train._inDelay > _simulator._simulatedTime)
-					continue;
-				if (train._waitFor != null) {
-					// TODO: waitfor
-				}
-
-				// we can start the train
-				Track text = territory.findTextTrack(train._entrance);
-				text = territory.findStationNamed(train._entrance);
-				if (text == null || text._wlink == null) {
-					_simulator.alert(String.format("Train %s derailed: entry point %s not found",
-							train._name, train._entrance));
-					train.derailed();
-					continue;
-				}
-				Track entryTrack = territory.findTrack(text._elink);
-				if (entryTrack == null) {
-					entryTrack = territory.findTrack(text._wlink);
-					if (entryTrack == null) {
-						_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to any track",
-								train._name, train._entrance, text._position.toString()));
-						train.derailed();
-						continue;
-					}
-				}
-				PathFinder finder = new PathFinder();
-				Direction dir = territory.findEntryDirection(text, entryTrack);
-				if (dir == null) {
-					_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to horizontal or vertical track",
-							train._name, train._entrance, text._position.toString()));
-					train.derailed();
-					continue;
-				}
-				TrackPath path = finder.find(entryTrack._position, dir);
-				if (path == null) {
-					_simulator.alert(String.format("Train %s derailed: cannot create path from entry point %s %s",
-							train._name, train._entrance, text._position.toString()));
-					train.derailed();
-					continue;
-				}
-				train._path = path;
-				if (!path.isFree()) {
-					train._status = TrainStatus.DELAYED;
-					continue;
-				}
-				startRunning(train);
+				if (readyToStart(train))
+					startRunning(train);
 				break;
 
 			case ARRIVED:
+			case DERAILED:
 				continue;
 
 			case DELAYED:
@@ -133,9 +83,6 @@ public class TrainRunner {
 				startRunning(train);
 				break;
 
-			case DERAILED:
-				continue;
-
 			case RUNNING:
 
 				// advance position
@@ -147,6 +94,7 @@ public class TrainRunner {
 				// check etd
 				if (train._timeDep > _simulator._simulatedTime)
 					break;
+
 //				startRunning(train);
 				train._status = TrainStatus.RUNNING;
 				train._outOf = train._position;
@@ -186,6 +134,114 @@ public class TrainRunner {
 
 			}
 		}
+	}
+
+	public boolean readyToStart(Train train) {
+		Territory territory = _simulator._territory;
+
+		// check time in
+		if (train._entrance == null)
+			return false;
+		if(train._days != 0 && (_simulator._schedule._runDay & train._days) == 0)
+			return false;
+		if (train._timeIn < _simulator._schedule._startTime)
+			return false;
+		// check random delay 3 minutes before entry time
+		if (train._timeIn - 180 < _simulator._simulatedTime && !train._gotDelay) {
+		    train._inDelay = checkRealTimeDelay(train) * 60;
+		    if(train._inDelay == 0) {
+		    	// TODO: train._inDelay = bstreet_enterdelay(t, &changed) * 60;
+		    	train._inDelay += selectDelay(train, train._entryDelay);
+	    	}	
+			train._gotDelay = true;
+		}
+		if (train._timeIn + train._inDelay > _simulator._simulatedTime)
+			return false;
+		if (train._waitFor != null) {
+			Track trk;
+		    Train t1 = _simulator._schedule.findTrainNamed(train._waitFor);
+		    if(t1 == null || !t1.isArrived())
+		    	return false;
+		    if(train._waitTime == 0)
+		    	train._waitTime = 60;	/* default we wait 60 seconds */
+		    if(t1._timeExited + train._waitTime > _simulator._simulatedTime)
+		    	return false;		/* can't depart, yet */
+		    if((trk = territory.findStation(t1._exit)) != null || !(trk instanceof Track)) {
+			    if(train._timeDelay == 0) {		/* first time, issue an alert */
+			    	_simulator.alert(String.format("You must assign train %s using stock from train %s!",
+							train._name, train._waitFor));
+			    }
+			    train._timeDelay += _simulator._currentTimeMultiplier;
+			    _simulator._totalDelay += _simulator._currentTimeMultiplier;
+			    return false;
+		    }
+		}
+
+		// we can start the train
+		Track text = territory.findTextTrack(train._entrance);
+		text = territory.findStationNamed(train._entrance);
+		if (text == null || (text._wlinkTrack == null && text._elinkTrack == null)) {
+			_simulator.alert(String.format("Train %s derailed: entry point %s not found",
+					train._name, train._entrance));
+			train.derailed();
+			return false;
+		}
+		Track entryTrack = text._elinkTrack;
+		if (entryTrack == null) {
+			entryTrack = text._wlinkTrack;
+			if (entryTrack == null) {
+				_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to any track",
+						train._name, train._entrance, text._position.toString()));
+				train.derailed();
+				return false;
+			}
+		}
+		PathFinder finder = new PathFinder();
+		Direction dir = territory.findEntryDirection(text, entryTrack);
+		if (dir == null) {
+			_simulator.alert(String.format("Train %s derailed: entry point %s %s not linked to horizontal or vertical track",
+					train._name, train._entrance, text._position.toString()));
+			train.derailed();
+			return false;
+		}
+		TrackPath path = finder.find(entryTrack._position, dir);
+		if (path == null) {
+			_simulator.alert(String.format("Train %s derailed: cannot create path from entry point %s %s",
+					train._name, train._entrance, text._position.toString()));
+			train.derailed();
+			return false;
+		}
+		train._path = path;
+		if (!path.isFree()) {
+			train._status = TrainStatus.DELAYED;
+			return false;
+		}
+		return true;
+	}
+
+	private int selectDelay(Train train, TDDelay del) {
+		if(del == null || !_simulator._options._randomDelays.isSet())
+		    return 0;
+		if(del._nDelays != 0)
+		    return 0;
+		if(train.isSet(Train.GOTDELAYATSTOP))
+		    return del._nSeconds;
+		if(del._nSeconds == 0) {
+		    int r = (int) (Math.random() * 100);
+		    for(int i = 0; i < del._nDelays; ++i) {
+				if(r < del._prob[i]) {
+				    del._nSeconds = del._seconds[i];
+				    train.setFlag(Train.ENTEREDLATE);
+				    break;
+				}
+		    }
+		}
+		return del._nSeconds;
+	}
+
+	private int checkRealTimeDelay(Train train) {
+		// TODO: get train late time from mobile.viaggiatreno.it
+		return 0;
 	}
 
 	public void leaveTrack(Track track) {

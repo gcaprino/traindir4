@@ -49,6 +49,9 @@ public interface ICommandIds {
 	public static final String CMD_ZOOM_IN = "com.traindirector.zoomin";
 	public static final String CMD_ZOOM_OUT = "com.traindirector.zoomout";
 
+	public static final String CMD_SHOW_WELCOME_PAGE = "com.traindirector.showwelcomepage";
+    public static final String CMD_SHOW_MAP = "com.traindirector.showmap";
+
 	public static final String CMD_HELP_LANGUAGE = "com.bstreet.cg.traindirector.help.language";
     
     // UNUSED

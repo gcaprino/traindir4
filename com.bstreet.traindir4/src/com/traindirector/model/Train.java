@@ -57,6 +57,7 @@ public class Train {
 	public int  _inDelay;
     public short   _startDelay;     // TODO: seconds to wait until starting after stop (runtime - set from train schedule or train type)
     public short   _myStartDelay;   // TODO: seconds this train should wait (from schedule file)
+    public boolean _gotDelay;	// we computed a delay upon entry in the territory
 	public boolean _shunting;
 	public TrackPath _path;
 	public TDDelay _entryDelay;
@@ -491,6 +492,7 @@ public class Train {
 		_minDel = 0;
 		_minLate = 0;
 		_inDelay = 0;
+		_gotDelay = false;
 		_shunting = false;
 		_entryDelay = null;
 		_trackDistance = 0; // distance still to travel in path[0]
