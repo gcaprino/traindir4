@@ -446,9 +446,9 @@ public class Switch extends Track {
 				t1 = getSegments(TrackDirection.SW_NE);
 				t2 = getSegments(TrackDirection.SW_N);
 			} else if(_switched)
-				t2 = getSegments(TrackDirection.SW_N);
+				return getSegments(TrackDirection.SW_N);
 			else
-				t1 = getSegments(TrackDirection.SW_NE);
+				return getSegments(TrackDirection.SW_NE);
 			break;
 
 		case 19:

@@ -330,7 +330,7 @@
       </command>
       <command
             categoryId="com.bstreet.cg.traindirector.category"
-            description="Show the Time-Distance graph"
+            description="Show a map for the territory"
             id="com.traindirector.showmap"
             name="ShowMap">
       </command>
@@ -352,7 +352,52 @@
       <key
             commandId="com.bstreet.cg.traindirector.open"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+2">
+            sequence="CTRL+O">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+E">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.run"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+Shift+S">
+      </key>
+      <key
+            commandId="com.traindirector.timedistance"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+G">
+      </key>
+      <key
+            commandId="com.traindirector.lategraph"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+L">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.fast"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+X">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.slow"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+Z">
+      </key>
+      <key
+            commandId="com.traindirector.skipahead"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+K">
+      </key>
+      <key
+            commandId="com.traindirector.stationschedule"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="F6">
+      </key>
+      <key
+            commandId="com.traindirector.itinerary"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="Ctrl+I">
       </key>
       <key
             commandId="com.bstreet.cg.traindirector.openMessage"
@@ -362,7 +407,7 @@
       <key
             commandId="org.eclipse.ui.file.exit"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+X">
+            sequence="Alt+F4">
       </key>
    </extension>
    <extension point="org.eclipse.core.runtime.products" id="product">

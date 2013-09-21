@@ -443,7 +443,7 @@ public class SavFile extends TextFile {
 
 			if (line != null) {
 				values = readIntArray(line, 5);
-				schedule._runDay = values[0];
+				_simulator._runDay = values[0];
 				_simulator._options._terseStatus.set(values[1] != 0);
 				_simulator._options._statusOnTop.set(values[2] != 0);
 				_simulator._options._showSeconds.set(values[3] != 0);
@@ -873,7 +873,7 @@ public class SavFile extends TextFile {
 			// other statistics and options
 			
 			out.append(String.format("%d,%d,%d,%d,%d\n",
-					schedule._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
+					_simulator._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
 					_simulator._options._showSeconds, _simulator._options._traditionalSignals));
 			
 			out.append(String.format("%d,%d\n", _simulator._options._autoLink, _simulator._options._showGrid));
@@ -1439,7 +1439,7 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("RunDay")) {
-				schedule._runDay = ivalue;
+				_simulator._runDay = ivalue;
 				continue;
 			}
 			if(key.equals("TerseStatus")) {
@@ -1834,7 +1834,7 @@ public class SavFile extends TextFile {
 		// other statistics and options
 		
 		out.append(String.format("RunDay:%d\nTerseStatus:%d\nStatusOnTop:%d\nShowSeconds:%d\nTraditionalSignals:%d\n",
-				schedule._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
+				_simulator._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
 				_simulator._options._showSeconds, _simulator._options._traditionalSignals));
 		
 		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._options._autoLink, _simulator._options._showGrid));

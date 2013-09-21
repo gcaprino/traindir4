@@ -9,7 +9,6 @@ public class Schedule {
 	public List<Train> _trains;
 	public List<Train> _stranded;
 	public int _startTime;
-	public int _runDay;
 
 	public int _nRunning;
 	public int _nWaiting;
@@ -27,7 +26,6 @@ public class Schedule {
 		_trains.clear();
 		_stranded.clear();
 		_startTime = 0;
-		_runDay = 0;
 		clearCounters();
 	}
 

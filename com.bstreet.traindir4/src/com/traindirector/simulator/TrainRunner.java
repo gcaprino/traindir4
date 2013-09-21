@@ -142,7 +142,7 @@ public class TrainRunner {
 		// check time in
 		if (train._entrance == null)
 			return false;
-		if(train._days != 0 && (_simulator._schedule._runDay & train._days) == 0)
+		if(train._days != 0 && (_simulator._runDay & train._days) == 0)
 			return false;
 		if (train._timeIn < _simulator._schedule._startTime)
 			return false;

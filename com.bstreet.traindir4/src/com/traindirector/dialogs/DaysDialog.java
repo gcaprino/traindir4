@@ -21,7 +21,7 @@ public class DaysDialog extends BaseDialog {
 	}
 
 	private Button[] dayButton = new Button[7];
-	public String[] days = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+	public String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 	private int _selectedDay;
 
 	@Override
