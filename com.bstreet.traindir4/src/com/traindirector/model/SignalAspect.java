@@ -9,6 +9,7 @@ public class SignalAspect {
 	
 	public static final String RED = "red";
 	public static final String GREEN = "green";
+	public static final String GREEN_FLEETED = "greenFleeted";
 
 	public String _name;
 	public String _action;

@@ -117,6 +117,20 @@ public class LoadCommand extends SimulatorCommand {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		int count = 0;
+		for (Train train : _simulator._schedule._trains) {
+			if (train._entrance == null || train._entrance.isEmpty()) {
+				++count;
+				train._entrance = "?";
+			}
+			if (train._exit == null || train._exit.isEmpty()) {
+				++count;
+				train._exit = "?";
+			}
+		}
+		if (count > 0) {
+			_simulator.alert("Some train has unknown entry/exit point!");
+		}
 	}
 	
 	

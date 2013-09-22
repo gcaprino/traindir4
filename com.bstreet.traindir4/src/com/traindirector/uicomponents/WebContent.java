@@ -14,9 +14,15 @@ import org.eclipse.core.runtime.FileLocator;
 
 public class WebContent {
 
-    public File getResourceFile(String filePath) {
+	String _endpoint;
+	
+	public WebContent(String endpoint) {
+		_endpoint = endpoint;
+	}
+
+    public static File getResourceFile(String filePath) {
         try {
-        	URL res = getClass().getResource(filePath);
+        	URL res = WebContent.class.getResource(filePath);
         	if (res == null)
         		return null;
             URL path = FileLocator.toFileURL(res);
@@ -32,7 +38,7 @@ public class WebContent {
         return null;
     }
 
-    public List<String> getFileContent(File file) {
+    public static List<String> getFileContent(File file) {
     	List<String> content = new ArrayList<String>();
     	if (file == null)
     		return content;
@@ -83,6 +89,26 @@ public class WebContent {
 
 	public String getHTML() {
 		return "<html><body>Empty page.</body></html>";
+	}
+
+	public String getEndpoint() {
+		return _endpoint;
+	}
+
+	public String getCmd(String location) {
+		String cmd = location;
+		if (cmd.startsWith("tdir:"))
+			cmd = cmd.substring(5);
+		if (cmd.startsWith("about:"))
+			cmd = cmd.substring(6);
+		if (cmd.startsWith("/"))
+			cmd = cmd.substring(1);
+		if (cmd.startsWith(_endpoint))
+			cmd = cmd.substring(_endpoint.length());
+		if (cmd.startsWith("/"))
+			cmd = cmd.substring(1);
+		cmd = cmd.replace("%20", " ");
+		return cmd;
 	}
 
 }

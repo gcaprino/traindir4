@@ -166,12 +166,17 @@ public class Signal extends Track {
 			return false;
 		}
 
+		boolean set = false;
 		if (this._script != null && _script instanceof TDSScript) {
 			// try to set the signal's aspect using the associated script, if any
-			if (!_script.handle("OnCleared", this, null))
+			set = _script.handle("OnCleared", this, null);
+		}
+		if (!set) {
+			if (_nowfleeted)
+				setAspectFromName(SignalAspect.GREEN_FLEETED);
+			else
 				setAspectFromName(SignalAspect.GREEN);
-		} else
-			setAspectFromName(SignalAspect.GREEN);
+		}
 		finder.setAs(path, TrackStatus.BUSY);
 		return true;
 	}
@@ -180,13 +185,12 @@ public class Signal extends Track {
 	public void onClick() {
 		toggle();
 	}
-	
+
 	@Override
 	public void onRightClick() {
 		if(!isClear())
 			return;
-		_fleeted = !_fleeted;
-		_nowfleeted = _fleeted;
+		_nowfleeted = !_nowfleeted;
 		if(_fleeted)
 			setAspectFromName("greenFleeted");
 		else
@@ -612,8 +616,12 @@ public class Signal extends Track {
         Track   trk;
         Signal  sig;
         Direction dir;
-        int size = path._tracks.size();
+        int		size;
         
+        if (path == null || path._tracks == null)
+        	return;
+        
+        size = path._tracks.size();
         if(size < 1)
             return;
         trk = path.getLastTrack();

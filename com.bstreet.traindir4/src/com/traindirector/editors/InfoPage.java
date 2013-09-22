@@ -3,8 +3,6 @@ package com.traindirector.editors;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
-
 import com.traindirector.Application;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.uicomponents.WebContent;

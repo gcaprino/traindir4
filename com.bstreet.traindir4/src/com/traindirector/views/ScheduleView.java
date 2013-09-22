@@ -203,8 +203,7 @@ public class ScheduleView extends ViewPart {
 		if(_table.isDisposed())
 			return;
 		synchronized(_simulator._schedule) {
-			int nRows = _table.getItemCount();
-			for (int i = 0; i < nRows; ++i) {
+			for (int i = _table.getItemCount(); --i >= 0; ) {
 				TableItem item = _table.getItem(i);
 				Train train = (Train) item.getData("train");
 				if (train == null)

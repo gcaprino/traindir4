@@ -6,20 +6,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.traindirector.dialogs.PropertyDialog;
+import com.traindirector.dialogs.TextOption;
 import com.traindirector.model.Switchboard;
 import com.traindirector.model.Switchboard.SwitchboardCell;
+import com.traindirector.options.Option;
 import com.traindirector.simulator.Simulator;
 
 public class SwitchboardContent extends WebContent {
 
 	private Switchboard currentSwitchboard;
+	boolean _isEditing;
 	String _urlBase;
-	
+
 	public SwitchboardContent() {
+		super("switchboard");
 		List<Switchboard> swblist = Simulator.INSTANCE._switchboards;
 		if(swblist != null && !swblist.isEmpty())
 			currentSwitchboard = swblist.get(0);
-		_urlBase = "";
+		_urlBase = "tdir:/";
 	}
 	
 	public void setUrlBase(String base) {
@@ -32,21 +37,127 @@ public class SwitchboardContent extends WebContent {
 
 	@Override
 	public boolean doLink(String location) {
-        if (location.startsWith("sb-edit")) {
+		Switchboard swb = null;
+		_isEditing = true;
+		final String cmd = super.getCmd(location);
+        if (cmd.startsWith("sb-edit")) {
+        	location = cmd.substring(7).trim();
+        	if (location.startsWith("-e ")) {
+        		location = location.substring(3).trim();
+            	swb = Simulator.INSTANCE.findSwitchboard(location);
+            	if (swb == null) {
+            		// TODO: impossible
+            		return true;
+            	}
+            	doSwitchBoardNameDialog(swb);
+                return true;
+        	}
+        	if (location.isEmpty()) {
+        		doSwitchBoardNameDialog(null);
+        		return true;
+        	}
+        	swb = Simulator.INSTANCE.findSwitchboard(location);
+        	if (swb == null) {
+        		// TODO: impossible
+        		return true;
+        	}
+        	setCurrentSwitchboard(swb);
             return true;
-        } else if(location.startsWith("sb-cell")) {
+        } else if(cmd.startsWith("sb-cell")) {
+        	doSwitchBoardCellDialog(cmd.substring(7).trim());
             return true;
+        } else if(cmd.startsWith("sb-browser")) {
+        	// TODO: open an external web browser that points to our server
+        } else {
+        	_isEditing = false;
+        	String[] elements = cmd.split("/");
+        	if (elements.length < 1)
+        		return false;
+        	swb = Simulator.INSTANCE.findSwitchboard(elements[0]);
+        	if (swb == null) {
+        		Simulator.INSTANCE.alert("Switchboard '" + elements[0] + "' not found.");
+        		return true;
+        	}
+        	currentSwitchboard = swb;
+        	if (elements.length == 3) {
+        		int x = 0;
+        		int y = 0;
+        		try {
+        			x = Integer.parseInt(elements[1]);
+        			y = Integer.parseInt(elements[2]);
+        			swb.select(x, y);
+        		} catch (Exception e) {
+            		Simulator.INSTANCE.alert("Switchboard '" + elements[0] + "': illegal cell reference '" + elements[1] + "/" + elements[2] + "'");
+        		}
+        		return true;
+        	}
+        	return true;
         }
 		return false;
 	}
 
+	private void doSwitchBoardNameDialog(Switchboard swb) {
+		List<Option> _options = new ArrayList<Option>();
+		Option o = new TextOption("name", "Visible name:");
+		if (swb != null)
+			o.set(swb._name);
+		_options.add(o); // 0
+		o = new TextOption("file", "File name:");
+		if (swb != null)
+			o.set(swb._filename);
+		_options.add(o); // 1
+		
+		PropertyDialog dialog = new PropertyDialog(null, _options);
+		if (!dialog.openInDisplayThread())
+			return;
+		if (swb == null) {
+			swb = new Switchboard();
+			Simulator.INSTANCE._switchboards.add(swb);
+		}
+		swb._name = _options.get(0)._value;
+		swb._filename = _options.get(1)._value;
+	}
+
+	protected void doSwitchBoardCellDialog(final String which) {
+		String[] rowcol = which.split(",");
+		if (rowcol.length != 2)
+			return;
+		try {
+			int i = Integer.parseInt(rowcol[0]);
+			int y = Integer.parseInt(rowcol[1]);
+			SwitchboardCell cell = currentSwitchboard.find(i, y);
+			List<Option> _options = new ArrayList<Option>();
+			Option o = new TextOption("label", "Label:");
+			if (cell != null)
+				o.set(cell.getText());
+			_options.add(o); // 0
+			o = new TextOption("itin", "Itinerary:");
+			if (cell != null)
+				o.set(cell.getItinerary());
+			_options.add(o); // 1
+			
+			PropertyDialog dialog = new PropertyDialog(null, _options);
+			if (!dialog.openInDisplayThread())
+				return;
+			currentSwitchboard.change(i, y, _options.get(0)._value, _options.get(1)._value);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	@Override
 	public String getHTML() {
+		
+		// TODO: handle edit vs. operation mode
+
 		Simulator sim = Simulator.INSTANCE;
 		List<Switchboard> swblist = Simulator.INSTANCE._switchboards;
 		if(currentSwitchboard == null && swblist != null && !swblist.isEmpty())
 			currentSwitchboard = swblist.get(0);
 		
+		if (!_isEditing) {
+			return currentSwitchboard.toHTML(_urlBase);
+		}
 		File homePageFile = getResourceFile("/html/en/switchboard.html");
 		File cssFile = getResourceFile("/html/style.css");
 		List<String> content = new ArrayList<String>();
@@ -59,6 +170,7 @@ public class SwitchboardContent extends WebContent {
 		if (homePageFile != null) {
 			content = getFileContent(homePageFile);
             Map<String, String> values = new HashMap<String, String>();
+            values.put("css", css.toString());
 
 //          TODO:  $serverPort
             
@@ -96,7 +208,7 @@ public class SwitchboardContent extends WebContent {
             		cells.append("<tr><td width='40'>" + y + "</td>\n");
             		for (i = 0; i < Switchboard.MAX_SWBD_X; ++i) {
             			SwitchboardCell cell = currentSwitchboard.find(i, y);
-            			cells.append("<td width='70' align='center' valign='top'><a href='" + _urlBase + "tdir:sb-cell " + i + "," + y + "'>");
+            			cells.append("<td width='70' align='center' valign='top'><a href='" + _urlBase + "sb-cell " + i + "," + y + "'>");
             			if(cell == null) {
             				cells.append("?</a></td>\n");
             			} else {

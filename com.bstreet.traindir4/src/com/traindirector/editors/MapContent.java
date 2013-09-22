@@ -1,8 +1,6 @@
 package com.traindirector.editors;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +12,10 @@ import com.traindirector.uicomponents.WebContent;
 public class MapContent extends WebContent {
 	String _name;
 	String _html = "";
+
+	public MapContent() {
+		super("map");
+	}
 
     public void setName(String type) {
         _name = type;

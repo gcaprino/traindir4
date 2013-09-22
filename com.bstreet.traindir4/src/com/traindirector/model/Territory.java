@@ -183,6 +183,8 @@ public class Territory {
 	}
 
 	public Track findStation(String name) {
+		if (name == null)
+			return null;
 		for (Track track : _tracks) {
 			if ((track instanceof TextTrack))
 				continue;
@@ -311,18 +313,19 @@ public class Territory {
 	}
 
 	public Signal findSignalNamed(String name) {
+		for (Signal track : _signals) {
+			if (track._station == null)
+				continue;
+			if (track._station.compareTo(name) == 0)
+				return (Signal) track;
+		}
 		if (name.charAt(0) == '(') {
 			TDPosition pos = new TDPosition(name);
-			for (Track track : _tracks) {
-				if ((track instanceof Signal) && track._position.sameAs(pos))
+			for (Signal track : _signals) {
+				if (track._position.sameAs(pos))
 					return (Signal) track;
 			}
 			return null;
-		}
-		for (Track track : _tracks) {
-			if ((track instanceof Signal) && track._station != null
-					&& track._station.compareTo(name) == 0)
-				return (Signal) track;
 		}
 		return null;
 	}
@@ -348,6 +351,8 @@ public class Territory {
 	}
 
 	public Track findStationNamed(String name) {
+		if (name == null)
+			return null;
 		int index = name.indexOf(PLATFORM_SEP);
 		String station = name;
 		if (index >= 0) {

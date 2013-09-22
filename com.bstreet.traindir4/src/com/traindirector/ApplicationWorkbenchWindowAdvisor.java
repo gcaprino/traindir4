@@ -2,6 +2,7 @@ package com.traindirector;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jetty.deploy.App;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.application.ActionBarAdvisor;
@@ -9,9 +10,9 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
-import com.traindirector.editors.WebPage;
 import com.traindirector.editors.WelcomePage;
 import com.traindirector.files.IniFile;
+import com.traindirector.web.server.WebServer;
 
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
@@ -40,6 +41,8 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
     	IniFile initFile = new IniFile(Application._simulator);
     	initFile.load();
     	WelcomePage.openEditor(_actionBarAdvisor._window, "Home");
+    	
+    	Application._simulator.initWebServer();
     }
     
     @Override

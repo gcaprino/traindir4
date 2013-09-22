@@ -14,6 +14,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
 import com.traindirector.dialogs.ColorOption;
+import com.traindirector.editors.InfoContent;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
@@ -27,12 +28,17 @@ import com.traindirector.model.SignalAspect;
 import com.traindirector.model.Switchboard;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
+import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
 import com.traindirector.options.Option;
 import com.traindirector.options.OptionsManager;
 import com.traindirector.scripts.ScriptFactory;
 import com.traindirector.uicomponents.SwitchboardContent;
+import com.traindirector.web.pages.PerformanceContent;
+import com.traindirector.web.pages.StationInfoContent;
+import com.traindirector.web.pages.StationsListContent;
+import com.traindirector.web.pages.TrainInfoContent;
 import com.traindirector.web.server.WebServer;
 
 public class Simulator {
@@ -104,13 +110,6 @@ public class Simulator {
 		_colorFactory = new ColorFactory(Application._display);
 		_scriptFactory = new ScriptFactory();
 		_options = new OptionsManager();
-
-		_webServer = new WebServer();
-		try {
-			_webServer.startServer();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		_commands = new LinkedList<SimulatorCommand>();
 		_alerts = new LinkedList<Alert>();
@@ -310,6 +309,7 @@ public class Simulator {
 			for(int i = 0; i < simulatedSpeed; ++i) {
 				++_simulatedTime;
 				_trainRunner.timeStep();
+				updateSignals(null); // to update fleeted signals
 			}
 		}
 	}
@@ -337,6 +337,16 @@ public class Simulator {
 	}
 
 	private void openAllFleeted() {
+		for(Signal signal : _territory.getAllSignals()) {
+		    if(!signal._fleeted) // it's not an automatic signal
+		    	continue;
+		    if(!signal.isFleeted() || signal.isClear()) // not in automatic mode or already green
+		    	continue;
+		    if(signal._controls == null || signal._controls._status == TrackStatus.BUSY)
+		    	continue;
+		    signal.toggle();
+		}
+
 	}
 
 	public void setBaseDirectory(String name) {
@@ -522,6 +532,25 @@ public class Simulator {
 				continue;
 			ImageTrack image = (ImageTrack) track;
 			image.onIconUpdate();
+		}
+	}
+
+	public void initWebServer() {
+    	// This must be here to use the options from the .ini file
+		_webServer = new WebServer();
+		try {
+			// Register with the server all the services that can handle web requests
+			// TODO: pass class instead of instance, so that each request can get its own instance
+			// 		 and operate in its own context
+			_webServer.addContent(new SwitchboardContent());
+			_webServer.addContent(new PerformanceContent());
+			_webServer.addContent(new StationInfoContent());
+			_webServer.addContent(new StationsListContent());
+			_webServer.addContent(new TrainInfoContent());
+			_webServer.addContent(new InfoContent());
+			_webServer.startServer();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

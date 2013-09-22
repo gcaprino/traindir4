@@ -224,7 +224,7 @@ public class LayoutCanvas {
 		}
 		long mostRecentUpdate = lastUpdate;
 
-		synchronized (_simulator) {
+		synchronized (_simulator._territory) {
 			gc.setBackground(bgColor);
 			gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
 

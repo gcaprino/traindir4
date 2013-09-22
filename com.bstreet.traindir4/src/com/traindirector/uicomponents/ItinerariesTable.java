@@ -64,7 +64,7 @@ public class ItinerariesTable {
 			item.setText(i._name);
 			item.setText(1, i._signame);
 			item.setText(2, i._endsig);
-			item.setText(3, i._nextitin);
+			item.setText(3, i._nextitin == null ? "" : i._nextitin);
 			item.setData("itin", i);
 		}
 		if(_table.getItemCount() != 0)

@@ -48,6 +48,8 @@ public class OptionsManager {
 	public BooleanOption _useRealTime;// not implemented
 	public IntegerOption _enableTraining;	// not implemented
 	public IntegerOption _serverPort;
+	public BooleanOption _enableHttpServer;
+	public TextOption _userName;
 	public BooleanOption _drawTrainNames;
 	public BooleanOption _noTrainNamesColors;
 	public BooleanOption _swapHeadTail;
@@ -139,6 +141,8 @@ public class OptionsManager {
 		_randomDelays = new BooleanOption("RandomDelays", "Add random delays to trains arrival times");
 		_playSynchronously = new BooleanOption("PlaySynchronously", "Stop simulation while playing sounds");
 		_serverPort  = new IntegerOption("ServerPort", "Port to use for the web server");
+		_enableHttpServer = new BooleanOption("httpServerEnabled", "Enable HTTP server");
+		_userName = new TextOption("userName", "Name of the player (leave empty to disable multiplayer)");
 		_drawTrainNames = new BooleanOption("TrainNames", "Show train names instead of icons");
 		_noTrainNamesColors = new BooleanOption("NoTrainNamesColors", "Don't show train names colors");
 		_swapHeadTail = new BooleanOption("SwapHeadTail", "Swap head and tail icons");
@@ -228,6 +232,9 @@ public class OptionsManager {
 		_colorOptions.add(_occupiedTrackColor);
 		_colorOptions.add(_workingTrackColor);
 		_colorOptions.add(_textTrackColor);
+		
+		_serverPort._intValue = 8081;
+		_enableHttpServer._intValue = 1;
 	}
 
 	public Map<Option, Widget> createOptionsWidgets(Composite parent, List<Option> fields) {
@@ -242,7 +249,9 @@ public class OptionsManager {
 				lbl = new Label(parent, SWT.NONE);
 				lbl.setText(o._description);
 				txt = new Text(parent, SWT.BORDER);
-				if(o._value != null)
+				if(o instanceof IntegerOption)
+					txt.setText("" + o._intValue);
+				else if(o._value != null)
 					txt.setText(o._value);
 				ld = new GridData();
 				ld.horizontalSpan = 2;
@@ -315,6 +324,13 @@ public class OptionsManager {
 				o._intValue = b.getSelection() ? 1 : 0;
 			} else if (w instanceof Text) {
 				Text t = (Text) w;
+				if (o instanceof IntegerOption) {
+					try {
+						o._intValue = Integer.parseInt(t.getText());
+					} catch (Exception e) {
+						o._intValue = 0;
+					}
+				}
 				o._value = t.getText();
 			}
 		}
