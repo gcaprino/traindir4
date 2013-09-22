@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension  point="org.eclipse.core.runtime.applications" id="application">
+      <application
+            icon="icons/train16x16black.png">
+         <run class="com.traindirector.Application">
+         </run>
+      </application>
+   </extension>
+   <extension point="org.eclipse.ui.perspectives">
+      <perspective
+            name="Simulation Perspective"
+            class="com.traindirector.SimulationPerspective"
+            id="com.bstreet.cg.traindirector.perspective">
+      </perspective>
+      <perspective
+            name="Welcome Perspective"
+            class="com.traindirector.WelcomePerspective"
+            id="com.traindirector.welcomePerspective">
+      </perspective>
+      <perspective
+            class="com.traindirector.EditLayoutPerspective"
+            id="com.traindirector.edit.layoutPerspective"
+            name="EditLayout">
+      </perspective>
+      <perspective
+            class="com.traindirector.EditItineraryPerspective"
+            id="com.traindirector.edit.itineraryPerspective"
+            name="EditItinerary">
+      </perspective>
+   </extension>
+   <extension point="org.eclipse.ui.views">
+      <view
+            name="Message"
+            allowMultiple="true"
+            icon="icons/switch16x16black.png"
+            class="com.traindirector.View"
+            id="com.bstreet.cg.traindirector.view">
+      </view>
+      <view
+            name="Mailboxes"
+            allowMultiple="true"
+            icon="icons/train16x16black.png"
+            class="com.traindirector.NavigationView"
+            id="com.bstreet.cg.traindirector.navigationView">
+      </view>
+      <category
+            id="com.bstreet.cg.traindirector"
+            name="Train Director">
+      </category>
+      <view
+            allowMultiple="true"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.ScheduleView"
+            icon="icons/schedule16x16black.png"
+            id="com.bstreet.cg.traindirector.views.ScheduleView"
+            name="Schedule">
+      </view>
+      <view
+            allowMultiple="true"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.AlertsView"
+            icon="icons/alert16x16black.png"
+            id="com.bstreet.cg.traindirector.views.AlertsView"
+            name="Alerts">
+      </view>
+      <view
+            allowMultiple="true"
+            class="com.traindirector.views.TrainStopsView"
+            icon="icons/train16x16black.png"
+            id="com.traindirector.trainstops"
+            name="Stops"
+            restorable="true">
+      </view>
+      <view
+            name="Editor Tools"
+            allowMultiple="false"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.EditToolsView"
+            icon="icons/edit16x16black.png"
+            id="com.traindirector.views.editTools">
+      </view>
+      <view
+            name="Itineraries"
+            allowMultiple="false"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.ItinerariesView"
+            icon="icons/edit16x16black.png"
+            id="com.traindirector.views.itineraries">
+      </view>
+      <view
+            id="com.traindirector.views.editschedule"
+            allowMultiple="false"
+            category="com.bstreet.cg.traindirector"
+            class="com.traindirector.views.EditScheduleView"
+            icon="icons/schedule16x16black.png"
+            name="Schedule Editor">
+      </view>
+   </extension>
+   <extension point="org.eclipse.ui.commands">
+      <category
+            name="Mail"
+            id="com.bstreet.cg.traindirector.category">
+      </category>
+      <command
+            name="Open a Layout"
+            description="Opens a train director simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.open">
+      </command>
+      <command
+            name="Close"
+            description="Close a train director simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.close">
+      </command>
+      <command
+            name="Save Simulation"
+            description="Save the current state of the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.save">
+      </command>
+      <command
+            name="Edit Layout"
+            description="Edit the layuot"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.edit">
+      </command>
+      <command
+            name="Save Layout"
+            description="Save the layout"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.savechanges">
+      </command>
+      <command
+            name="Run Simulation"
+            description="Start executing the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.run">
+      </command>
+      <command
+            name="Stop Simulation"
+            description="Stop execution of the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.stop">
+      </command>
+      <command
+            name="Fast"
+            description="Speed up the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.fast">
+      </command>
+      <command
+            name="Slow"
+            description="Slow down the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.slow">
+      </command>
+      <command
+            name="Restart"
+            description="Restart the simulation"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.restart">
+      </command>
+      <command
+            name="Schedule"
+            description="Shows the schedule panel"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.show.schedule">
+      </command>
+      <command
+            name="Alerts"
+            description="Shows the alerts panel"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.show.alerts">
+      </command>
+      <command
+            name="Train Stops"
+            description="Shows the train stops panel"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.show.trainStops">
+      </command>
+      <command
+            name="Edit Tools"
+            description="Shows the edit tools"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.show.edit.tools">
+      </command>
+      <command
+            name="Language..."
+            description="Select the language"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.help.language">
+      </command>
+      
+      <!-- unused -->
+      <command
+            name="Open Message Dialog"
+            description="Open a message dialog"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.openMessage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Modify the program&apos;s configuration"
+            id="com.traindirector.preferences"
+            name="Preferences">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Select an itinerary"
+            id="com.traindirector.itinerary"
+            name="Itinearay">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Assign Trains"
+            id="com.traindirector.assign"
+            name="Assign">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Restore simulation to the previously saved state"
+            id="com.traindirector.restore"
+            name="Restore">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show coordinates bars in layout"
+            id="com.traindirector.coordbars"
+            name="CoordBars">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show information"
+            id="com.traindirector.info"
+            name="Info">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show how many late minutes were accumulated over time"
+            id="com.traindirector.lategraph"
+            name="LateGraph">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Clear the layout"
+            id="com.traindirector.new"
+            name="New">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Set all automatic signals to green"
+            id="com.traindirector.settogreen"
+            name="SetToGreen">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Welcome Page"
+            id="com.traindirector.showwelcomepage"
+            name="WelcomePage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Info page"
+            id="com.traindirector.infopage"
+            name="InfoPage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the layout page"
+            id="com.traindirector.layoutpage"
+            name="LayoutPage">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show performance points"
+            id="com.traindirector.performance"
+            name="Performance">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Skip to 3 minutes before the next arrival or departure"
+            id="com.traindirector.skipahead"
+            name="SkipAhead">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the schedule for individual stations"
+            id="com.traindirector.stationschedule"
+            name="StationSchedule">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the list of stations"
+            id="com.traindirector.stationslist"
+            name="StationsList">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show/hide the status bar"
+            id="com.traindirector.statusbar"
+            name="StatusBar">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the switchboard editor"
+            id="com.traindirector.switchboard"
+            name="SwitchBoard">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Define the itineraries"
+            id="com.traindirector.edit.itineraries"
+            name="EditItineraries">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Time-Distance graph"
+            id="com.traindirector.timedistance"
+            name="TimeDistance">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the Time-Distance graph"
+            id="com.traindirector.platformoccupancy"
+            name="PlatformOccupancy">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show a map for the territory"
+            id="com.traindirector.showmap"
+            name="ShowMap">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Zoom in see more details of the layout"
+            id="com.traindirector.zoomin"
+            name="ZoomIn">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Zoom out to see a larger portion of the layout"
+            id="com.traindirector.zoomout"
+            name="ZoomOut">
+      </command>
+
+   </extension>
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            commandId="com.bstreet.cg.traindirector.open"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+O">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.edit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+E">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.run"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+Shift+S">
+      </key>
+      <key
+            commandId="com.traindirector.timedistance"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+G">
+      </key>
+      <key
+            commandId="com.traindirector.lategraph"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+L">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.fast"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+X">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.slow"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+Z">
+      </key>
+      <key
+            commandId="com.traindirector.skipahead"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+K">
+      </key>
+      <key
+            commandId="com.traindirector.stationschedule"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="F6">
+      </key>
+      <key
+            commandId="com.traindirector.itinerary"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="Ctrl+I">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.openMessage"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+3">
+      </key>
+      <key
+            commandId="org.eclipse.ui.file.exit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="Alt+F4">
+      </key>
+   </extension>
+   <extension point="org.eclipse.core.runtime.products" id="product">
+      <product
+            application="com.traindirector.application"
+            name="Train Director">
+         <property name="aboutText" value="RCP Mail template created by PDE">
+         </property>
+         <property name="windowImages" value="icons/sample2.gif">
+         </property>
+         <property name="aboutImage" value="product_lg.gif">
+         </property>
+         <property name="appName" value="Train Director">
+         </property>
+      </product>
+   </extension>
+   <extension point="org.eclipse.ui.editors">
+      <editor
+            class="com.traindirector.editors.LayoutPart"
+            default="false"
+            icon="icons/switch16x16black.png"
+            id="com.bstreet.cg.traindirector.layout"
+            name="Layout">
+      </editor>
+      <editor
+            class="com.traindirector.editors.WelcomePage"
+            default="false"
+            icon="icons/switch16x16black.png"
+            id="com.traindirector.editor.welcome"
+            name="Welcome">
+      </editor>
+      <editor
+            class="com.traindirector.editors.SwitchboardEditor"
+            default="false"
+            icon="icons/switch16x16black.png"
+            id="com.traindirector.editor.switchboard"
+            name="Switchboard">
+      </editor>
+      <editor
+            class="com.traindirector.editors.GraphicPage"
+            default="false"
+            icon="icons/switch16x16black.png"
+            id="com.traindirector.graphics"
+            name="Graphics">
+      </editor>
+      <editor
+            class="com.traindirector.editors.PlatformOccupancyEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.platforms"
+            name="Platform Occupancy">
+      </editor>
+      <editor
+            class="com.traindirector.editors.TimeDistanceEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.timedistance"
+            name="Time Distance Graph">
+      </editor>
+      <editor
+            class="com.traindirector.editors.ReportEditor"
+            default="false"
+            icon="icons/schedule16x16black.png"
+            id="com.traindirector.editor.report"
+            name="Report">
+      </editor>
+      <editor
+            class="com.traindirector.editors.InfoPage"
+            default="false"
+            icon="icons/question18x18black.png"
+            id="com.traindirector.editor.info"
+            name="Welcome">
+      </editor>
+      <editor
+            class="com.traindirector.editors.MapPage"
+            default="false"
+            icon="icons/question18x18black.png"
+            id="com.traindirector.editor.map"
+            name="Map">
+      </editor>
+   </extension>
+   <extension point="org.eclipse.help.contexts">
+      <contexts file="contexts.xml">
+      </contexts>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="com.traindirector.preferences.AppearancePreferencePage"
+            id="com.traindirector.preferences.AppearancePreferencePage"
+            name="Appearance">
+      </page>
+      <page
+            class="com.traindirector.preferences.OptionsPage"
+            id="com.bstreet.traindirector.preferences.options"
+            name="Options">
+      </page>
+      <page
+            class="com.traindirector.preferences.EnvironmentPage"
+            id="com.traindirector.preferences.environment"
+            name="Environment">
+      </page>
+      <page
+            class="com.traindirector.preferences.SkinPage"
+            id="com.traindirector.preferences.skin"
+            name="Skin">
+      </page>
+      <page
+            class="com.traindirector.preferences.ServerPage"
+            id="com.traindirector.preferences.server"
+            name="Server">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="com.traindirector.preferences.PreferenceInitializer">
+      </initializer>
+   </extension>
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            commandId="com.traindirector.itinerary"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+I">
+      </key>
+      <key
+            commandId="com.bstreet.cg.traindirector.run"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+S">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="com.traindirector.edit.layoutPerspective">
+         <view
+               closeable="false"
+               id="com.traindirector.views.editTools"
+               minimized="false"
+               moveable="true"
+               ratio="0.25f"
+               relationship="left"
+               relative="org.eclipse.ui.editorss"
+               showTitle="true"
+               visible="true">
+         </view>
+      </perspectiveExtension>
+   </extension>
+</plugin>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map_canvas { height: 100% }
+    </style>
+    <script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?sensor=false">
+    </script>
+    <script type="text/javascript">
+    var map;
+    var cityCircle;
+    var populationOptions;
+      function initialize() {
+        var myOptions = {
+          center: new google.maps.LatLng($center),
+          zoom: $zoom,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        populationOptions = {
+	      strokeColor: '#FF0000',
+	      strokeOpacity: 0.8,
+	      strokeWeight: 2,
+	      fillColor: '#FF0000',
+	      fillOpacity: 0.35,
+	      map: map,
+	      center: new google.maps.LatLng($center),
+	      radius: 1000
+	    };
+	    var image = "C:/CG/git/traindir4/com.bstreet.traindir4/html/images/train16x16black.png";
+	    cityCircle = new google.maps.Circle(populationOptions);
+        var beachMarker = new google.maps.Marker({
+		      position: myOptions.center,
+		      map: map,
+		      icon: image
+		})
+      }
+    </script>
+  </head>
+  <body onload="initialize()">
+    <div id="map_canvas" style="width:100%; height:100%">Loading...</div>
+  </body>
+</html>

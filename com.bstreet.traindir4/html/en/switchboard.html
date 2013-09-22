@@ -1,0 +1,40 @@
+<html>
+<head>
+<style type="text/css">
+$css
+</style>
+<title>Switchboard</title>
+</head>
+<body>
+<center>
+Switchboard
+</center>
+<hr>
+Use this screen to define the layout of a switchboard and which itineraries are shown in it.<br>
+Switchboards are accessed via an external web browser at the port $serverPort.<br>
+<a href="tdir:sb-browser">Open the switchboard in a browser.</a><br>
+<hr>
+<table><tr>
+  <td valign="top">
+
+<!-- 2 tables side by side:
+     The left table is the list of pages.
+     The right table is the switchboard for the current page.
+ -->
+ 
+     <table><tr><th width='180'>Switchboards</th></tr>
+     $swblist
+ 
+       <tr><td><a href="tdir:sb-edit">New board</a></td></tr>
+       <!-- <tr><td><a href="tdir:sb-save">Save</a></td></tr> -->
+     </table>
+  </td>
+  <td>
+    <table><tr valign=\"top\"><td width='40'>&nbsp;</td>
+    $swbcells
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+
