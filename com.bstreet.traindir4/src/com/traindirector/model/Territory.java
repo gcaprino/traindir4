@@ -340,6 +340,8 @@ public class Territory {
 	public static boolean sameStation(String st1, String st2) {
 		int i = 0;
 		char ch = ' ';
+		if (st1 == null || st2 == null)
+			return false;
 		while (i < st1.length() && (ch = st1.charAt(i)) != PLATFORM_SEP
 				&& i < st2.length() && ch == st2.charAt(i))
 			++i;

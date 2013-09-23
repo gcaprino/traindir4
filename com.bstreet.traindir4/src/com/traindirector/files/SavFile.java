@@ -252,6 +252,10 @@ public class SavFile extends TextFile {
 				
 				while((line = in.readLine()) != null) {
 					line = line.trim();
+					if (line.startsWith(":startDelay ")) {
+						train._startDelay = Integer.parseInt(line.substring(12));
+						continue;
+					}
 					if (line.length() < 1 || line.charAt(0) == '.')
 						break;
 					cols = line.split(",");
@@ -761,6 +765,10 @@ public class SavFile extends TextFile {
 				
 				// from 8th line
 				
+				if (train._startDelay > 0) {
+					out.append(String.format(":startDelay %d\n", train._startDelay));
+				}
+
 				// Save status of each stop
 				
 				for (TrainStop stop : train._stops) { 
@@ -1744,6 +1752,9 @@ public class SavFile extends TextFile {
 			}
 			if(train._stopping != null)
 				out.append(String.format("  StoppingAt:%s\n", train._stopping._station));
+			if (train._startDelay != 0) {
+				out.append(String.format("  StartDelay:%d\n", train._startDelay));
+			}
 			if (train._length > 0) {
 				// save the length. This may be different than
 				// the length specified in the sch file because

@@ -620,13 +620,18 @@ VLine	itin_layout[] = {
 			_script.handle("OnEnter", this, train);
 		}
 	}
+	
+	public void onExit(Train train) {
+		if (_script != null) {
+			_script.handle("OnExit", this, train);
+		}
+	}
 
 	public void doStopped(Train train) {
 		if (_script != null) {
 			_script.handle("OnStopped", this, train);
 		}
 	}
-
 
 	public void doScript(String cmd, Train train) {
 		if (_script == null)
@@ -635,5 +640,5 @@ VLine	itin_layout[] = {
 		Script script = factory.createInstance(cmd);
 		script.handle("OnEnter", this, train);
 	}
-	
+
 }

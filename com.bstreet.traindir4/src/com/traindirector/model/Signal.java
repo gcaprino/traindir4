@@ -187,6 +187,44 @@ public class Signal extends Track {
 	}
 
 	@Override
+	public void onCtrlClick() {
+	    if(isClear())
+	    	return;
+	    if(_fixedred) {
+	    	/* TODO: ADD PENALTY */
+	    	return;
+	    }
+	    // we ignore true approach signals
+	    if((isApproach() && !isShuntingSignal()) || _intermediate)
+	    	return;
+
+	    // TODO: optimize using path cache
+		PathFinder finder = new PathFinder();
+		Direction dir = getDirectionFrom(_direction);
+		TrackPath path = finder.find(_controls._position, dir);
+
+	    if(path == null)
+	    	return;
+	    Track trk = path.getFirstTrack();
+	    if(trk._status == TrackStatus.BUSYSHUNTING) {
+			for(int i = 0; i < path.getTrackCount(0); ++i) {
+			    trk = path.getTrackAt(i);
+			    if(trk._status != TrackStatus.BUSYSHUNTING)
+			    	break;
+			    trk._status = TrackStatus.FREE;
+			}
+			onUnclear();	// set to red
+	    } else {
+			int i = setShuntingPath(path, _direction, null);
+			if(i < 0) {
+			    return;
+			}
+			path.setStatusToIndex(TrackStatus.BUSYSHUNTING, i);
+			onShunt();
+	    }
+	}
+
+	@Override
 	public void onRightClick() {
 		if(!isClear())
 			return;
@@ -195,6 +233,37 @@ public class Signal extends Track {
 			setAspectFromName("greenFleeted");
 		else
 			setAspectFromName("green");
+	}
+
+	protected int setShuntingPath(TrackPath path, TrackDirection direction, Train shunting) {
+		Track	trk;
+		Train	trn;
+		int	i;
+
+		i = path.isPartiallyFree(shunting);
+		if(i >= 0) {
+		    trk = path.getTrackAt(i);
+		    trn = Simulator.INSTANCE._schedule.findAnyTrainAt(trk._position);
+		    if(trn == null) {
+				return -1;
+		    }
+		    switch(trn._status) {
+		    case STOPPED:
+		    case ARRIVED:
+		    case WAITING:
+				break;
+		    default:
+				if(trn._shunting)
+				    break;
+				return -1;
+		    }
+		    if(shunting != null) {
+				shunting._merging = trn;
+				trn.setFlag(Train.WAITINGMERGE);
+		    }
+		} else
+		    i = path.getTrackCount(0) + 1;
+		return i;
 	}
 
 	public void setAspectFromName(String action) {
@@ -410,22 +479,32 @@ public class Signal extends Track {
 
 	public void onUnclear() {
 		// set signal to red
+		if (_script != null)
+			_script.handle("OnUnclear", this, null);
 	}
 
 	public void onShunt() {
 		// set signal to clear for shunting
+		if (_script != null)
+			_script.handle("OnShunt", this, null);
 	}
 
 	public void onCross() {
 		// set signal to red when a train enters the controlled section
+		if (_script != null)
+			_script.handle("OnCross", this, null);
 	}
 
 	public void onUnlock() {
 		// set signal to green after path has become clear
+		if (_script != null)
+			_script.handle("OnUnlock", this, null);
 	}
 
 	public void onUnfleet() {
 		// set fleeted signal to green after path has become clear
+		if (_script != null)
+			_script.handle("OnUnfleet", this, null);
 	}
 
 	public void onUpdate() {
@@ -440,17 +519,20 @@ public class Signal extends Track {
 	public void onInit() {
 		// initial setting (when load or restart)
 		// some other signal changed, see if we need to change, too
-		if (_script == null)
-			return;
-		_script.handle("OnInit", this, null);
+		if (_script != null)
+			_script.handle("OnInit", this, null);
 	}
 
 	public void onAuto() {
 		// automatic signal has been enabled/disabled
+		if (_script != null)
+			_script.handle("OnAuto", this, null);
 	}
 
 	public void onClicked() {
 		// for shunting signals
+		if (_script != null)
+			_script.handle("OnClick", this, null);
 	}
 
 	private TrackPath getNextPath() {

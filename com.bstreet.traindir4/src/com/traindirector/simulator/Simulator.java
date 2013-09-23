@@ -85,6 +85,8 @@ public class Simulator {
 	public String _baseFileName;
 	public boolean _gMustBeClearPath;
 	public int[] _lateData = new int[24 * 60]; // how many late minutes we accumulated for each minute in the day
+
+	public int[] _startDelay = new int[Track.NSPEEDS];
 	
 	public PerformanceCounters _performanceCounters = new PerformanceCounters();
 	public int _runPoints;
@@ -365,6 +367,10 @@ public class Simulator {
 
 	public void clearDelays() {
 		for (Train train : _schedule._trains) {
+			train._startDelay = 0;
+			if (train._myStartDelay == 0 && _startDelay[train._type] != 0) {
+				train._myStartDelay = _startDelay[train._type];
+			}
 			if (train._entryDelay != null)
 				train._entryDelay._nSeconds = 0;
 			for (TrainStop stop : train._stops) {
@@ -483,6 +489,7 @@ public class Simulator {
 		_alerts.clear();
 		_simulatedTime = 0;
 		_running = false;
+		_startDelay = new int[Track.NSPEEDS];
 		clearPoints();
 		CGEventDispatcher.getInstance().postEvent(new ResetEvent(this));
 	}

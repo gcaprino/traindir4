@@ -1,13 +1,12 @@
 package com.traindirector.simulator;
 
-import java.util.Random;
-
 import com.traindirector.commands.AssignCommand;
 import com.traindirector.commands.ReverseCommand;
 import com.traindirector.model.Direction;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Signal;
 import com.traindirector.model.SignalAspect;
+import com.traindirector.model.Switch;
 import com.traindirector.model.TDPosition;
 import com.traindirector.model.Territory;
 import com.traindirector.model.TextTrack;
@@ -100,6 +99,7 @@ public class TrainRunner {
 				train._outOf = train._position;
 				findStopPoint(train);
 				findSlowPoint(train);
+				train.start();
 				advance(train);
 				break;
 
@@ -123,6 +123,17 @@ public class TrainRunner {
 				}
 				SignalAspect aspect = signal.getAspect();
 				if (!aspect._action.equals(SignalAspect.PROCEED)) {
+                    // we could not enter the path, maybe because the user
+                    // has closed the signal while we were starting,
+                    // so go back to WAITING state
+					if (train._status == TrainStatus.STARTING && train._startDelay == 0) {
+						train._status = TrainStatus.WAITING;
+					}
+					continue;
+				}
+				if (train._status == TrainStatus.WAITING && train._myStartDelay != 0) {
+					train._status = TrainStatus.STARTING;
+					train._startDelay = train._myStartDelay;
 					continue;
 				}
 				train._status = TrainStatus.RUNNING;
@@ -244,9 +255,9 @@ public class TrainRunner {
 		return 0;
 	}
 
-	public void leaveTrack(Track track) {
+	public void leaveTrack(Train train, Track track) {
 		track.setStatus(TrackStatus.FREE);
-		// track.onExitTrack(); // run scripts
+		track.onExit(train); // run scripts
 	}
 
 	public Track findEntryTrack(Train train) {
@@ -583,7 +594,63 @@ public class TrainRunner {
 	}
 
 	public void tailAdvance(Train train, double traveled) {
-		// TODO: to be implemented
+		Train	tail;
+		Train	t = train;
+		int		i = 0, len;
+		Track	trk;
+
+		if((tail = t._tail) == null || t._tail._tailEntry != 0 || tail._path == null)
+		    return;
+		//Vector_dump(t, wxT("tail_advance"));
+		if(t._position != null) {
+		    for(i = 0; i < tail._path.getTrackCount(0); ++i) {
+				trk = tail._path.getTrackAt(i);
+				if(trk == t._position)
+				    break;
+		    }
+		    // tail is on the same as head -- do nothing
+		    if(i == tail._path.getTrackCount(0))
+		    	return;
+		}
+		if(tail._position != null) {
+		    tail._position.setStatus(TrackStatus.FREE);
+		    leaveTrack(t, tail._position);
+		    tail._position = null;
+		}
+		if(t._position != null) {
+		    len = t._length;
+		    len -= t._trackpos;	/* portion already traveled by train's head */
+		} else {		/* when exiting, */
+		    len = tail._trackpos;/* this is the length still inside the layout */
+		    i = tail._path.getTrackCount(0);
+		}
+		if(len > 0) {
+		    --i;
+		    while(i >= 0) {
+				trk = tail._path.getTrackAt(i);
+				if(trk instanceof Track || trk instanceof Switch) {
+				    trk.setStatus(TrackStatus.BUSY);
+				    tail._position = trk;
+				}
+				--i;
+				if(len < trk._length)
+				    break;
+				len -= trk._length;
+		    }
+		} else
+		    --i;
+		while(i >= 0) {
+		    trk = tail._path.getTrackAt(i);
+		    if(trk._status != TrackStatus.BUSY) {
+				tail._path.remove(trk);
+				--i;
+				break;
+		    }
+		    trk.setStatus(TrackStatus.FREE);
+		    trk.onExit(t);
+		    tail._path.remove(trk);
+		    --i;
+		}
 	}
 
 	public void startRunning(Train train) {
@@ -607,6 +674,12 @@ public class TrainRunner {
 		findStopPoint(train);
 		findSlowPoint(train);
 //		t->pathpos = 1;
+		if (train._tail != null) {
+			if (train._tail._path == null)
+				train._tail._path = new TrackPath();
+			// make tail's path partially overlap the head's path
+			train._tail._path.append(train._path);
+		}
 		train.onEntry();
 		if(train._position._isStation)
 		    trainAtStation(train, train._position);
@@ -775,7 +848,7 @@ public class TrainRunner {
 				train._distanceToStop -= position._length - train._trackDistance;
 			}
 			
-			leaveTrack(position);
+			leaveTrack(train, position);
 			train._path.advance(1);
 			position = train.getHeadTrack();
 			train._position = position;
@@ -925,7 +998,7 @@ public class TrainRunner {
 		train._speed = 0;
 		t2 = train._merging;
 		train._position._status = TrackStatus.FREE;
-		leaveTrack(train._position);
+		leaveTrack(train, train._position);
 		t2.clearFlag(Train.WAITINGMERGE);
 		train._position = null;
 		if(t2.isStranded()) {
@@ -1141,8 +1214,14 @@ public class TrainRunner {
 			int i = aspect.getSpeedLimit();
 			if (i != 0)
 				train._curmaxspeed = i;
+			if (train._status == TrainStatus.WAITING && train._myStartDelay > 0) {
+				train._status = TrainStatus.STARTING;
+				train._startDelay = train._myStartDelay;
+				// TODO: set train status changed
+				return 0;
+			}
 			signal.doCross(train);
-			leaveTrack(train._position);
+			leaveTrack(train, train._position);
 			train._path = finder.find(nextTrack._position, dir);
 			if (train._path == null) {
 				// TODO: alert no path
@@ -1192,7 +1271,8 @@ public class TrainRunner {
 			train._tail._path = null;
 			train._tail = null;
 		}
-		position._status = TrackStatus.FREE;
+		if (position != null)
+				position._status = TrackStatus.FREE;
 		train.arrived();
 		// TODO: bstreet_train_arrived(train)
 		train._speed = 0;

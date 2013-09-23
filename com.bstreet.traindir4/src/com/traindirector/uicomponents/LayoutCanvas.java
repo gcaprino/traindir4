@@ -213,7 +213,7 @@ public class LayoutCanvas {
 			greenColor = _simulator._colorFactory.get(0, 255, 0);
 			blackColor = _simulator._colorFactory.get(0, 0, 0);
 			whiteColor = _simulator._colorFactory.get(255, 255, 255);
-			orangeColor = _simulator._colorFactory.get(255, 140, 0);
+			orangeColor = _simulator._colorFactory.get(255, 0, 0);
 			blueColor = _simulator._colorFactory.get(0, 0, 255);
 			bgColor = _simulator._colorFactory.getBackgroundColor();
 		}
@@ -309,7 +309,8 @@ public class LayoutCanvas {
 			case ARRIVED:
 			case RUNNING:
 			case STOPPED:
-			case WAITING: {
+			case WAITING:
+			case STARTING:
 				if (train._position != null) {
 					if(train._direction == Direction.W)
 						drawImage(gc, train._position._position, train._westIcon);
@@ -322,7 +323,7 @@ public class LayoutCanvas {
 					else
 						drawImage(gc, train._tail._position._position, train._eastCarIcon);
 				}
-			}
+
 			default:
 				break;
 			}

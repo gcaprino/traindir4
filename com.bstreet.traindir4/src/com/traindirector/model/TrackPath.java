@@ -51,6 +51,16 @@ public class TrackPath {
 		return true;
 	}
 
+	public int isPartiallyFree(Train shunting) {
+		int i = 0;
+		for (Track track : _tracks) {
+			if (track._status != TrackStatus.FREE)
+				return i;
+			++i;
+		}
+		return -1;
+	}
+
 	public boolean isEmpty() {
 		return _tracks.size() == 0;
 	}
@@ -81,6 +91,13 @@ public class TrackPath {
 			Track track = _tracks.get(index);
 			track._status = status;
 			++index;
+		}
+	}
+
+	public void setStatusToIndex(TrackStatus status, int index) {
+		for (int i = 0; i < index; ++i) {
+			Track track = _tracks.get(i);
+			track._status = status;
 		}
 	}
 
@@ -175,4 +192,9 @@ public class TrackPath {
 		}
 		return sb.toString();
 	}
+
+	public int lastIndexOf(Track track) {
+		return _tracks.lastIndexOf(track);
+	}
+
 }

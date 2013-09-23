@@ -445,7 +445,8 @@ public class ClickCommand extends SimulatorCommand {
 			return false;
 		}
 		AssignDialog dialog = new AssignDialog(shell, train, _simulator);
-		List<Train> departingTrains = _simulator._schedule.getTrainsDepartingFrom(train._position._station);
+		Track station = train.getStoppedAt();
+		List<Train> departingTrains = _simulator._schedule.getTrainsDepartingFrom(station == null ? null : station._station);
 		dialog.create();
 		dialog.fillTable(departingTrains);
 		int result = dialog.open();

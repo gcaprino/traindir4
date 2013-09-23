@@ -55,8 +55,8 @@ public class Train {
 	public int  _minDel;
 	public int  _minLate;
 	public int  _inDelay;
-    public short   _startDelay;     // TODO: seconds to wait until starting after stop (runtime - set from train schedule or train type)
-    public short   _myStartDelay;   // TODO: seconds this train should wait (from schedule file)
+    public int  _startDelay;     // seconds to wait until starting after stop (runtime - set from train schedule or train type)
+    public int  _myStartDelay;   // seconds this train should wait (from schedule file)
     public boolean _gotDelay;	// we computed a delay upon entry in the territory
 	public boolean _shunting;
 	public TrackPath _path;
@@ -91,8 +91,8 @@ public class Train {
 	public boolean _needFindStop;
 	public Track _outOf;		// when shunting, we were stopped at this station.
 	public List<Track> _fleet;
-	public int  _tailEntry;	// distance of tail from entry po
-	public int  _tailExit;	// distance of tail from exit po
+	public int  _tailEntry;	// distance of tail from entry point
+	public int  _tailExit;	// distance of tail from exit point
 	public Train _merging;	// we are bound to merge with this train
 	public Script _script;
 
@@ -110,6 +110,8 @@ public class Train {
 		_waitFor = null;
 		_fleet = new ArrayList<Track>();
 		_isExternal = false;
+		_startDelay = 0;
+		_myStartDelay = 0;
 	}
 
 	public String getStatusAsString() {
@@ -229,6 +231,26 @@ public class Train {
 			}
 		}
 		return false;
+	}
+
+	// TODO: what if our tail overlays multiple stations?
+	public Track getStoppedAt() {
+		if (_status != TrainStatus.STOPPED && _status != TrainStatus.ARRIVED)
+			return null;
+		if (_position == null)
+			return null;
+		if (_position._isStation)
+			return _position;
+		if (_tail == null || _tail._path == null)
+			return null;
+		int i = _tail._path.lastIndexOf(_position);
+		while (i >= 0) {
+			Track track = _tail._path.getTrackAt(i);
+			if (track._isStation)
+				return track;
+			--i;
+		}
+		return null;
 	}
 
 	public boolean isSet(int flag) {
@@ -471,7 +493,6 @@ public class Train {
 			_tail._path.setStatus(TrackStatus.FREE, 0);
 			_tail._path = null;
 		}
-		_tail = null;
 		
 		_status = TrainStatus.READY;
 		
@@ -561,6 +582,10 @@ public class Train {
 		onStopped();
 	}
 
+	public void start() {
+		onStart();
+	}
+
 	public TrainStop findStop(Track station) {
 		for (TrainStop stop : _stops) {
 			if (Territory.sameStation(stop._station, station._station))
@@ -594,15 +619,18 @@ public class Train {
 	}
 
 	private void onArrived() {
-		if (_script == null)
-			return;
-		_script.handle("OnArrived", null, this);
+		if (_script != null)
+			_script.handle("OnArrived", null, this);
 	}
 
 	private void onStopped() {
-		if (_script == null)
-			return;
-		_script.handle("OnStopped", null, this);
+		if (_script != null)
+			_script.handle("OnStop", null, this);
+	}
+
+	private void onStart() {
+		if(_script != null)
+			_script.handle("OnStart", null, this);
 	}
 
 	public void onWaiting(Signal signal) {
@@ -612,7 +640,7 @@ public class Train {
 
 	public void onEntry() {
 		if(_script != null)
-			_script.handle("OnExit", null, this);
+			_script.handle("OnEntry", null, this);
 	}
 
 	public void onExit() {

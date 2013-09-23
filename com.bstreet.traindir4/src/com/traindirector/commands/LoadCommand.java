@@ -107,12 +107,11 @@ public class LoadCommand extends SimulatorCommand {
 		_simulator._schedule.clear();
 		try {
 			BufferedReader input = _simulator._fileManager.getReaderFor(".sch");
-			SchFile schFile = new SchFile(_simulator);
-			schFile.readFile(input);
-			input.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
+			if (input != null) {
+				SchFile schFile = new SchFile(_simulator);
+				schFile.readFile(input);
+				input.close();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -127,6 +126,8 @@ public class LoadCommand extends SimulatorCommand {
 				++count;
 				train._exit = "?";
 			}
+			if (train._script != null)
+				train._script.parse();
 		}
 		if (count > 0) {
 			_simulator.alert("Some train has unknown entry/exit point!");
