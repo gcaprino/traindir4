@@ -34,6 +34,7 @@ import com.traindirector.model.TrainStop;
 import com.traindirector.options.Option;
 import com.traindirector.options.OptionsManager;
 import com.traindirector.scripts.ScriptFactory;
+import com.traindirector.uicomponents.SoundPlayer;
 import com.traindirector.uicomponents.SwitchboardContent;
 import com.traindirector.web.pages.PerformanceContent;
 import com.traindirector.web.pages.StationInfoContent;
@@ -59,6 +60,7 @@ public class Simulator {
 	public ColorFactory _colorFactory;
 	public ScriptFactory _scriptFactory;
 	public FileManager _fileManager;
+	public SoundPlayer _soundPlayer;
 	public OptionsManager _options;
 
 	public static int VGRID = 9;
@@ -112,6 +114,7 @@ public class Simulator {
 		_colorFactory = new ColorFactory(Application._display);
 		_scriptFactory = new ScriptFactory();
 		_options = new OptionsManager();
+		_soundPlayer = new SoundPlayer();
 
 		_commands = new LinkedList<SimulatorCommand>();
 		_alerts = new LinkedList<Alert>();
@@ -222,6 +225,8 @@ public class Simulator {
 	public void alert(String text) {
 		Alert a = new Alert(_simulatedTime, text);
 		_alerts.add(a);
+		if (_options._beepOnAlert.isSet())
+			_soundPlayer.play(_options._alertSoundPath._value);
 		AlertEvent e = new AlertEvent(this);
 		CGEventDispatcher.getInstance().postEvent(e);
 	}

@@ -259,7 +259,7 @@ public class SchFile extends TextFile {
 				if(line.startsWith("Enter:", i)) {
 					i = parseTime(line, i + 6);
 					train._timeIn = _time;
-					if(i >= line.length() && line.charAt(i) == DELAY_CHAR) {
+					if(i < line.length() && line.charAt(i) == DELAY_CHAR) {
 						train._entryDelay = new TDDelay();
 						i = parseDelay(line, i + 1, train._entryDelay);
 					}

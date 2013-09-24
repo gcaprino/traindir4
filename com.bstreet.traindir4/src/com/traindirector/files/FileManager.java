@@ -1,9 +1,10 @@
 package com.traindirector.files;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,10 +25,13 @@ public class FileManager {
 	ZipFile _zipFile;
 	Simulator _simulator;
 	Map<String, String> _entriesMap; // map original name to lower case name 
-	
+	Map<String, byte[]> _byteStreams; // mainly used for sounds
+
 	public FileManager(Simulator simulator, String base) {
 		_simulator = simulator;
 		_baseFile = base;
+		_byteStreams = new HashMap<String, byte[]>();
+
 		if (base.endsWith(".zip" ) || base.endsWith(".ZIP")) {
 			try {
 				_zipFile = new ZipFile(base);
@@ -54,18 +58,13 @@ public class FileManager {
 		return fname;
 	}
 
-	public BufferedReader getReaderFor(String extension) {
-		String schName = asExtension(extension);
-		return getReaderForFile(schName);
-	}
-	
-	public BufferedReader getReaderForFile(String schName) {
-		BufferedReader input = null;
+	public InputStream getStreamFor(String fname) {
+		InputStream stream = null;
 		if (_zipFile != null) {
-			Path path = new Path(schName);
+			Path path = new Path(fname);
 			String entryName = path.lastSegment();
-			if(schName.startsWith(_simulator._baseDir)) {
-				entryName = schName.substring(_simulator._baseDir.length() + 1);
+			if(fname.startsWith(_simulator._baseDir)) {
+				entryName = fname.substring(_simulator._baseDir.length() + 1);
 				entryName = entryName.replace("\\", "/");
 			}
 			String realName = _entriesMap.get(entryName.toLowerCase());
@@ -76,9 +75,7 @@ public class FileManager {
 				ZipEntry zipEntry = _zipFile.getEntry(realName);
 				if (zipEntry != null) {
 					try {
-						InputStream inputStream = _zipFile.getInputStream(zipEntry);
-						BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-						return br;
+						return _zipFile.getInputStream(zipEntry);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -89,32 +86,45 @@ public class FileManager {
 			}
 		}
 		try {
-			input = new BufferedReader(new FileReader(schName));
-			return input;
+			stream = new FileInputStream(fname);
+			return stream;
 		} catch (FileNotFoundException e) {
-			String fileName = _simulator._baseDir + File.separator + schName;
+			String fileName = _simulator._baseDir + File.separator + fname;
 			try {
-				input = new BufferedReader(new FileReader(fileName));
+				stream = new FileInputStream(fileName);
 			} catch (FileNotFoundException e1) {
 				TextOption pathsOption = Application.getSimulator()._options._scriptsPaths;
 				if(pathsOption == null || pathsOption._value == null || pathsOption._value.isEmpty())
 					return null;
 				String[] paths = pathsOption._value.split(";");
 				for(String path : paths) {
-					fileName = path + File.separator + schName;
+					fileName = path + File.separator + fname;
 					try {
-						input = new BufferedReader(new FileReader(fileName));
-						return input;
+						stream = new FileInputStream(fileName);
+						return stream;
 					} catch (FileNotFoundException e2) {
 					}
 				}
 				return null;
 			}
-			return input;
+			return stream;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public BufferedReader getReaderFor(String extension) {
+		String schName = asExtension(extension);
+		return getReaderForFile(schName);
+	}
+	
+	public BufferedReader getReaderForFile(String schName) {
+		InputStream stream = getStreamFor(schName);
+		if (stream == null)
+			return null;
+		BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+		return br;
 	}
 
 	public void close() {
@@ -125,6 +135,7 @@ public class FileManager {
 				e.printStackTrace();
 			}
 		_zipFile = null;
+		_byteStreams.clear();
 	}
 
 	/*
@@ -141,4 +152,32 @@ public class FileManager {
 			_entriesMap.put(entry.getName().toLowerCase(), entry.getName());
 		}
 	}
+
+	public InputStream getByteStreamFor(String fname) {
+		
+		ByteArrayInputStream stream = null;
+		byte[] content = _byteStreams.get(fname);
+		if (content != null)
+			return new ByteArrayInputStream(content);
+
+		File file = new File(fname);
+		if (!file.canRead())
+			return null;
+		
+		byte[] b = new byte[(int) file.length()];
+		try {
+			FileInputStream fileInputStream = new FileInputStream(file);
+			fileInputStream.read(b);
+			_byteStreams.put(fname, b);
+			stream = new ByteArrayInputStream(b);
+		} catch (FileNotFoundException e) {
+			System.out.println("File Not Found.");
+			e.printStackTrace();
+		} catch (IOException e1) {
+			System.out.println("Error Reading The File.");
+			e1.printStackTrace();
+		}
+		return stream;
+	}
+
 }

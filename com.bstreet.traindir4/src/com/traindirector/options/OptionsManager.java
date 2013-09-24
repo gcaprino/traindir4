@@ -175,8 +175,8 @@ public class OptionsManager {
 		_options.add(_swapHeadTail);
 		_options.add(_showTooltip);
 
-		_alertSoundPath = new FileOption("path.sound.alert", "Path to sound file for alert notifications");
-		_enterSoundPath = new FileOption("path.sound.entry", "Path to sound file for train entry");
+		_alertSoundPath = new FileOption("AlertSound", "Path to sound file for alert notifications", "C:\\Windows\\Media\\notify.wav");
+		_enterSoundPath = new FileOption("EntrySound", "Path to sound file for train entry", "C:\\Windows\\Media\\ringout.wav");
 		_scriptsPaths = new TextOption("SearchPath", "Directories with signal scripts");
 		
 		_options.add(_alertSoundPath);

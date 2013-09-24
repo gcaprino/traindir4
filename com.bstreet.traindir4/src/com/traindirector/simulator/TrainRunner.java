@@ -681,6 +681,9 @@ public class TrainRunner {
 			train._tail._path.append(train._path);
 		}
 		train.onEntry();
+		// play on entry sound
+		if (_simulator._options._beepOnEnter.isSet())
+			_simulator._soundPlayer.play(_simulator._options._enterSoundPath._value);
 		if(train._position._isStation)
 		    trainAtStation(train, train._position);
 		//advance(train);

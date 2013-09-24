@@ -194,7 +194,8 @@ public class DoCommand extends SimulatorCommand {
 			AssignCommand acmd = new AssignCommand(from, toTrain);
 			_simulator.addCommand(acmd);
 		} else if(_cmd.startsWith("play")) {
-			
+			String path = _cmd.substring(4).trim();
+			_simulator._soundPlayer.play(path);
 		} else if(_cmd.startsWith("skip")) {
 			
 		} else if(_cmd.startsWith("save_perf_text")) {
