@@ -240,14 +240,18 @@ public class Signal extends Track {
 		Train	trn;
 		int	i;
 
-		i = path.isPartiallyFree(shunting);
-		if(i >= 0) {
+		//i = path.isPartiallyFree(shunting);
+		//if(i >= 0) {
+		for (i = 0; i < path.getTrackCount(0); ++i) {
 		    trk = path.getTrackAt(i);
+		    if (trk._status != TrackStatus.FREE)
+		    	return -1; // could be a cleared path crossing this path 
 		    trn = Simulator.INSTANCE._schedule.findAnyTrainAt(trk._position);
-		    if(trn == null) {
-				return -1;
+		    if (trn == null) {
+				//return -1;
+		    	continue;
 		    }
-		    switch(trn._status) {
+		    switch (trn._status) {
 		    case STOPPED:
 		    case ARRIVED:
 		    case WAITING:
@@ -255,14 +259,15 @@ public class Signal extends Track {
 		    default:
 				if(trn._shunting)
 				    break;
-				return -1;
+				return -1; // found a moving train, so we can't merge to it
 		    }
-		    if(shunting != null) {
+		    if (shunting != null) {
 				shunting._merging = trn;
 				trn.setFlag(Train.WAITINGMERGE);
 		    }
-		} else
-		    i = path.getTrackCount(0) + 1;
+		    return i;
+		}
+		//} else
 		return i;
 	}
 
@@ -509,8 +514,8 @@ public class Signal extends Track {
 
 	public void onUpdate() {
 		// some other signal changed, see if we need to change, too
-		if (_aspectChanged)
-			return;
+		//if (_aspectChanged) 3.8p: paths are expected to always go forward, never to loop!
+		//	return;
 		if (_script == null)
 			return;
 		_script.handle("OnUpdate", this, null);

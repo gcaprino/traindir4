@@ -214,7 +214,8 @@ public class Simulator {
 		return sb.toString();
 	}
 
-	public void setSimulationSpeed(int speed) {
+	public void setSimulationSpeed(int index, int speed) {
+		_currentTimeMultiplier = index;
 		_simulatedSpeed = speed;		// 1 clock second = speed simulated seconds
 	}
 

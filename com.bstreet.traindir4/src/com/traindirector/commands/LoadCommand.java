@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.swt.widgets.Display;
 
 import com.bstreet.cg.events.CGEventDispatcher;
@@ -20,6 +19,7 @@ import com.traindirector.model.Schedule;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
+import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.SimulatorCommand;
 
 public class LoadCommand extends SimulatorCommand {
@@ -32,6 +32,11 @@ public class LoadCommand extends SimulatorCommand {
 		_fname = fname;
 	}
 	
+	public LoadCommand(Simulator sim, String fname) {
+		_simulator = sim;
+		_fname = fname;
+	}
+
 	public void handle() {
 		_simulator.stopRunning();
 		LoadStartEvent loadEvent = new LoadStartEvent(_simulator);

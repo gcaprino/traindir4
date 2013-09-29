@@ -26,10 +26,13 @@ import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
 import com.traindirector.Application;
 import com.traindirector.commands.ClickCommand;
+import com.traindirector.commands.RunStopCommand;
 import com.traindirector.editors.LayoutEditorInput;
+import com.traindirector.events.ChangeZoomingEvent;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
 import com.traindirector.events.TimeSliceEvent;
+import com.traindirector.events.ToggleCoordBarsEvent;
 import com.traindirector.model.Direction;
 import com.traindirector.model.ImageTrack;
 import com.traindirector.model.ItineraryButton;
@@ -79,6 +82,12 @@ public class LayoutCanvas {
 	private int _currentMaxTrackDirection;
 
 	private boolean _isEditorToolbox;
+	protected boolean _coordBars;
+
+	private static final int HCOORDBAR = 20;
+	private static final int VCOORDBAR = 30;
+	private int _xOffset = 0; // 0 or HCOORDBAR
+	private int _yOffset = 0; // 0 or VCOORDBAR
 
 	public LayoutCanvas(Composite parent) {
 		
@@ -88,99 +97,12 @@ public class LayoutCanvas {
 		_scroller.setContent(_canvas);
 		_canvas.setSize(4000, 4000);
 
-		_canvas.addPaintListener(new PaintListener() {
-			@Override
-			public void paintControl(PaintEvent e) {
-				updateCanvas(e.gc);
-			}
-		});
-		_canvas.addMouseMoveListener(new MouseMoveListener() {
-			@Override
-			public void mouseMove(MouseEvent e) {
-				onMouseMove(e);
-			}
-		});
-		_canvas.addMouseListener(new MouseListener() {
+		registerUIEventHandlers();
+		
 
-			@Override
-			public void mouseUp(MouseEvent e) {
-				onMouseUp(e);
-			}
-
-			@Override
-			public void mouseDown(MouseEvent e) {
-				onMouseDown(e);
-			}
-
-			@Override
-			public void mouseDoubleClick(MouseEvent e) {
-				onMouseDoubleClick(e);
-			}
-		});
-		_canvas.addKeyListener(new KeyListener() {
-			@Override
-			public void keyReleased(KeyEvent e) {
-				onKeyUp(e);
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				onKeyDown(e);
-			}
-		});
-		CGEventDispatcher.getInstance().addListener(
-				new CGEventListener(LoadStartEvent.class) {
-					@Override
-					public void handle(CGEvent event, Object target) {
-						_loading = true;
-					}
-				});
-		CGEventDispatcher.getInstance().addListener(
-				new CGEventListener(LoadEndEvent.class) {
-					@Override
-					public void handle(CGEvent event, Object target) {
-						if (_canvas == null || _canvas.isDisposed()) {
-							_canvas = null;
-							return;
-						}
-						if (target instanceof Simulator) {
-							_loading = false;
-							_simulator = (Simulator) target;
-							_canvas.getDisplay().syncExec(new Runnable() {
-								@Override
-								public void run() {
-									// _canvas.redraw();
-									_canvas.update();
-								}
-							});
-						}
-					}
-				});
-		CGEventDispatcher.getInstance().addListener(
-				new CGEventListener(TimeSliceEvent.class) {
-					@Override
-					public void handle(CGEvent event, Object target) {
-						if (_canvas == null || _canvas.isDisposed()) {
-							_canvas = null;
-							return;
-						}
-						if (target instanceof Simulator) {
-							_simulator = (Simulator) target;
-							if (_simulator == null) {
-								return;
-							}
-							_canvas.getDisplay().syncExec(new Runnable() {
-								@Override
-								public void run() {
-									_canvas.redraw();
-									_canvas.update();
-								}
-							});
-						}
-					}
-				});
-
+		registerInternalEventHandlers();
 	}
+
 
 
 	public void updateCanvas(GC gc) {
@@ -257,8 +179,9 @@ public class LayoutCanvas {
 
 				} else if (trk instanceof ItineraryButton) {
 					drawImage(gc, trk._position, ":icons:itinButton.xpm");
-					gc.drawText(trk._station, (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
-							trk._position._y * Simulator.VGRID * _yMultiplier);
+					gc.drawText(trk._station,
+							_xOffset + (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
+							_yOffset + trk._position._y * Simulator.VGRID * _yMultiplier);
 				} else if (trk instanceof PlatformTrack) {
 					VLine[] segs = trk.getSegments();
 					if(segs != null)
@@ -282,7 +205,9 @@ public class LayoutCanvas {
 						drawSegments(gc, sw._position, segs, TrackStatus.FREE);
 
 				} else if (trk instanceof TextTrack) {
-                    gc.drawText(trk._station, trk._position._x * Simulator.HGRID * _xMultiplier, trk._position._y * Simulator.VGRID * _yMultiplier);
+                    gc.drawText(trk._station,
+                    		_xOffset + trk._position._x * Simulator.HGRID * _xMultiplier,
+                    		_yOffset + trk._position._y * Simulator.VGRID * _yMultiplier);
 
 				} else if (trk instanceof TriggerTrack) {
 					VLine[] segs = trk.getSegments();
@@ -294,6 +219,8 @@ public class LayoutCanvas {
 					if (segs != null)
 						drawSegments(gc, trk._position, segs, trk._status);
 				}
+				
+				drawCoordBars(gc);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -303,7 +230,20 @@ public class LayoutCanvas {
 
 
 	
+	protected void drawCoordBars(GC gc) {
+		if (!_coordBars)
+			return;
+		Rectangle rect = _canvas.getBounds();
+		int offset = VCOORDBAR;
+		for (int y = 0; offset < rect.height; ++y, offset += _yMultiplier * Simulator.VGRID) {
+			String txt = "" + (y + 1);
+			gc.drawText(txt, 0, offset);
+		}
+	}
+	
 	protected void drawTrains(GC gc) {
+		TDIcon icon;
+		
 		for (Train train : _simulator._schedule._trains) {
 			switch (train._status) {
 			case ARRIVED:
@@ -318,10 +258,11 @@ public class LayoutCanvas {
 						drawImage(gc, train._position._position, train._eastIcon);
 				}
 				if(train._tail != null && train._tail._position != null) {
+					icon = train._westCarIcon;
 					if(train._tail._direction == Direction.W)
-						drawImage(gc, train._tail._position._position, train._westCarIcon);
+						drawImage(gc, train._tail._position._position, icon == null ? train._eastCarIcon : icon);
 					else
-						drawImage(gc, train._tail._position._position, train._eastCarIcon);
+						drawImage(gc, train._tail._position._position, train._eastCarIcon == null ? icon : train._eastCarIcon);
 				}
 
 			default:
@@ -330,16 +271,18 @@ public class LayoutCanvas {
 		}
 		for (Train train : _simulator._schedule._stranded) {
 			if (train._position != null) {
+				icon = train._westCarIcon;
 				if(train._direction == Direction.W)
-					drawImage(gc, train._position._position, train._westCarIcon);
+					drawImage(gc, train._position._position, icon == null ? train._eastCarIcon : icon);
 				else
-					drawImage(gc, train._position._position, train._eastCarIcon);
+					drawImage(gc, train._position._position, train._eastCarIcon == null ? icon : train._eastCarIcon);
 			}
 			if(train._tail != null && train._tail._position != null) {
+				icon = train._westCarIcon;
 				if(train._tail._direction == Direction.W)
-					drawImage(gc, train._tail._position._position, train._westCarIcon);
+					drawImage(gc, train._tail._position._position, icon == null ? train._eastCarIcon : icon);
 				else
-					drawImage(gc, train._tail._position._position, train._eastCarIcon);
+					drawImage(gc, train._tail._position._position, train._eastCarIcon == null ? icon : train._eastCarIcon);
 			}
 		}
 	}
@@ -395,16 +338,16 @@ public class LayoutCanvas {
 	}
 
 	public void eraseGridCell(GC gc, TDPosition pos) {
-		int x = pos._x * Simulator.HGRID * _xMultiplier;
-		int y = pos._y * Simulator.VGRID * _yMultiplier;
+		int x = _xOffset + pos._x * Simulator.HGRID * _xMultiplier;
+		int y = _yOffset + pos._y * Simulator.VGRID * _yMultiplier;
 		gc.setForeground(bgColor);
 		gc.fillRectangle(x, y, Simulator.HGRID, Simulator.VGRID);
 	}
 
 	public void drawSegments(GC gc, TDPosition pos, VLine[] segs,
 			TrackStatus status) {
-		int x = pos._x * Simulator.HGRID * _xMultiplier;
-		int y = pos._y * Simulator.VGRID * _yMultiplier;
+		int x = _xOffset + pos._x * Simulator.HGRID * _xMultiplier;
+		int y = _yOffset + pos._y * Simulator.VGRID * _yMultiplier;
 		// TODO: use options for track colors
 		if (status == TrackStatus.BUSY)
 			gc.setForeground(greenColor);
@@ -420,8 +363,8 @@ public class LayoutCanvas {
 	}
 
 	public void drawImage(GC gc, TDPosition pos, Image image) {
-		int x = pos._x * Simulator.HGRID * _xMultiplier;
-		int y = pos._y * Simulator.VGRID * _yMultiplier;
+		int x = _xOffset + pos._x * Simulator.HGRID * _xMultiplier;
+		int y = _yOffset + pos._y * Simulator.VGRID * _yMultiplier;
 		gc.drawImage(image, x, y);
 	}
 
@@ -438,7 +381,9 @@ public class LayoutCanvas {
 
 	// convert canvas to layout coords
 	public TDPosition toLayoutCoord(int x, int y) {
-		TDPosition pos = new TDPosition(x / Simulator.HGRID / _xMultiplier, y / Simulator.VGRID / _yMultiplier);
+		TDPosition pos = new TDPosition(
+				(x - _xOffset) / Simulator.HGRID / _xMultiplier,
+				(y - _yOffset) / Simulator.VGRID / _yMultiplier);
 		return pos;
 	}
 
@@ -516,13 +461,18 @@ public class LayoutCanvas {
 	public void onKeyUp(KeyEvent e) {
 		if (_loading)
 			return;
-
+		if (e.character == ' ' || e.character == 0x13) {
+			RunStopCommand cmd = new RunStopCommand();
+			_simulator.addCommand(cmd);
+		}
 	}
 
     public void setEditorToolbox(boolean b) {
         _isEditorToolbox = b;
         _xMultiplier = 4;
         _yMultiplier = 4;
+        _xOffset = 0;
+        _yOffset = 0;
     }
 
     private void drawToolbox(GC gc) {
@@ -589,6 +539,149 @@ public class LayoutCanvas {
         
         
     }
+
+    
+
+	protected void changeZooming(int factor) {
+		if (_isEditorToolbox)	// TODO: how about mini-canvases for dialogs?
+			return;
+		if (_xMultiplier == 1 && factor > 0) {
+			_xMultiplier = 2;
+			_yMultiplier = 2;
+			
+		} else if (_xMultiplier == 2 && factor < 0) {
+			_xMultiplier = 1;
+			_yMultiplier = 1;
+		}
+	}
+
+
+	protected void registerUIEventHandlers() {
+		_canvas.addPaintListener(new PaintListener() {
+			@Override
+			public void paintControl(PaintEvent e) {
+				updateCanvas(e.gc);
+			}
+		});
+		_canvas.addMouseMoveListener(new MouseMoveListener() {
+			@Override
+			public void mouseMove(MouseEvent e) {
+				onMouseMove(e);
+			}
+		});
+		_canvas.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseUp(MouseEvent e) {
+				onMouseUp(e);
+			}
+
+			@Override
+			public void mouseDown(MouseEvent e) {
+				onMouseDown(e);
+			}
+
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				onMouseDoubleClick(e);
+			}
+		});
+		_canvas.addKeyListener(new KeyListener() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				onKeyUp(e);
+			}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				onKeyDown(e);
+			}
+		});
+	}
+
+
+	protected void registerInternalEventHandlers() {
+		CGEventDispatcher.getInstance().addListener(
+				new CGEventListener(LoadStartEvent.class) {
+					@Override
+					public void handle(CGEvent event, Object target) {
+						_loading = true;
+					}
+				});
+		CGEventDispatcher.getInstance().addListener(
+				new CGEventListener(LoadEndEvent.class) {
+					@Override
+					public void handle(CGEvent event, Object target) {
+						if (_canvas == null || _canvas.isDisposed()) {
+							_canvas = null;
+							return;
+						}
+						if (target instanceof Simulator) {
+							_loading = false;
+							_simulator = (Simulator) target;
+							_canvas.getDisplay().syncExec(new Runnable() {
+								@Override
+								public void run() {
+									// _canvas.redraw();
+									_canvas.update();
+								}
+							});
+						}
+					}
+				});
+		CGEventDispatcher.getInstance().addListener(
+				new CGEventListener(TimeSliceEvent.class) {
+					@Override
+					public void handle(CGEvent event, Object target) {
+						if (_canvas == null || _canvas.isDisposed()) {
+							_canvas = null;
+							return;
+						}
+						if (target instanceof Simulator) {
+							_simulator = (Simulator) target;
+							if (_simulator == null) {
+								return;
+							}
+							_canvas.getDisplay().syncExec(new Runnable() {
+								@Override
+								public void run() {
+									_canvas.redraw();
+									_canvas.update();
+								}
+							});
+						}
+					}
+				});
+		CGEventDispatcher.getInstance().addListener(
+				new CGEventListener(ChangeZoomingEvent.class) {
+					@Override
+					public void handle(CGEvent event, Object target) {
+						if (!(event instanceof ChangeZoomingEvent))
+							return;	// impossible
+						ChangeZoomingEvent zooming = (ChangeZoomingEvent) event;
+						int factor = zooming.getFactor();
+						changeZooming(factor);
+					}
+				});
+		CGEventDispatcher.getInstance().addListener(
+				new CGEventListener(ToggleCoordBarsEvent.class) {
+					@Override
+					public void handle(CGEvent event, Object target) {
+						if (_isEditorToolbox)
+							return;
+						if (_coordBars) {
+							_coordBars = false;
+							_xOffset = 0;
+							_yOffset = 0;
+						} else {
+							_coordBars = true;
+							_xOffset = HCOORDBAR;
+							_yOffset = VCOORDBAR;
+						}
+					}
+				});
+
+	}
 
     TrackDirection[] trackDirections = {
              TrackDirection.E_W,

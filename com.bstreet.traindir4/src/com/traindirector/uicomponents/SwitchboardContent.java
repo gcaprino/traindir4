@@ -1,6 +1,8 @@
 package com.traindirector.uicomponents;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +19,6 @@ public class SwitchboardContent extends WebContent {
 
 	private Switchboard currentSwitchboard;
 	boolean _isEditing;
-	String _urlBase;
 
 	public SwitchboardContent() {
 		super("switchboard");
@@ -27,18 +28,19 @@ public class SwitchboardContent extends WebContent {
 		_urlBase = "tdir:/";
 	}
 	
-	public void setUrlBase(String base) {
-		_urlBase = base;
-	}
-
 	public void setCurrentSwitchboard(Switchboard swb) {
 		currentSwitchboard = swb;
 	}
 
 	@Override
 	public boolean doLink(String location) {
+		if (location.equals("about:blank"))
+			return false;
 		Switchboard swb = null;
-		_isEditing = true;
+		if (!_isEditing) {
+			return doSwitchboardLink(location);
+		}
+		//_isEditing = true;
 		final String cmd = super.getCmd(location);
         if (cmd.startsWith("sb-edit")) {
         	location = cmd.substring(7).trim();
@@ -69,7 +71,6 @@ public class SwitchboardContent extends WebContent {
         } else if(cmd.startsWith("sb-browser")) {
         	// TODO: open an external web browser that points to our server
         } else {
-        	_isEditing = false;
         	String[] elements = cmd.split("/");
         	if (elements.length < 1)
         		return false;
@@ -94,6 +95,34 @@ public class SwitchboardContent extends WebContent {
         	return true;
         }
 		return false;
+	}
+
+	private boolean doSwitchboardLink(String location) {
+		String[] elements = location.split("/");
+		int i = 1;
+		try {
+			while (i < elements.length && elements[i].isEmpty()) ++i;
+			if (i >= elements.length) return false;
+			if (elements[i].equals("switchboard")) {
+				while (++i < elements.length && elements[i].isEmpty());
+				if (i >= elements.length) return false;
+			}
+			Switchboard swb = Simulator.INSTANCE.findSwitchboard(elements[i]);
+			if (swb == null)
+				return false;
+			currentSwitchboard = swb;
+			while (++i < elements.length && elements[i].isEmpty());
+			if (i >= elements.length) return false;
+			int x = Integer.parseInt(elements[i]);
+			while (++i < elements.length && elements[i].isEmpty());
+			if (i >= elements.length) return false;
+			int y = Integer.parseInt(elements[i]);
+			swb.select(x, y);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	private void doSwitchBoardNameDialog(Switchboard swb) {
@@ -156,7 +185,7 @@ public class SwitchboardContent extends WebContent {
 			currentSwitchboard = swblist.get(0);
 		
 		if (!_isEditing) {
-			return currentSwitchboard.toHTML(_urlBase);
+			return createExternalHtmlPage(_urlBase);
 		}
 		File homePageFile = getResourceFile("/html/en/switchboard.html");
 		File cssFile = getResourceFile("/html/style.css");
@@ -221,5 +250,74 @@ public class SwitchboardContent extends WebContent {
             return replaceContent(content, values);
 		}
 		return sim.getVersion();
+	}
+
+	private String createExternalHtmlPage(String oldUrlBase) {
+		int indx = oldUrlBase.indexOf("/switchboard/");
+		String parentUrl = oldUrlBase.substring(0, indx + 13);
+		String cmd = oldUrlBase.substring(indx + 13);
+		if (cmd.isEmpty()) {
+			currentSwitchboard = Simulator.INSTANCE._switchboards.get(0);
+		} else {
+			int indx2 = cmd.indexOf("/");
+			String swbName = cmd;
+			if (indx2 > 0)
+				swbName = cmd.substring(0, indx2);
+			currentSwitchboard = Simulator.INSTANCE.findSwitchboard(swbName);
+			if (currentSwitchboard == null)
+				currentSwitchboard = Simulator.INSTANCE._switchboards.get(0);
+		}
+		String urlBase = oldUrlBase.substring(0, indx + 13);
+		urlBase += currentSwitchboard._filename + "/";
+		File swbHeaderFile = getResourceFile("/html/en/swbHeader.html");
+		List<String> content = getFileContent(swbHeaderFile);
+		BufferedReader tdstyle = Simulator.INSTANCE._fileManager.getReaderForFile("tdstyle.css");
+		if (tdstyle != null) {
+			String line;
+			try {
+				while((line = tdstyle.readLine()) != null)
+					content.add(line);
+				tdstyle.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		content.add("</head>\n<body>\n");
+		content.add(String.format(
+				"<form name=\"iform\" method=\"get\" action=\"%sswitchboard/%s\">",
+				oldUrlBase, currentSwitchboard._filename, currentSwitchboard._name));
+        content.add("<input type=\"text\" name=\"i\"></form><br>\n");
+		content.add("<ul class=\"navbar\">\n<br /><br />");
+		for (Switchboard ss : Simulator.INSTANCE._switchboards) {
+			if (ss == currentSwitchboard) {
+				content.add("<li class='selected'>");
+				content.add(ss._name);
+				content.add("</li>\n");
+			} else {
+				content.add("<li class='other'>");
+				content.add(String.format("<a href=\"%s%s\">%s</a>",
+                    parentUrl, ss._filename, ss._name));
+				content.add("</li>\n");
+			}
+		}
+		content.add("</ul>\n");
+		StringBuilder css = new StringBuilder();
+		for (String s : content) {
+			css.append(s);
+			css.append('\n');
+		}
+		String board = currentSwitchboard.toHTML(urlBase);
+		css.append(board);
+		swbHeaderFile = getResourceFile("/html/en/swbFooter.html");
+		List<String> footer = getFileContent(swbHeaderFile);
+		for (String s : footer) {
+			css.append(s);
+			css.append("\n");
+		}
+		return css.toString();
+	}
+
+	public void setEditing(boolean value) {
+		_isEditing = value;
 	}
 }

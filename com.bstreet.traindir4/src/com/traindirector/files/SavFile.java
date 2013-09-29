@@ -166,7 +166,7 @@ public class SavFile extends TextFile {
 				train._speed = values[2];
 				train._maxspeed = values[3];
 				train._curmaxspeed = values[4];
-				train._trackpos = values[5];
+				train._trackDistance = values[5];
 				train._timeLate = values[6];
 				train._timeDelay = values[7];
 				train._timeRed = values[8];
@@ -322,7 +322,7 @@ public class SavFile extends TextFile {
 					
 					cols = line.split(",");
 					// tail._pathpos = Integer.parseInt(cols[0]); // backward compatibility
-					tail._trackpos = Integer.parseInt(cols[1]);
+					tail._trackDistance = Integer.parseInt(cols[1]);
 					tail._tailEntry = Integer.parseInt(cols[2]);
 					tail._tailExit = Integer.parseInt(cols[3]);
 					for (int i = 4; i < cols.length; ++i) {
@@ -644,12 +644,15 @@ public class SavFile extends TextFile {
 		
 		BufferedWriter out = null;
 		try {
-			out = new BufferedWriter(new FileWriter(new File(_fileName)));
+			File savFile = new File(_fileName);
+			if (savFile.exists())
+				savFile.delete();
+			out = new BufferedWriter(new FileWriter(savFile));
 			if(saveNewFormat(out))
 				return true;
 			// TODO: remove saving in old format
 			out.append(trkFileName + eol);
-			out.append(String.format("%d,%ld,%d,%d,%d,%d,%d,%d,%d,%ld\n",
+			out.append(String.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
 					_simulator._currentTimeMultiplier,	// cur_time_mult
 					schedule._startTime,	// start_time
 					_simulator._options._showSpeeds._intValue,	// show_speeds
@@ -720,20 +723,20 @@ public class SavFile extends TextFile {
 				// 3rd line
 				out.append(String.format("  %d,%d,%d,%d,%d,%d,%d,%d,%d", train._timeExited,
 						train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
-						train._curmaxspeed, train._trackpos, train._timeLate,
+						train._curmaxspeed, train._trackDistance, train._timeLate,
 						train._timeDelay, train._timeRed));
 				if (train._entryDelay != null)
 					out.append(String.format(",%d", train._entryDelay._nSeconds));
 				out.append('\n');
 				
 				// 4th line
-				out.append(String.format("  %ld,%d,%ld,%ld,%d\n", train._timeDep, 0, //tr->pathpos,
+				out.append(String.format("  %d,%d,%d,%f,%d\n", train._timeDep, 0, //tr->pathpos,
 					train._pathtravelled, train._distanceToStop, train._shunting ? 1 : 0));
 				if (train._stopPoint == null)
 					out.append("  0,0,0,");
 				else
-					out.append(String.format("  %d,%d,%d,",  train._stopPoint._position._x,
-							train._stopping._position._y, train._distanceToSlow));
+					out.append(String.format("  %d,%d,%f,",  train._stopPoint._position._x,
+							train._stopPoint._position._y, train._distanceToSlow));
 				if (train._slowPoint == null)
 					out.append("0,0");
 				else
@@ -802,7 +805,7 @@ public class SavFile extends TextFile {
 						out.append('\n');
 					}
 					out.append(String.format("  %d,%d,%d,%d", tail._position == null ? -1 : 0,
-							tail._trackpos, tail._tailEntry, tail._tailExit));
+							tail._trackDistance, tail._tailEntry, tail._tailExit));
 					int i;
 					for (i = 0; i < tail._path.getTrackCount(0); ++i) {
 						Track trk = tail._path.getTrackAt(i);
@@ -941,21 +944,19 @@ public class SavFile extends TextFile {
 	TDPosition posValue = new TDPosition();
 	
 	private boolean getKV(String in) {
-		String[] split = in.split(":");
-		key = split[0].trim();
-		if(split.length < 2) {
-			value = "";
+		int index = in.indexOf(':');
+		if (index < 0) {
+			return false;
+		}
+		key = in.substring(0, index).trim();
+		value = in.substring(index + 1).trim();
+		try {
+			ivalue = Integer.parseInt(value);
+			bvalue = ivalue != 0;
+			return true;
+		} catch (Exception e) {
 			ivalue = 0;
-		} else {
-			value = split[1];
-			try {
-				ivalue = Integer.parseInt(value);
-				bvalue = ivalue != 0;
-				return true;
-			} catch (Exception e) {
-				ivalue = 0;
-				bvalue = false;
-			}
+			bvalue = false;
 		}
 		return false;
 	}
@@ -992,7 +993,7 @@ public class SavFile extends TextFile {
 		String trkFileName = file.getPath();
 		trkFileName = trkFileName.replace(".TRK", ".trk");
 		trkFileName = trkFileName.replace(".ZIP", ".zip");
-		LoadCommand loadCmd = new LoadCommand(trkFileName);
+		LoadCommand loadCmd = new LoadCommand(_simulator, trkFileName);
 		loadCmd.handle();
 
 		Switch sw = null;
@@ -1143,8 +1144,8 @@ public class SavFile extends TextFile {
 				train._curmaxspeed = ivalue;
 				continue;
 			}
-			if(key.equals("TrackPos")) {
-				train._trackpos = ivalue;
+			if(key.equals("TrackDistance")) {
+				train._trackDistance = ivalue;
 				continue;
 			}
 			if(key.equals("TimeLate")) {
@@ -1307,8 +1308,8 @@ public class SavFile extends TextFile {
 					tail._fleet.add(signal);
 					continue;
 				}
-				if(key.equals("TailTrackPos")) {
-					tail._trackpos = ivalue;
+				if(key.equals("TailTrackDistance")) {
+					tail._trackDistance = ivalue;
 					continue;
 				}
 				if(key.equals("TailEntry")) {
@@ -1655,7 +1656,7 @@ public class SavFile extends TextFile {
 	public boolean saveNewFormat(BufferedWriter out) throws IOException {
 		Schedule schedule = _simulator._schedule;
 		out.append("Layout: " + trkFileName + eol);
-		out.append(String.format("CurrentTimeMultiplier:%d\nStartTime:%ld\nShowSpeeds:%d\nShowBlocks:%d\nBeenOnAlert:%d\nRunPoints:%d\nTotalDelay:%d\nTotalLate:%d\nTimeMultiplier:%d\nSimulatedTime:%ld\n",
+		out.append(String.format("CurrentTimeMultiplier:%d\nStartTime:%d\nShowSpeeds:%d\nShowBlocks:%d\nBeenOnAlert:%d\nRunPoints:%d\nTotalDelay:%d\nTotalLate:%d\nTimeMultiplier:%d\nSimulatedTime:%d\n",
 				_simulator._currentTimeMultiplier,	// cur_time_mult
 				schedule._startTime,	// start_time
 				_simulator._options._showSpeeds._intValue,	// show_speeds
@@ -1711,21 +1712,21 @@ public class SavFile extends TextFile {
 			out.append(String.format("Train:%s\n", train._name));
 			out.append(String.format("  Status:%d\n  Direction:%d\n  Exited:%s\n", train._status.ordinal(), train._direction.ordinal(),
 				train._exited != null ? train._exited : ""));
-			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackPos:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
+			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackDistance:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
 					train._timeExited, train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
-					train._curmaxspeed, train._trackpos, train._timeLate,
+					train._curmaxspeed, train._trackDistance, train._timeLate,
 					train._timeDelay, train._timeRed));
 			if (train._entryDelay != null)
 				out.append(String.format("  EntryDelay:%d\n", train._entryDelay._nSeconds));
 			
-			out.append(String.format("  TimeDep:%ld\n  PathPos:%d\n  PathTraveled:%ld\n  DistanceToStop:%ld\n  Shunting:%d\n",
+			out.append(String.format("  TimeDep:%d\n  PathPos:%d\n  PathTraveled:%d\n  DistanceToStop:%f\n  Shunting:%d\n",
 					train._timeDep, 0, //tr->pathpos,
 					train._pathtravelled, train._distanceToStop, train._shunting ? 1 : 0));
 			if (train._stopPoint != null)
-				out.append(String.format("  StopPoint:%d,%d\n  DistanceToStop:%d\n",
-						train._stopPoint._position._x, train._stopping._position._y, train._distanceToStop));
+				out.append(String.format("  StopPoint:%d,%d\n  DistanceToStop:%f\n",
+						train._stopPoint._position._x, train._stopPoint._position._y, train._distanceToStop));
 			if (train._slowPoint != null)
-				out.append(String.format("  SlowPoint:%d,%d\n  DistanceToSlow:%d\n",
+				out.append(String.format("  SlowPoint:%d,%d\n  DistanceToSlow:%f\n",
 						train._slowPoint._position._x, train._slowPoint._position._y, train._distanceToSlow));
 			out.append(String.format("  NeedFIndStop:%d\n", train._needFindStop ? 1 : 0));
 			
@@ -1739,7 +1740,7 @@ public class SavFile extends TextFile {
 				out.append(String.format("  Position:%d,%d\n", train._position._position._x, train._position._position._y));
 			out.append(String.format("  WaitTime:%d\n  Flags:%d\n  Arrived:%d\n", train._waitTime, train._flags, train._arrived));
 
-			out.append(String.format("  OldStatus:%d\n  OutOf:%s\n", train._oldStatus.ordinal(),
+			out.append(String.format("  OldStatus:%d\n  OutOf:%s\n", train._oldStatus != null ? train._oldStatus.ordinal() : 0,
 					train._outOf != null ? train._outOf._station : ""));
 			
 			// Save status of each stop
@@ -1772,8 +1773,8 @@ public class SavFile extends TextFile {
 					}
 					out.append(eol);
 				}
-				out.append(String.format("    TailPos:%d\n    TailTrackPos:%d\n    TailEntry:%d\n    TailExit:%d",
-						tail._position == null ? -1 : 0, tail._trackpos, tail._tailEntry, tail._tailExit));
+				out.append(String.format("    TailPos:%d\n    TailTrackDistance:%d\n    TailEntry:%d\n    TailExit:%d\n",
+						tail._position == null ? -1 : 0, tail._trackDistance, tail._tailEntry, tail._tailExit));
 				int i;
 				for (i = 0; i < tail._path.getTrackCount(0); ++i) {
 					Track trk = tail._path.getTrackAt(i);
@@ -1845,10 +1846,10 @@ public class SavFile extends TextFile {
 		// other statistics and options
 		
 		out.append(String.format("RunDay:%d\nTerseStatus:%d\nStatusOnTop:%d\nShowSeconds:%d\nTraditionalSignals:%d\n",
-				_simulator._runDay, _simulator._options._terseStatus, _simulator._options._statusOnTop,
-				_simulator._options._showSeconds, _simulator._options._traditionalSignals));
+				_simulator._runDay, _simulator._options._terseStatus._intValue, _simulator._options._statusOnTop._intValue,
+				_simulator._options._showSeconds._intValue, _simulator._options._traditionalSignals._intValue));
 		
-		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._options._autoLink, _simulator._options._showGrid));
+		out.append(String.format("AutoLink:%d\nShowGrid:%d\n", _simulator._options._autoLink._intValue, _simulator._options._showGrid._intValue));
 
 		PerformanceCounters perf_tot = _simulator._performanceCounters;
 		out.append(String.format("WrongDest:%d\nLateTrains:%d\nThrownSwitches:%d\nClearedSignals:%d\nDenied:%d\nTurnedTrains:%d\nWaitingTrains:%d\nWrongPlatform:%d\nNTrainsLate:%d\nNTrainsWrong:%d\nNMissedStops:%d\nNWrongAssign:%d\n",

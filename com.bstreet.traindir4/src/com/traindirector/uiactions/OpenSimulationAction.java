@@ -1,25 +1,20 @@
 package com.traindirector.uiactions;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.WorkbenchException;
-import org.eclipse.ui.internal.Workbench;
-
 import com.traindirector.Activator;
 import com.traindirector.Application;
 import com.traindirector.ICommandIds;
 import com.traindirector.SimulationPerspective;
 import com.traindirector.commands.LoadCommand;
+import com.traindirector.commands.RestoreCommand;
 import com.traindirector.editors.LayoutPart;
-import com.traindirector.editors.WebPage;
-import com.traindirector.simulator.Simulator;
 
 
 public class OpenSimulationAction extends Action {
@@ -41,9 +36,9 @@ public class OpenSimulationAction extends Action {
 		Shell shell = Display.getDefault().getActiveShell();
 		if (openDialog == null) {
 			openDialog = new FileDialog(shell);
-			openDialog.setFilterExtensions(new String[] { "*.zip", "*.trk", "*.*" });
+			openDialog.setFilterExtensions(new String[] { "*.zip", "*.trk", "*.sav", "*.*" });
 			openDialog.setFilterNames(new String[] {
-					"Zipped Simulation (*.zip)", "Simulation (*.trk)", "All files (*.*)" });
+					"Zipped Simulation (*.zip)", "Simulation (*.trk)", "Saved Simulations (*.sav)", "All files (*.*)" });
 		}
 		String fname = openDialog.open();
 		if (fname == null) {
@@ -64,6 +59,11 @@ public class OpenSimulationAction extends Action {
 			e.printStackTrace();
 		}
 		LayoutPart.openEditor(window, fname);
+		if (fname.toLowerCase().endsWith(".sav")) {
+			RestoreCommand cmd = new RestoreCommand(fname);
+			Application.getSimulator().addCommand(cmd);
+			return;
+		}
 		LoadCommand cmd = new LoadCommand(fname);
 		Application.getSimulator().addCommand(cmd);
 	}

@@ -1,9 +1,12 @@
 package com.traindirector.commands;
 
+import java.awt.TrayIcon.MessageType;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -486,6 +489,16 @@ public class ClickCommand extends SimulatorCommand {
 
 		case AssignDialog.SPLIT:
 			// TODO: open split dialog
+			InputDialog splitDialog = new InputDialog(shell, "Split train", "Position where to split the train (meters from the head)", "100", null);
+			if (splitDialog.open() != InputDialog.OK)
+				break;
+			String value = splitDialog.getValue();
+			try {
+				length = Integer.parseInt(value);
+			} catch (Exception e) {
+				MessageDialog.open(MessageDialog.ERROR, shell, "Error", "Length must be a numeric value.", SWT.NONE);
+				break;
+			}
 			cmd = new SplitCommand(train, length);
 			break;
 

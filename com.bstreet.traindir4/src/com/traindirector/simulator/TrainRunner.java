@@ -182,8 +182,8 @@ public class TrainRunner {
 			    	_simulator.alert(String.format("You must assign train %s using stock from train %s!",
 							train._name, train._waitFor));
 			    }
-			    train._timeDelay += _simulator._currentTimeMultiplier;
-			    _simulator._totalDelay += _simulator._currentTimeMultiplier;
+			    train._timeDelay += _simulator._simulatedSpeed;
+			    _simulator._totalDelay += _simulator._simulatedSpeed;
 			    return false;
 		    }
 		}
@@ -406,7 +406,6 @@ public class TrainRunner {
 	public Signal findSignalAtEndOfPath(TrackPath path) {
 		int nPathElements = path.getTrackCount(0);
 		Track track = path.getLastTrack();
-		PathFinder finder = new PathFinder();
 		Direction dir = track.walk(path.getDirectionAt(nPathElements - 1));
 		TDPosition nextPos = dir.offset(track._position);
 		Track next = _simulator._territory.findTrack(nextPos);
@@ -445,24 +444,66 @@ public class TrainRunner {
 		int distToStop = 0;
 		train._stopPoint = null;
 		train._distanceToStop = 0;
-		for (i = 0; i < train._path.getTrackCount(0); ++i) {
-			Track track = train._path.getTrackAt(i);
-			distToStop += track._length;
-			if (track != train._outOf && track._isStation && train.stopsAt(track)) {
-				train._stopPoint = track;
-				if (track._length > 0)
-					distToStop -= track._length / 2; // stop in the middle of the track
-				// TODO account for train length when stopping
-				train._distanceToStop = distToStop;
-				return;
+		Signal signal = findSignalAtEndOfPath(train._path);
+		if (signal != null) {
+			if (!signal.isClear()) {
+				train._stopPoint = signal;
+				train._distanceToStop = train._path.getDistance(0);
 			}
 		}
-		Signal signal = findSignalAtEndOfPath(train._path);
-		if (signal == null)
-			return;
-		if (!signal.isClear()) {
-			train._stopPoint = signal;
+		for (i = 0; i < train._path.getTrackCount(0); ++i) {
+			Track track = train._path.getTrackAt(i);
+			if (!track._isStation || i == 0) {	// i == 0 if we are already at a station
+				distToStop += track._length;
+				continue;
+			}
+			
+			// we are at a station
+			
+			if (!train.isStranded() && !train._shunting) {
+				if (!train.stopsAt(track)) {
+					distToStop += track._length;
+					continue;
+				}
+			}
+			if (track == train._outOf) {
+				distToStop += track._length;
+				continue;
+			}
+			
+			// we want to stop at this station
+
+			train._stopPoint = track;
 			train._distanceToStop = distToStop;
+			if (train._length == 0) {
+				// train will stop in the middle of the station's track
+				train._distanceToStop += track._length / 2;
+				break;
+			}
+			if (train._length <= track._length) {
+				train._distanceToStop += (track._length / 2) + (train._length / 2);
+				return;
+			}
+			
+			/* proceed until end of path, or until half of the
+			 * train's length has traveled past the station.
+			 */
+			
+			int overLength = train._length / 2 - track._length / 2;
+			train._distanceToStop += track._length;
+			while (++i < train._path.getTrackCount(0)) {
+				track = train._path.getTrackAt(i);
+				if (track._isStation)
+					break;
+				if (overLength - track._length < 0) {
+					train._distanceToStop += overLength;
+					train._stopPoint = track;
+					break;
+				}
+				overLength -= track._length;
+				train._distanceToStop += track._length;
+			}
+			break;
 		}
 	}
 
@@ -619,9 +660,10 @@ public class TrainRunner {
 		}
 		if(t._position != null) {
 		    len = t._length;
-		    len -= t._trackpos;	/* portion already traveled by train's head */
+		    len -= t._trackDistance;	/* portion already traveled by train's head */
 		} else {		/* when exiting, */
-		    len = tail._trackpos;/* this is the length still inside the layout */
+		    len = tail._trackDistance;/* this is the length still inside the layout */
+		    len = tail._path.getDistance(0) - (int)tail._trackDistance;
 		    i = tail._path.getTrackCount(0);
 		}
 		if(len > 0) {
@@ -629,19 +671,25 @@ public class TrainRunner {
 		    while(i >= 0) {
 				trk = tail._path.getTrackAt(i);
 				if(trk instanceof Track || trk instanceof Switch) {
-				    trk.setStatus(TrackStatus.BUSY);
+				    trk.setStatus(TrackStatus.OCCUPIED);
 				    tail._position = trk;
 				}
 				--i;
-				if(len < trk._length)
-				    break;
+				if(len < trk._length) {
+					tail._trackDistance = trk._length - len;
+				    break; // this track can fit the tail
+				}
 				len -= trk._length;
 		    }
 		} else
 		    --i;
+		
+		// Remove all the tracks from the beginning of the path
+		// to the new position of the tail
+
 		while(i >= 0) {
 		    trk = tail._path.getTrackAt(i);
-		    if(trk._status != TrackStatus.BUSY) {
+		    if(trk._status != TrackStatus.OCCUPIED) {
 				tail._path.remove(trk);
 				--i;
 				break;
@@ -705,7 +753,10 @@ public class TrainRunner {
 
 			// head has exited the territory
 
-			computeSpeed(train, tail._path.getDirectionAt(0));
+			if (tail._path != null && !tail._path.isEmpty())
+				computeSpeed(train, tail._path.getDirectionAt(0));
+			else
+				computeSpeed(train, train._direction);
 
 			// has tail entered the territory?
 			// (maybe the train is longer than the distance
@@ -992,6 +1043,7 @@ public class TrainRunner {
 
 	private void merge(Train train) {
 		Train	t2;
+		Train	tail;
 		boolean	doDelete = false;
 		int	i;
 
@@ -1015,10 +1067,11 @@ public class TrainRunner {
 	//			Vector_dump(t2, "materiale");
 				// incoming train always attaches to the tail of previous train.
 				AssignCommand assign = new AssignCommand(train, t2);
+				// TODO: pass _simlator
 				assign.handle();
 	//			Vector_dump(trn, "dopo assign");
 				train._merging = null;
-				Train tail = train._tail;
+				tail = train._tail;
 				// t2 is deleted here, so nothing else to do
 				if(tail == null || tail._path == null) {
 				    if(train._position == null || !train._position._isStation || train._position == train._outOf)
@@ -1078,6 +1131,15 @@ public class TrainRunner {
 		    train._position = t2._position;
 		    t2._position = null;
 		    t2._tail = null;
+		    tail = train._tail;
+		    if (tail == null)
+		    	return;
+			for(i = 0 /*tail._pathpos*/; i < tail._path.getTrackCount(0); ++i) {
+			    Track trk = tail._path.getTrackAt(i);
+			    if(trk == train._position)
+			    	break;
+			    trk.setStatus(TrackStatus.OCCUPIED);
+			}
 		    return;
 		}
 		// else we want to keep t2 and remove trn
@@ -1149,16 +1211,7 @@ public class TrainRunner {
 					continue; // impossile
 				if (wtrack._status == TrackStatus.BUSYSHUNTING)
 					continue;
-				train._merging = _simulator._schedule.findTrainAt(wtrack._position);
-				if (train._merging == null) {
-					train._merging = _simulator._schedule.findTailAt(wtrack._position);
-				}
-				if (train._merging == null) {
-					train._merging = _simulator._schedule.findStrandedAt(wtrack._position);
-				}
-				if (train._merging == null) {
-					train._merging = _simulator._schedule.findStrandedTailAt(wtrack._position);
-				}
+				train._merging = _simulator._schedule.findAnyTrainAt(wtrack._position);
 				if (train._merging != null && (train._merging._status == TrainStatus.STOPPED ||
 						train._merging._status == TrainStatus.WAITING ||
 						train._merging._status == TrainStatus.ARRIVED)) {
@@ -1275,10 +1328,11 @@ public class TrainRunner {
 			train._tail = null;
 		}
 		if (position != null)
-				position._status = TrackStatus.FREE;
+			position._status = TrackStatus.FREE;
 		train.arrived();
 		// TODO: bstreet_train_arrived(train)
 		train._speed = 0;
+		train._path = null;
 		train.onExit();
 	}
 

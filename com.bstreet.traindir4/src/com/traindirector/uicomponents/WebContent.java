@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.FileLocator;
 public class WebContent {
 
 	String _endpoint;
+	protected String _urlBase;
 	
 	public WebContent(String endpoint) {
 		_endpoint = endpoint;
@@ -109,6 +110,10 @@ public class WebContent {
 			cmd = cmd.substring(1);
 		cmd = cmd.replace("%20", " ");
 		return cmd;
+	}
+
+	public void setUrlBase(String value) {
+		_urlBase = value;
 	}
 
 }

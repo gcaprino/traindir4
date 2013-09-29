@@ -226,11 +226,11 @@ public class Train {
 
 	public boolean stopsAt(Track track) {
 		for (TrainStop stop : _stops) {
-			if (stop._station.compareTo(track._station) == 0) {
+			if (stop._station.equals(track._station)) {
 				return true;
 			}
 		}
-		return false;
+		return track._station.equals(_exit);
 	}
 
 	// TODO: what if our tail overlays multiple stations?
@@ -271,8 +271,8 @@ public class Train {
 			sb.append(_position._position.toString());
 		}
 		sb.append(" ");
-		sb.append(_speed);
-		sb.append(" km/h, slow: ");
+		sb.append(_length);
+		sb.append(" m, slow: ");
 		sb.append(_distanceToSlow);
 		sb.append(" m, stop: ");
 		sb.append(_distanceToStop);
@@ -561,6 +561,10 @@ public class Train {
 		_speed = 0;
 		_position = null;
 		_tail = null;
+	}
+
+	public void shunt() {
+		_shunting = true;
 	}
 
 	public void merge() {

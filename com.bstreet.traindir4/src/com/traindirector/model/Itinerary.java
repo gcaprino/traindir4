@@ -3,6 +3,7 @@ package com.traindirector.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.traindirector.simulator.PathFinder;
 import com.traindirector.simulator.Simulator;
 
 public class Itinerary {
@@ -30,11 +31,43 @@ public class Itinerary {
 	}
 
 	public boolean canSelect() {
-		return false;
-	}
+    	Signal	sig;
+        int     el;
+		Track   trk;
 	
+		sig = Simulator.INSTANCE._territory.findSignalNamed(_signame);
+		if(sig == null)
+		    return false;
+	
+		if(sig._controls == null)
+		    return false;
+		if(sig.isClear())
+		    return false;
+	
+	    turnSwitches();
+		PathFinder finder = new PathFinder();
+		TDPosition position = sig._controls._position;
+		TrackPath path = finder.find(position, sig.getDirectionFrom(sig._direction));
+	    if(path == null) {
+            restoreSwitches();
+		    return false;
+	    }
+		int nel = path.getTrackCount(0);
+		boolean failed = false;
+		// check that every element in the path is clear
+		for(el = 0; el < nel; ++el) {
+		    trk = path.getTrackAt(el);
+		    if (trk._status != TrackStatus.FREE) {
+	            failed = true;
+	            break;
+		    }
+		}
+	    restoreSwitches();
+		return !failed;
+	}
+
 	public boolean isSelected() {
-		return false;
+		return deselect(true);
 	}
 
 	public boolean select() {
@@ -69,7 +102,54 @@ public class Itinerary {
 	}
 	
 	public boolean deselect(boolean checkOnly) {
-		return false;
+		territory = Simulator.INSTANCE._territory;
+		Signal	sig;
+
+		sig = territory.findSignalNamed(_signame);
+		if(sig == null)
+		    return false;
+
+		if(sig._controls == null)
+		    return false;
+		if(!sig.isClear())	// maybe a train entered the block or the
+		    return false;	// path is occupied in the opposite direction
+
+		PathFinder finder = new PathFinder();
+		TDPosition position = sig._controls._position;
+		TrackPath path = finder.find(position, sig.getDirectionFrom(sig._direction));
+	    if(path == null)
+		    return false;
+		int nel = path.getTrackCount(0);
+		int el;
+		Track trk;
+		boolean failed = false;
+		// check that every element in the path is still clear
+		for(el = 0; el < nel; ++el) {
+		    trk = path.getTrackAt(el);
+		    if (trk._status != TrackStatus.BUSY) { 
+				failed = true;
+				break;
+		    }
+		}
+		if(!failed) {
+		    // check that every switch is in the right position
+		    for(el = 0; el < this._switches.size(); ++el) {
+		    	Switch sw = territory.findSwitch(this._switches.get(el)._position);
+				if(sw == null) {
+				    failed = true;
+				    break;
+				}
+				if(sw.isThrown() != this._switches.get(el)._thrown) {
+				    failed = true;
+				    break;
+				}
+		    }
+		}
+		if(!failed) {
+		    if(!checkOnly)		// OK to undo the itinerary
+		    	sig.toggle();
+		}
+		return !failed;
 	}
 	
 	public boolean turnSwitches() {

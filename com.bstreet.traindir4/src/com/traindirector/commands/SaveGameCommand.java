@@ -2,11 +2,7 @@ package com.traindirector.commands;
 
 import java.io.File;
 
-import com.bstreet.cg.events.CGEventDispatcher;
-import com.traindirector.events.LoadEndEvent;
-import com.traindirector.events.LoadStartEvent;
 import com.traindirector.files.SavFile;
-import com.traindirector.files.TrkFile;
 import com.traindirector.model.Schedule;
 import com.traindirector.model.Territory;
 import com.traindirector.simulator.SimulatorCommand;

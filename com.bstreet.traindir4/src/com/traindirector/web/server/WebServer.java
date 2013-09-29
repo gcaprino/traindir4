@@ -39,6 +39,7 @@ public class WebServer extends AbstractHandler implements Runnable {
 			cmd = cmd.substring(0, indx);
 		WebContent provider = _handlers.get(cmd);
 		if (provider != null) {
+			provider.setUrlBase("http://localhost:8900" + target);
 			provider.doLink(target);
 			String result = provider.getHTML();
 			response.getWriter().println(result);
