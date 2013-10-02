@@ -130,7 +130,7 @@ public class Signal extends Track {
 			return false;
 		}
 		
-		if(_fixedred) {
+		if (_fixedred) {
 			// TODO penalty always red
 			return false;
 		}
@@ -144,8 +144,18 @@ public class Signal extends Track {
 
 		// TODO: if shunting signal
 		
+		/*
+		if(_isShuntingSignal) {
+		    onClicked();
+		    updateSignals(this);
+		    return false;
+		}
+		*/
+		
 		if (isClear()) {
-			// TODO: penalty if !fleeted
+			// penalty if !fleeted
+			if (!isFleeted() && !_noClickPenalty)
+				++Simulator.INSTANCE._performanceCounters.cleared_signal;
 			unreserveIntermediateSignals(path);
 			setAspectFromName(SignalAspect.RED);
 			onUnclear();
@@ -183,7 +193,9 @@ public class Signal extends Track {
 
 	@Override
 	public void onClick() {
-		toggle();
+		if (!toggle() && !isClear()) {
+			++Simulator.INSTANCE._performanceCounters.denied;
+		}
 	}
 
 	@Override
@@ -191,7 +203,7 @@ public class Signal extends Track {
 	    if(isClear())
 	    	return;
 	    if(_fixedred) {
-	    	/* TODO: ADD PENALTY */
+	    	++Simulator.INSTANCE._performanceCounters.denied;
 	    	return;
 	    }
 	    // we ignore true approach signals

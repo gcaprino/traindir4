@@ -535,13 +535,7 @@ public class SavFile extends TextFile {
 					// 0 is the position of the train
 					for(i = 1; i < train._path.getTrackCount(0); ++i) {
 						Track track = train._path.getTrackAt(i);
-						if ((trn = schedule.findTrainAt(track._position)) == null) {
-							if((trn = schedule.findTailAt(track._position)) == null) {
-								if ((trn = schedule.findStrandedAt(track._position)) == null) {
-									trn = schedule.findStrandedTailAt(track._position);
-								}
-							}
-						}
+						trn = schedule.findAnyTrainAt(track._position);
 						if (trn != null) {
 							train._merging = trn;
 							train._flags |= Train.MERGING;
@@ -1613,13 +1607,7 @@ public class SavFile extends TextFile {
 				// 0 is the position of the train
 				for(i = 1; i < train._path.getTrackCount(0); ++i) {
 					Track track = train._path.getTrackAt(i);
-					if ((trn = schedule.findTrainAt(track._position)) == null) {
-						if((trn = schedule.findTailAt(track._position)) == null) {
-							if ((trn = schedule.findStrandedAt(track._position)) == null) {
-								trn = schedule.findStrandedTailAt(track._position);
-							}
-						}
-					}
+					trn = schedule.findAnyTrainAt(track._position);
 					if (trn != null) {
 						train._merging = trn;
 						train._flags |= Train.MERGING;

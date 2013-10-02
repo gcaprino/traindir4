@@ -16,6 +16,8 @@ public class Schedule {
 	public int _nReady;
 	public int _nArrived;
 	public int _nDerailed;
+	public int _nStarting;
+	public int _nStopped;
 
 	public Schedule() {
 		_trains = new LinkedList<Train>();
@@ -104,10 +106,12 @@ public class Schedule {
 		_nArrived = 0;
 		_nDerailed = 0;
 		_nRunning = 0;
-		computeCounters();
+		_nStopped = 0;
+		_nStarting = 0;
 	}
 	
 	public void computeCounters() {
+		clearCounters();
 		for (Train train : _trains) {
 			switch (train._status) {
 			case READY:    ++_nReady;	 break;
@@ -116,6 +120,8 @@ public class Schedule {
 			case DERAILED: ++_nDerailed; break;
 			case ARRIVED:  ++_nArrived;  break;
 			case RUNNING:  ++_nRunning;  break;
+			case STARTING: ++_nStarting; break;
+			case STOPPED:  ++_nStopped;  break;
 			}
 		}
 	}

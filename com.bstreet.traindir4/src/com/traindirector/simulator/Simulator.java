@@ -91,6 +91,7 @@ public class Simulator {
 	public int[] _startDelay = new int[Track.NSPEEDS];
 	
 	public PerformanceCounters _performanceCounters = new PerformanceCounters();
+	public PerformanceCounters _performanceMultipliers = new PerformanceCounters();
 	public int _runPoints;
 	public int _totalDelay;
 	public int _totalLate;
@@ -133,6 +134,8 @@ public class Simulator {
 		_timer.schedule(_timedExecutor, 500, 100);
 		_options._locale = "en";
 		
+		_performanceMultipliers.setAll(1); // hard vs. soft performance
+
 		_options.initOptions();
 		for(Option o : _options._colorOptions) {
 			ColorOption col = (ColorOption)o;
@@ -211,7 +214,34 @@ public class Simulator {
 		sb.append(TDTime.toString(_simulatedTime));
 		sb.append(" x");
 		sb.append(_simulatedSpeed);
+		_schedule.computeCounters();
+		sb.append("  R " + _schedule._nRunning + " / S " + _schedule._nStarting + " / r " + _schedule._nReady +
+				" / w " + _schedule._nWaiting + " / s " + _schedule._nStopped + " / a " + _schedule._nArrived);
+		
+		sb.append(" Pt: -");
+		sb.append(getPerformancePoints());
+		sb.append(" Del: ");
+		sb.append(_totalDelay);
+		sb.append(" Late: ");
+		sb.append(_totalLate);
+
 		return sb.toString();
+	}
+
+	public int getPerformancePoints() {
+		PerformanceCounters perf_tot = _performanceCounters;
+		PerformanceCounters perf_vals = _performanceMultipliers;
+		int tot;
+
+		tot = perf_tot.wrong_dest * perf_vals.wrong_dest;
+		tot += perf_tot.late_trains * perf_vals.late_trains;
+		tot += perf_tot.thrown_switch * perf_vals.thrown_switch;
+		tot += perf_tot.cleared_signal * perf_vals.cleared_signal;
+		tot += perf_tot.turned_train * perf_vals.turned_train;
+		tot += perf_tot.waiting_train * perf_vals.waiting_train;
+		tot += perf_tot.wrong_platform * perf_vals.wrong_platform;
+		tot += perf_tot.denied * perf_vals.denied;
+		return tot;
 	}
 
 	public void setSimulationSpeed(int index, int speed) {

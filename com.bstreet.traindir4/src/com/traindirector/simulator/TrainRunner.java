@@ -256,6 +256,9 @@ public class TrainRunner {
 	}
 
 	public void leaveTrack(Train train, Track track) {
+		if (track instanceof Switch) {
+			((Switch) track).resetThrown();
+		}
 		track.setStatus(TrackStatus.FREE);
 		track.onExit(train); // run scripts
 	}

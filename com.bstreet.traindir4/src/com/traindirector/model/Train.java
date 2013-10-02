@@ -547,10 +547,46 @@ public class Train {
 	}
 
 	public void arrived() {
+		Simulator sim = Simulator.INSTANCE;
+		PerformanceCounters perf_tot = sim._performanceCounters;
+		
 		_status = TrainStatus.ARRIVED;
 		_speed = 0;
-		// TODO: penalty: check correct destination
-		// TODO: penalty: check late arrival
+		
+		// penalty: check late arrival
+		
+		int minlate;
+		int arrTime = _timeOut;
+		
+		if (arrTime < _timeIn)
+			arrTime += 24 * 60 * 60;
+		minlate = (sim._simulatedTime - arrTime) / 60;
+		if ((_flags & Train.SETLATEARRIVAL) != 0)	/* we stopped here before! */
+		    minlate = 0;
+		else
+		    _timeExited = sim._simulatedTime;
+		_flags |= SETLATEARRIVAL;
+		_arrived = 1;
+		if (minlate > 0) {
+		    _timeLate += minlate;
+		    // total_late += minlate;
+		    if(sim._options._hardCounters.isSet() || (_flags & ENTEREDLATE) == 0)
+		    	++perf_tot.late_trains;
+		} else for(TrainStop ts : _stops) {
+		    if(ts._late && (sim._options._hardCounters.isSet() || (_flags & ENTEREDLATE) == 0)) {
+		    	++perf_tot.late_trains;
+		    	break;
+		    }
+		}
+
+		// get entry delay
+		// penalty: check correct destination
+		
+		for (TrainStop ts : _stops) {
+		    if(sim._territory.findStation(ts._station) != null && !ts._stopped)
+		    	++perf_tot.nmissed_stops;
+		}
+
 		if (_position != null && _position instanceof TextTrack)
 			_position = null;	// remove it from the territory
 		onArrived();

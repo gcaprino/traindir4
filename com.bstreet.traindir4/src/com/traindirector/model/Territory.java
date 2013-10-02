@@ -403,7 +403,6 @@ public class Territory {
 
 	public void removeTrains() {
 		Simulator simulator = Simulator.INSTANCE;
-		Territory territory = simulator._territory;
 		for (Train train : simulator._schedule._trains) {
 			train.reset();
 		}
