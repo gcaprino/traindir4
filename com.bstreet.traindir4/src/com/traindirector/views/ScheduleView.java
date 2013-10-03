@@ -6,10 +6,13 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.part.*;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.SWT;
@@ -27,6 +30,7 @@ import com.traindirector.options.OptionsManager;
 import com.traindirector.simulator.ColorFactory;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDTime;
+import com.traindirector.uicomponents.UIUtils;
 
 
 /**
@@ -112,11 +116,14 @@ public class ScheduleView extends ViewPart {
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(_table, "com.bstreet.traindirector.scheduleView");
 		_colorFactory = Simulator.INSTANCE._colorFactory;
-		
+
+		UIUtils.restoreColumnSizes(_table, "Schedule");
+
 		makeActions();
 		hookContextMenu();
 		contributeToActionBars();
 		hookDoubleClickAction();
+
 		CGEventDispatcher.getInstance().addListener(new CGEventListener(LoadEndEvent.class) {
 			public void handle(CGEvent event, Object target) {
 				if(target instanceof Simulator) {

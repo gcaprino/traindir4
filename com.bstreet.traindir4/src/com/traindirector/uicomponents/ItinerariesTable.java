@@ -47,6 +47,9 @@ public class ItinerariesTable {
 		col.setWidth(140);
 		
 		_table.setHeaderVisible(true);
+		
+		UIUtils.restoreColumnSizes(_table, "Itineraries");
+
 	}
 
 	public int getSelectionCount() {
