@@ -180,4 +180,19 @@ public class FileManager {
 		return stream;
 	}
 
+	public String getTextContentFor(String fname) {
+		BufferedReader reader = getReaderForFile(fname);
+		StringBuilder sb = new StringBuilder();
+		String line;
+		try {
+			while ((line = reader.readLine()) != null) {
+				sb.append(line);
+				sb.append("\n");
+			}
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return sb.toString();
+	}
 }
