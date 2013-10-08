@@ -45,6 +45,9 @@ public class Territory {
 	}
 
 	public void add(Track trk) {
+		Track oldTrack = findTrack(trk._position);
+		if (oldTrack != null)
+			remove(oldTrack);
 		_tracks.add(trk);
 	}
 
@@ -64,7 +67,11 @@ public class Territory {
 		}
 		return null;
 	}
-	
+
+	public Track findTrack(int x, int y) {
+		return findTrack(new TDPosition(x, y));
+	}
+
 	public void remove(Track track) {
 		_tracks.remove(track);
 	}
@@ -200,8 +207,24 @@ public class Territory {
 	// relative positions of the entry text and
 	// the linked entry track
 	public Direction findEntryDirection(Track text, Track track) {
+		Direction dir;
+		if (track == null)
+			return null;
+		if (text._elinkTrack == track)
+			dir = Direction.E;
+		else if (text._wlinkTrack == track)
+			dir = Direction.W;
+		else
+			return null;
 		TDPosition ptext = text._position;
 		TDPosition ptrack = track._position;
+		switch (track._direction) {
+		case N_S:
+		case S_N:
+		case TRK_N_S:
+			return (ptext._y < ptrack._y) ? Direction.S : Direction.N;
+		}
+		/*
 		switch (track._direction) {
 		case E_W:
 		case W_E:
@@ -259,6 +282,8 @@ public class Territory {
 			break;
 		}
 		return null;
+		*/
+		return dir;
 	}
 
 	public void loadSignalAspects(ScriptFactory scriptFactory) {

@@ -237,7 +237,7 @@ public class Itinerary {
 			if (sig == null)
 				return false;
 			SignalAspect aspect = sig.getAspect();
-			if (aspect._action.compareTo(SignalAspect.PROCEED) == 0)
+			if (aspect.canProceed())	// already cleared
 				return false;
 			blocks.add(sig);
 			if (it._nextitin == null || it._nextitin.isEmpty())

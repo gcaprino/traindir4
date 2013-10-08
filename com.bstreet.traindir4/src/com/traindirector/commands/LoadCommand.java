@@ -43,7 +43,7 @@ public class LoadCommand extends SimulatorCommand {
 		CGEventDispatcher.getInstance().postEvent(loadEvent);
 		_territory = _simulator._territory;
 		_territory.removeAllElements();
-		
+
 		_simulator.setNewProject(_fname);
 
 		File dir = new File(_fname);

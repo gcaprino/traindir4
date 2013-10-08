@@ -2,6 +2,7 @@ package com.traindirector.views;
 
 
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -62,12 +63,23 @@ public class ScheduleView extends ViewPart {
 	private Action showCancelledAction;
 	private Action showArrivedAction;
 	private Action doubleClickAction;
+	private Action trackFirstAction;
+	private Action trackLastAction;
 
 	public Simulator _simulator;
 	public ColorFactory _colorFactory;
 
 	public boolean _showCancelled = true;
 	public boolean _showArrived = true;
+
+	protected boolean _trackFirstTrain;
+
+	protected boolean _trackLastTrain;
+
+	private Action assignAction;
+
+	private Action trainPropertiesAction;
+
 
 	/**
 	 * The constructor.
@@ -106,6 +118,15 @@ public class ScheduleView extends ViewPart {
 		col.setWidth(60);
 		col = new TableColumn(_table, SWT.NONE);
 		col.setText("Min.Late");
+		col.setWidth(60);
+		col = new TableColumn(_table, SWT.NONE);
+		col.setText("Length");
+		col.setWidth(60);
+		col = new TableColumn(_table, SWT.NONE);
+		col.setText("m to stop");
+		col.setWidth(60);
+		col = new TableColumn(_table, SWT.NONE);
+		col.setText("m to slow");
 		col.setWidth(60);
 		col = new TableColumn(_table, SWT.NONE);
 		col.setText("Status");
@@ -197,8 +218,11 @@ public class ScheduleView extends ViewPart {
 				item.setText(5, "" + train._speed);
 				item.setText(6, "" + train._minDel);
 				item.setText(7, "" + train._minLate);
-				item.setText(8, train.getStatusAsString());
-				item.setText(9, train.getNotesAsString());
+				item.setText(8, train._length > 0 ? "" + train._length : "");
+				item.setText(9, train.isRunning() ? "" + train._distanceToStop : "");
+				item.setText(10, train.isRunning() ? "" + train._distanceToSlow : "");
+				item.setText(11, train.getStatusAsString());
+				item.setText(12, train.getNotesAsString());
 				setItemColors(item, train);
 			}
 		}
@@ -223,8 +247,10 @@ public class ScheduleView extends ViewPart {
 				item.setText(5, "" + train._speed);
 				item.setText(6, "" + train._minDel);
 				item.setText(7, "" + train._minLate);
-				item.setText(8, train.getStatusAsString());
-				item.setText(9, train.getRunInfo());
+				item.setText(9, train.isRunning() ? "" + train._distanceToStop : "");
+				item.setText(10, train.isRunning() ? "" + train._distanceToSlow : "");
+				item.setText(11, train.getStatusAsString());
+				item.setText(12, train.getNotesAsString());
 				setItemColors(item, train);
 			}
 		}
@@ -315,14 +341,17 @@ public class ScheduleView extends ViewPart {
 	private void fillContextMenu(IMenuManager manager) {
 		manager.add(showCancelledAction);
 		manager.add(showArrivedAction);
+		manager.add(trackFirstAction);
+		manager.add(trackLastAction);
+		manager.add(assignAction);
+		manager.add(trainPropertiesAction);
 		// Other plug-ins can contribute their actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
 	private void makeActions() {
-		showCancelledAction = new Action("Show Cancelled", Action.AS_CHECK_BOX) {
+		showCancelledAction = new Action("Show Canceled", Action.AS_CHECK_BOX) {
 			public void run() {
-				// Show Arrived
 				_showCancelled = showCancelledAction.isChecked();
 				fillScheduleTable();
 			}
@@ -334,7 +363,6 @@ public class ScheduleView extends ViewPart {
 		
 		showArrivedAction = new Action("Show Arrived", Action.AS_CHECK_BOX) {
 			public void run() {
-				// Show Arrived
 				_showArrived = showArrivedAction.isChecked();
 				fillScheduleTable();
 			}
@@ -344,10 +372,51 @@ public class ScheduleView extends ViewPart {
 				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
 		showArrivedAction.setChecked(_showArrived);
 
-		// TODO: segui primo treno attivo
-		// TODO: segui ultimo treno attivo
-		// TODO: assign
-		// TODO: train properties
+		trackFirstAction = new Action("Track First Train", Action.AS_RADIO_BUTTON) {
+			public void run() {
+				_trackFirstTrain = trackFirstAction.isChecked();
+				_trackLastTrain = false;
+				trackLastAction.setChecked(false);
+				fillScheduleTable();
+			}
+		};
+		trackFirstAction.setToolTipText("Automatically track first non-arrived");
+		trackFirstAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		trackFirstAction.setChecked(_trackFirstTrain);
+
+		trackLastAction = new Action("Track Last Train", Action.AS_RADIO_BUTTON) {
+			public void run() {
+				_trackLastTrain = trackLastAction.isChecked();
+				_trackFirstTrain = false;
+				trackFirstAction.setChecked(false);
+				fillScheduleTable();
+			}
+		};
+		trackLastAction.setToolTipText("Automatically track first non-arrived");
+		trackLastAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		trackLastAction.setChecked(_trackFirstTrain);
+
+		assignAction = new Action("Assign", Action.AS_PUSH_BUTTON) {
+			public void run() {
+				fillScheduleTable();
+			}
+		};
+		assignAction.setToolTipText("Assign rolling stock of this train to another train");
+		assignAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		assignAction.setChecked(_trackFirstTrain);
+
+		trainPropertiesAction = new Action("Properties", Action.AS_PUSH_BUTTON) {
+			public void run() {
+			}
+		};
+		trainPropertiesAction.setToolTipText("Show properties of this train");
+		trainPropertiesAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
+			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		trainPropertiesAction.setChecked(_trackFirstTrain);
+
 		doubleClickAction = new Action() {
 			public void run() {
 //				ISelection selection = viewer.getSelection();

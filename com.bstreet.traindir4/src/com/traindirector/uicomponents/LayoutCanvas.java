@@ -17,17 +17,12 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-
 import com.bstreet.cg.events.CGEvent;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.bstreet.cg.events.CGEventListener;
 import com.traindirector.Application;
 import com.traindirector.commands.ClickCommand;
 import com.traindirector.commands.RunStopCommand;
-import com.traindirector.editors.LayoutEditorInput;
 import com.traindirector.events.ChangeZoomingEvent;
 import com.traindirector.events.LoadEndEvent;
 import com.traindirector.events.LoadStartEvent;
@@ -57,6 +52,7 @@ public class LayoutCanvas {
 
 	ScrolledComposite _scroller;
 	Canvas _canvas;
+	Display _display;
 
 	Simulator _simulator;
 
@@ -88,17 +84,25 @@ public class LayoutCanvas {
 	private static final int VCOORDBAR = 30;
 	private int _xOffset = 0; // 0 or HCOORDBAR
 	private int _yOffset = 0; // 0 or VCOORDBAR
+	
+	private LayoutEditor _editor;
 
-	public LayoutCanvas(Composite parent) {
+	public LayoutCanvas(Composite parent, boolean isEditor) {
 		
+		_display = parent.getDisplay();
 		_statusLine = Application._workbenchAdvisor._windowAdvisor._actionBarAdvisor._statusLine;
 		_scroller = new ScrolledComposite(parent, SWT.V_SCROLL | SWT.H_SCROLL);
 		_canvas = new Canvas(_scroller, SWT.NO_BACKGROUND);
 		_scroller.setContent(_canvas);
-		_canvas.setSize(4000, 4000);
+		if (!isEditor)
+			_canvas.setSize(4000, 4000);
+		else {
+			_canvas.setSize(800, 400);
+			setEditorToolbox(true);
+		}
 
 		registerUIEventHandlers();
-		
+
 
 		registerInternalEventHandlers();
 	}
@@ -108,7 +112,7 @@ public class LayoutCanvas {
 	public void updateCanvas(GC gc) {
 		try {
 			// draw into a buffer, then transfer it over to the canvas
-			Image buffer = new Image(Display.getDefault(), _canvas.getBounds());
+			Image buffer = new Image(_display, _canvas.getBounds());
 			GC gc2 = new GC(buffer);
 			redrawCanvas(gc2);
 
@@ -179,9 +183,7 @@ public class LayoutCanvas {
 
 				} else if (trk instanceof ItineraryButton) {
 					drawImage(gc, trk._position, ":icons:itinButton.xpm");
-					gc.drawText(trk._station,
-							_xOffset + (trk._position._x + 1) * Simulator.HGRID * _xMultiplier,
-							_yOffset + trk._position._y * Simulator.VGRID * _yMultiplier);
+					drawText(gc, trk._position, trk._station);
 				} else if (trk instanceof PlatformTrack) {
 					VLine[] segs = trk.getSegments();
 					if(segs != null)
@@ -205,10 +207,10 @@ public class LayoutCanvas {
 						drawSegments(gc, sw._position, segs, TrackStatus.FREE);
 
 				} else if (trk instanceof TextTrack) {
-                    gc.drawText(trk._station,
-                    		_xOffset + trk._position._x * Simulator.HGRID * _xMultiplier,
-                    		_yOffset + trk._position._y * Simulator.VGRID * _yMultiplier);
-
+					
+					// TODO: small and large text
+					drawText(gc, trk._position, trk._station);
+					
 				} else if (trk instanceof TriggerTrack) {
 					VLine[] segs = trk.getSegments();
 					if (segs != null)
@@ -315,7 +317,12 @@ public class LayoutCanvas {
 		}
 	}
 	
-	
+	private void drawText(GC gc, TDPosition position, String text) {
+		gc.drawText(text,
+				_xOffset + (position._x + 1) * Simulator.HGRID * _xMultiplier,
+				_yOffset + position._y * Simulator.VGRID * _yMultiplier);
+	}
+
     private void drawImage(GC gc, TDPosition position, String iconFileName) {
 		TDIcon icon = _simulator._iconFactory.get(iconFileName);
 		if (icon == null) {
@@ -323,7 +330,7 @@ public class LayoutCanvas {
 		}
 		drawImage(gc, position, icon);
 	}
-	
+
 	private void drawImage(GC gc, TDPosition position, TDIcon icon) {
 		if (icon != null) {
 			if (icon._bytes == null || !(icon._bytes instanceof Image)) {
@@ -371,7 +378,7 @@ public class LayoutCanvas {
 	public Image drawXpm(TDPosition pos, String[] xpm) {
 		try {
 			XPM xpmImage = new XPM(xpm);
-			Image img = new Image(_canvas.getDisplay(), xpmImage.data);
+			Image img = new Image(_display, xpmImage.data);
 			return img;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -424,6 +431,15 @@ public class LayoutCanvas {
 			return;
 		TDPosition pos = toLayoutCoord(e.x, e.y);
 		if(!_isEditorToolbox) {
+			if (Simulator.getEditing()) {
+				if (_editor == null) {
+					// this is here because _simulator may be null in our constructor
+					_editor = new LayoutEditor(_simulator, this);
+				}
+				_editor._pos = pos;
+				_editor.handle(e.button != 1);
+				return;
+			}
         	ClickCommand cmd = new ClickCommand(pos);
         	cmd.setLeftClick(e.button == 1);
         	cmd.setShiftKey((e.stateMask & SWT.SHIFT) != 0);
@@ -476,9 +492,13 @@ public class LayoutCanvas {
     }
 
     private void drawToolbox(GC gc) {
+    	Track trk;
         // First row
-        String[] firstRow = { "Del", "Tracks", "Switches", "Signals", "Items", "Actions" };
-        TDPosition pos = new TDPosition(0, 1);
+        //String[] firstRow = { "Del", "Tracks", "Switches", "Signals", "Items", "Actions" };
+    	String[] firstRow = { ":icons:edit:tracks.xpm", ":icons:edit:switches.xpm", ":icons:edit:signals.xpm",
+    			":icons:edit:tools.xpm", ":icons:edit:actions.xpm" };
+        TDPosition pos = new TDPosition(0, 0);
+
         
         gc.setBackground(bgColor);
         gc.fillRectangle(0, 0, _canvas.getSize().x, _canvas.getSize().y);
@@ -487,16 +507,22 @@ public class LayoutCanvas {
                 Simulator.HGRID * _xMultiplier - 3, Simulator.VGRID * _yMultiplier - 3);
         gc.setBackground(whiteColor);
         for(int x = 0; x < firstRow.length; ++x) {
-            gc.drawText(firstRow[x], x * Simulator.HGRID * _xMultiplier, 0);
+//            gc.drawText(firstRow[x], x * Simulator.HGRID * _xMultiplier, 0);
+        	pos._x = x + 1;
+        	drawImage(gc, pos, firstRow[x]);
         }
-        switch(_currentTrackType) {
+        pos._x = 0;
+        drawText(gc, pos, "Del");
+        ++pos._y;
+        VLine[] segs;
+		switch(_currentTrackType) {
         case 0: // Delete
             break;
         case 1: // Tracks
             _currentMaxTrackDirection = trackDirections.length;
             for(int x = 0; x < _currentMaxTrackDirection; ++x) {
                 pos._x = x;
-                VLine[] segs = Track.getSegments(trackDirections[x]);
+                segs = Track.getSegments(trackDirections[x]);
                 if (segs != null)
                     drawSegments(gc, pos, segs, TrackStatus.FREE);
             }
@@ -506,7 +532,7 @@ public class LayoutCanvas {
             _currentMaxTrackDirection = 24;
             for(int x = 0; x < _currentMaxTrackDirection; ++x) {
                 pos._x = x;
-                VLine[] segs = sw.getSegments(x);
+                segs = sw.getSegments(x);
                 if (segs != null)
                     drawSegments(gc, pos, segs, TrackStatus.FREE);
                 segs = sw.getBlockSegments();
@@ -533,10 +559,55 @@ public class LayoutCanvas {
             }
             break;
         case 4: // Items
+            _currentMaxTrackDirection = 6;
+            drawText(gc, pos, "Abc");
+        	++pos._x;
+        	drawText(gc, pos, "Abc"); // TODO: small text
+        	++pos._x;
+			drawImage(gc, pos, ":icons:itinButton.xpm");
+			drawText(gc, pos, "A");
+			++pos._x;
+			drawImage(gc, pos, ":icons:itinButton.xpm");
+			drawText(gc, pos, "A");
+			++pos._x;
+			drawImage(gc, pos, _simulator._iconFactory.get(":icons:camera.xpm"));
+			++pos._x;
+			trk = new PlatformTrack();
+			trk._direction = TrackDirection.E_W;
+			segs = trk.getSegments();
+			drawSegments(gc, pos, segs, TrackStatus.FREE);
+			break;
+
         case 5: // Actions
+            _currentMaxTrackDirection = 11;
+            drawText(gc, pos, "Link...");
+        	++pos._x;
+        	drawText(gc, pos, "...to...");
+        	++pos._x;
+        	drawText(gc, pos, "Macro");
+        	++pos._x;
+        	drawText(gc, pos, "Place");
+        	++pos._x;
+        	trk = new TriggerTrack();
+        	trk._direction = TrackDirection.E_W;
+			drawSegments(gc, pos, trk.getSegments(), trk._status);
+			++pos._x;
+        	trk._direction = TrackDirection.W_E;
+			drawSegments(gc, pos, trk.getSegments(), trk._status);
+			++pos._x;
+        	trk._direction = TrackDirection.N_S;
+			drawSegments(gc, pos, trk.getSegments(), trk._status);
+			++pos._x;
+        	trk._direction = TrackDirection.S_N;
+			drawSegments(gc, pos, trk.getSegments(), trk._status);
+			++pos._x;
+			drawImage(gc, pos, _simulator._iconFactory.get(":icons:edit:moveStart.xpm"));
+			++pos._x;
+			drawImage(gc, pos, _simulator._iconFactory.get(":icons:edit:moveEnd.xpm"));
+			++pos._x;
+			drawImage(gc, pos, _simulator._iconFactory.get(":icons:edit:moveDest.xpm"));
             break;
         }
-        
         
     }
 
@@ -619,7 +690,7 @@ public class LayoutCanvas {
 						if (target instanceof Simulator) {
 							_loading = false;
 							_simulator = (Simulator) target;
-							_canvas.getDisplay().syncExec(new Runnable() {
+							_display.syncExec(new Runnable() {
 								@Override
 								public void run() {
 									// _canvas.redraw();
@@ -642,7 +713,8 @@ public class LayoutCanvas {
 							if (_simulator == null) {
 								return;
 							}
-							_canvas.getDisplay().syncExec(new Runnable() {
+							// TODO: synchronized _territory
+							_display.syncExec(new Runnable() {
 								@Override
 								public void run() {
 									_canvas.redraw();

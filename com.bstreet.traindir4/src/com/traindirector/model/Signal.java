@@ -634,7 +634,20 @@ public class Signal extends Track {
 	}
 
 	public void unlock() {
-		// TODO Auto-generated method stub
+		if(_controls == null)
+		    return;
+		PathFinder finder = new PathFinder();
+		Direction dir = getDirectionFrom(_direction);
+		TrackPath path = finder.find(_controls._position, dir);
+
+		if (path == null)
+			return;
+		
+		if (path.isFree()) {
+		    onUnlock();
+//		    sig->status = ST_GREEN;
+		    path.setStatus(TrackStatus.BUSY, 0);
+		}
 	}
 
 	public void doUnclear() {

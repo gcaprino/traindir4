@@ -51,4 +51,12 @@ public class SignalAspect {
 	public String toString() {
 		return _name + "=" + _action;
 	}
+
+	public boolean canProceed() {
+		if (_action.equals(PROCEED))
+			return true;
+		if (_action.startsWith(SPEEDLIMIT))
+			return true;
+		return false;
+	}
 }

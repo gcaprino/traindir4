@@ -48,8 +48,11 @@ public class Schedule {
 	}
 
 	public Train findTrainAt(TDPosition pos) {
+		if (pos == null)
+			return null;
 		for (Train train : _trains) {
-			if (train._position != null && train._position._position.sameAs(pos))
+			if (train._position != null && train._position._position != null &&
+					train._position._position.sameAs(pos))
 				return train;
 		}
 		return null;

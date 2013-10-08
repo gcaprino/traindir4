@@ -122,7 +122,7 @@ public class TrainRunner {
 					continue;
 				}
 				SignalAspect aspect = signal.getAspect();
-				if (!aspect._action.equals(SignalAspect.PROCEED)) {
+				if (!aspect.canProceed()) {
                     // we could not enter the path, maybe because the user
                     // has closed the signal while we were starting,
                     // so go back to WAITING state
@@ -367,7 +367,8 @@ public class TrainRunner {
 					train._speed += speedincr;
 					speedincr = 0;
 				}
-			}
+			} else if (maxspeed == 0)
+				maxspeed = train._curmaxspeed;
 		}
 
 		/* Is slowspeed lower? */
@@ -412,8 +413,14 @@ public class TrainRunner {
 		Direction dir = track.walk(path.getDirectionAt(nPathElements - 1));
 		TDPosition nextPos = dir.offset(track._position);
 		Track next = _simulator._territory.findTrack(nextPos);
-		if (next == null)
-			return null;
+		if (next == null) {
+			if (dir == Direction.W && track._wlinkTrack != null)
+				next = track._wlinkTrack;
+			else if (dir == Direction.E && track._elinkTrack != null)
+				next = track._elinkTrack;
+			else
+				return null;
+		}
 		Signal signal;
 		signal = _simulator._territory.findSignalLinkedTo(next, dir);
 		if (signal == null) {
@@ -717,13 +724,10 @@ public class TrainRunner {
 		train._trackDistance = 0;
 		findStopPoint(train);
 		findSlowPoint(train);
-		// train._path.setBusy();
 		for (int i = 0; i < train._path.getTrackCount(0); ++i) {
 			Track tt = train._path.getTrackAt(i);
 			tt.setStatus(TrackStatus.BUSY);
 		}
-		findStopPoint(train);
-		findSlowPoint(train);
 //		t->pathpos = 1;
 		if (train._tail != null) {
 			if (train._tail._path == null)
@@ -1177,11 +1181,17 @@ public class TrainRunner {
 		if (nextTrack == null)
 			_simulator._territory.findSwitch(nextPos);
 		if (nextTrack == null) {
-			// alert cannot go from position to nextTrack
-			_simulator.alert(String.format("Train %s: cannot go from %s to %s - no track",
-					train._name, position._position.toString(), nextPos.toString()));
-			train.derailed();
-			return 0;
+			if (dir == Direction.W && position._wlinkTrack != null)
+				nextTrack = position._wlinkTrack;
+			else if (dir == Direction.E && position._elinkTrack != null)
+				nextTrack = position._elinkTrack;
+			else {
+				// alert cannot go from position to nextTrack
+				_simulator.alert(String.format("Train %s: cannot go from %s to %s - no track",
+						train._name, position._position.toString(), nextPos.toString()));
+				train.derailed();
+				return 0;
+			}
 		}
 		
 		// check if we can cross the signal that protects the next block

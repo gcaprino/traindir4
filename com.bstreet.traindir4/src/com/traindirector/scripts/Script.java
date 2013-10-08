@@ -2,7 +2,6 @@ package com.traindirector.scripts;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -508,7 +507,7 @@ public class Script {
 			interpreter._track = track;
 		}
 		interpreter._train = train;
-		interpreter.Execute(stmt);
+		interpreter.Execute(stmt, key);
 		return true;
 	}
 }

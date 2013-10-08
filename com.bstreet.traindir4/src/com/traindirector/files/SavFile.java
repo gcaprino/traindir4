@@ -8,11 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.osgi.framework.adaptor.FilePath;
 
 import com.traindirector.commands.LoadCommand;
@@ -75,7 +70,7 @@ public class SavFile extends TextFile {
 				String[] segs = path.getSegments();
 				file = new File(segs[segs.length - 1], "");
 				if (!file.canRead()) {
-					// TODO: show alert - file not found
+					_simulator.alert("Cannot open file '" + line + "'.");
 					return false;
 				}
 			}
@@ -973,16 +968,32 @@ public class SavFile extends TextFile {
 	public boolean loadNewFormat(BufferedReader in, String line) throws IOException {
 		Schedule schedule = _simulator._schedule;
 		getKV(line);
+		String fname = value;
+		boolean found = true;
 		// check for relative path
-		File file = new File(value);
+		File file = new File(fname);
 		if (!file.canRead()) {
 			FilePath path = new FilePath(line);
 			String[] segs = path.getSegments();
 			file = new File(segs[segs.length - 1], "");
 			if (!file.canRead()) {
-				// TODO: show alert - file not found
-				return false;
+				if (!value.toLowerCase().endsWith(".trk")) {
+					fname = value + ".trk";
+					file = new File(fname);
+					if (!file.canRead()) {
+						if (!value.toLowerCase().endsWith(".zip")) {
+							fname = value + ".zip";
+							file = new File(fname);
+							if (!file.canRead()) {
+								found = false;
+							}
+						}
+					}
+				}
 			}
+			if (!found)
+				_simulator.alert("Cannot open file '" + value + "'.");
+			return false;
 		}
 		String trkFileName = file.getPath();
 		trkFileName = trkFileName.replace(".TRK", ".trk");
@@ -1643,7 +1654,7 @@ public class SavFile extends TextFile {
 
 	public boolean saveNewFormat(BufferedWriter out) throws IOException {
 		Schedule schedule = _simulator._schedule;
-		out.append("Layout: " + trkFileName + eol);
+		out.append("Layout: " + _simulator.getSimulationFileName() + eol);
 		out.append(String.format("CurrentTimeMultiplier:%d\nStartTime:%d\nShowSpeeds:%d\nShowBlocks:%d\nBeenOnAlert:%d\nRunPoints:%d\nTotalDelay:%d\nTotalLate:%d\nTimeMultiplier:%d\nSimulatedTime:%d\n",
 				_simulator._currentTimeMultiplier,	// cur_time_mult
 				schedule._startTime,	// start_time

@@ -24,6 +24,7 @@ public class SaveGameCommand extends SimulatorCommand {
 		File dir = new File(_fname);
 		_simulator.setBaseDirectory(dir.getParent()); // make relative file names from the
 													  // location of the .trk file
+		_simulator.setLastSaved(_fname);
 		SavFile savFile = new SavFile(_simulator, _territory, _fname);
 		savFile.save();
 		if (wasRunning) {

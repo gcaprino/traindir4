@@ -709,4 +709,13 @@ public class Train {
 		return (_days & Simulator.INSTANCE._runDay) != 0;
 	}
 
+	public boolean isRunning() {
+		switch (_status) {
+		case RUNNING:
+		case STARTING:
+			return true;
+		}
+		return false;
+	}
+
 }

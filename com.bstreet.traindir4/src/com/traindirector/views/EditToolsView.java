@@ -16,7 +16,7 @@ public class EditToolsView extends ViewPart {
 
     @Override
     public void createPartControl(Composite parent) {
-        _layout = new LayoutCanvas(parent);
+        _layout = new LayoutCanvas(parent, true);
         _layout.setEditorToolbox(true);
     }
 

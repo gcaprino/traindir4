@@ -36,6 +36,7 @@ import com.traindirector.options.OptionsManager;
 import com.traindirector.scripts.ScriptFactory;
 import com.traindirector.uicomponents.SoundPlayer;
 import com.traindirector.uicomponents.SwitchboardContent;
+import com.traindirector.views.TraceView;
 import com.traindirector.web.pages.PerformanceContent;
 import com.traindirector.web.pages.StationInfoContent;
 import com.traindirector.web.pages.StationsListContent;
@@ -105,6 +106,9 @@ public class Simulator {
     private int _editorTrackType;
     private int _editorTrackDirection;
     public WebServer _webServer;
+	private String _lastSaved;
+	private String _simulationName;
+	private TraceView _traceView;
 	
 	public Simulator() {
 
@@ -427,6 +431,11 @@ public class Simulator {
 			_fileManager = null;
 		}
 		_fileManager = new FileManager(this, fname);
+		_simulationName = fname;
+	}
+
+	public String getSimulationFileName() {
+		return _simulationName;
 	}
 
 	public BufferedReader getReaderFor(String extension) {
@@ -597,4 +606,26 @@ public class Simulator {
 		}
 	}
 
+	public void setLastSaved(String name) {
+		_lastSaved = name;
+	}
+
+	public String getLastSaved() {
+		return _lastSaved;
+	}
+
+	public void setTraceView(TraceView view) {
+		_traceView = view;
+	}
+	
+	public String getTraceExpr() {
+		if (_traceView == null)
+			return null;
+		return _traceView.getExpr();
+	}
+	
+	public void trace(String msg) {
+		if (_traceView != null)
+			_traceView.addTrace(msg);
+	}
 }
