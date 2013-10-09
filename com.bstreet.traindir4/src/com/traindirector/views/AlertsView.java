@@ -31,6 +31,7 @@ import com.traindirector.commands.SaveAlertsCommand;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.model.Alert;
 import com.traindirector.simulator.Simulator;
+import com.traindirector.uicomponents.UIUtils;
 
 public class AlertsView extends ViewPart {
 
@@ -61,6 +62,8 @@ public class AlertsView extends ViewPart {
 		col.setText("Message");
 		col.setWidth(300);
 		_table.setHeaderVisible(true);
+
+		UIUtils.restoreColumnSizes(_table, "Alerts");
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(_table, "com.traindirector.alertsView");

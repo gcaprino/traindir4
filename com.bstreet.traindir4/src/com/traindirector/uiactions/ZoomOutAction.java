@@ -3,10 +3,9 @@ package com.traindirector.uiactions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchWindow;
 
-import com.traindirector.Activator;
-import com.traindirector.Application;
+import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.ICommandIds;
-import com.traindirector.commands.SpeedCommand;
+import com.traindirector.events.ChangeZoomingEvent;
 
 public class ZoomOutAction extends Action {
 
@@ -16,11 +15,11 @@ public class ZoomOutAction extends Action {
 		setId(ICommandIds.CMD_ZOOM_OUT);
         // Associate the action with a pre-defined command, to allow key bindings.
 		setActionDefinitionId(ICommandIds.CMD_ZOOM_OUT);
-		//setImageDescriptor(Activator.getImageDescriptor("/icons/faster16x16black.png"));
+		//setImageDescriptor(Activator.getImageDescriptor("/icons/zoomout16x16black.png"));
 	}
 	
 	public void run() {
-		//SpeedCommand cmd = new SpeedCommand(1);
-		//Application.getSimulator().addCommand(cmd);
+		ChangeZoomingEvent event = new ChangeZoomingEvent(-1);
+		CGEventDispatcher.getInstance().postEvent(event);
 	}
 }

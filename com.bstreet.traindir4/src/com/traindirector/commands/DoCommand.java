@@ -1,11 +1,16 @@
 package com.traindirector.commands;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 import org.eclipse.swt.widgets.Display;
 
 import com.traindirector.Application;
 import com.traindirector.editors.InfoPage;
 import com.traindirector.model.TDPosition;
+import com.traindirector.model.Track;
 import com.traindirector.model.Train;
+import com.traindirector.scripts.Script;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.SimulatorCommand;
 
@@ -61,7 +66,8 @@ public class DoCommand extends SimulatorCommand {
 			RunStopCommand rscmd = new RunStopCommand();
 			_simulator.addCommand(rscmd);
 		} else if(_cmd.startsWith("greensigs")) {
-			
+			SetSignalsToGreenCommand grcmd = new SetSignalsToGreenCommand();
+			_simulator.addCommand(grcmd);
 		} else if(_cmd.startsWith("shunt")) {
 			
 		} else if(_cmd.startsWith("traininfopage")) {
@@ -143,7 +149,15 @@ public class DoCommand extends SimulatorCommand {
 		} else if(_cmd.startsWith("selecttool")) {
 			
 		} else if(_cmd.startsWith("itinerary")) {
-			
+			offset = skipBlanks(_cmd, 9);
+			if (offset < 0)
+				return;
+			String name = _cmd.substring(offset);
+			int indx = name.indexOf("@");
+			if (indx > 0)
+				name = name.substring(0, indx);
+			ItineraryCommand itcmd = new ItineraryCommand(name);
+			_simulator.addCommand(itcmd);
 		} else if(_cmd.startsWith("info")) {
 			ShowInfoCommand cmd = new ShowInfoCommand(_simulator._baseFileName + ".htm");
 			_simulator.addCommand(cmd);
@@ -194,14 +208,69 @@ public class DoCommand extends SimulatorCommand {
 			AssignCommand acmd = new AssignCommand(from, toTrain);
 			_simulator.addCommand(acmd);
 		} else if(_cmd.startsWith("play")) {
-			
+			String path = _cmd.substring(4).trim();
+			_simulator._soundPlayer.play(path);
 		} else if(_cmd.startsWith("skip")) {
-			
+			SkipAheadCommand skcmd = new SkipAheadCommand();
+			_simulator.addCommand(skcmd);
 		} else if(_cmd.startsWith("save_perf_text")) {
 			
 		} else if(_cmd.startsWith("split")) {
-			
+		    int length;
+
+		    offset = skipBlanks(_cmd,  5);
+		    int idx = _cmd.indexOf(",", offset);
+		    if (idx < 0)
+		    	idx = _cmd.length();
+		    String trainName = _cmd.substring(offset, idx).trim();
+		    Train train = _simulator._schedule.findTrainNamed(trainName);
+		    if(train == null) {
+		    	// trace(L("Cannot split %s: train not found.", trainName));
+		    	return;
+		    }
+		    if (idx < _cmd.length()) {
+		    	offset = skipBlanks(_cmd, idx + 1);
+		    	try {
+		    		length = Integer.parseInt(_cmd.substring(offset));
+		    	} catch (Exception e) {
+		    		e.printStackTrace();
+		    		length = 0;
+		    	}
+		    } else {
+		    	length = 0;
+		    }
+		    SplitCommand spcmd = new SplitCommand(train, length);
+		    _simulator.addCommand(spcmd);
+		    
 		} else if(_cmd.startsWith("script")) {
+			
+			offset = skipBlanks(_cmd, 6);
+			if (offset < 0)
+				return;
+			try {
+				int indx = _cmd.indexOf(",", offset);
+				if (indx < 0)
+					return;
+				int x = Integer.parseInt(_cmd.substring(offset, indx));
+				offset = indx + 1;
+				indx = _cmd.indexOf(" ", indx);
+				if (indx < 0)
+					return;
+				int y = Integer.parseInt(_cmd.substring(offset, indx));
+				String name = _cmd.substring(indx + 1).trim();
+				Track track = _simulator._territory.findTrack(new TDPosition(x, y));
+				if (track == null)
+					return;
+				
+				track._script = new Script(null);
+				track._script._body = _simulator._fileManager.getTextContentFor(name);
+				track._script.parse();
+
+				track.DoEnter(null);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
 			
 		} else if(_cmd.startsWith("showalert")) {
 			offset = skipBlanks(_cmd, 9);
@@ -436,22 +505,6 @@ public class DoCommand extends SimulatorCommand {
 		    y = wxStrtol(end, &end, 10);
 		    tool_selected(x, y);
 		} else if(!wxStrncmp(cmd, wxT("itinerary"), 9)) {
-		    for(cmd += 9; *cmd == wxT(' ') || *cmd == wxT('\t'); ++cmd);
-		    const wxChar *nameend = wxStrrchr(cmd, wxT('@'));
-		    int	    namelen;
-		    Itinerary *it;
-
-		    if(nameend)
-			namelen = nameend - cmd;
-		    else
-			namelen = wxStrlen(cmd);
-		    for(it = itineraries; it; it = it->next) {
-			if(!wxStrncmp(it->name, cmd, namelen) &&
-			      wxStrlen(it->name) == namelen)
-	 		    break;
-		    }
-		    if(it)
-			itinerary_selected(it);
 		} else if(!wxStrcmp(cmd, wxT("info"))) {
 		    track_info_dialogue();
 		} else if(!wxStrncmp(cmd, wxT("sb-edit"), 7)) {
@@ -505,33 +558,10 @@ public class DoCommand extends SimulatorCommand {
 //		    invalidate_field();
 //		    repaint_all();
 		} else if(!wxStrncmp(cmd, wxT("play"), 4)) {
-		    cmd += 4;
-		    while(*cmd == ' ') ++cmd;
-		    traindir->PlaySound(cmd);
 		} else if(!wxStrcmp(cmd, wxT("skip"))) {
-		    skip_to_next_event();
 		} else if(!wxStrcmp(cmd, wxT("save_perf_text"))) {
 		    traindir->SavePerfText();
 		} else if(!wxStrncmp(cmd, wxT("split"), 5)) {
-		    int length;
-
-		    for(cmd += 5; *cmd == wxT(' ') || *cmd == wxT('\t'); ++cmd);
-		    x = 0;
-		    while(*cmd && *cmd != ',') {
-			buff[x++] = *cmd++;
-		    }
-		    buff[x] = 0;
-		    if(!(t = findTrainNamed(buff))) {
-			// trace(L("Cannot split %s: train not found."));
-			return;
-		    }
-		    if(*cmd == ',') {
-			while(*++cmd == ' ' || *cmd == '\t');
-			length = wxAtoi(cmd);
-		    } else {
-			length = 0;
-		    }
-		    split_train(t, length);
 		} else if(!wxStrncmp(cmd, wxT("script"), 6)) {
 		    wxChar *end;
 		    for(cmd += 10; *cmd == ' ' || *cmd == '\t'; ++cmd);

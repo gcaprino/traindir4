@@ -29,6 +29,8 @@ public class TriggerTrack extends Track {
 		new VLine( 2, Simulator.VGRID / 2, Simulator.HGRID - 2, Simulator.VGRID - 2 ),
 	};
 
+	public Track _controls;
+
 	@SuppressWarnings("incomplete-switch")
 	@Override
 	public VLine[] getSegments() {

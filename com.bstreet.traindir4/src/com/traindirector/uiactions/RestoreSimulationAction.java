@@ -3,10 +3,10 @@ package com.traindirector.uiactions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchWindow;
 
-import com.traindirector.Activator;
 import com.traindirector.Application;
 import com.traindirector.ICommandIds;
-import com.traindirector.commands.SpeedCommand;
+import com.traindirector.commands.RestoreCommand;
+import com.traindirector.simulator.Simulator;
 
 public class RestoreSimulationAction extends Action {
 
@@ -20,7 +20,8 @@ public class RestoreSimulationAction extends Action {
 	}
 	
 	public void run() {
-		//SpeedCommand cmd = new SpeedCommand(1);
-		//Application.getSimulator().addCommand(cmd);
+		Simulator sim = Application.getSimulator();
+		RestoreCommand cmd = new RestoreCommand(sim.getLastSaved());
+		sim.addCommand(cmd);
 	}
 }

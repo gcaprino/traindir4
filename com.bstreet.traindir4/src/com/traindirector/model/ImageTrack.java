@@ -5,6 +5,8 @@ import com.traindirector.simulator.Simulator;
 
 public class ImageTrack extends Track {
 	
+	public Track _controls;
+	
 	public void onClick() {
 		super.onClick();
 		Simulator.INSTANCE.updateAllIcons();

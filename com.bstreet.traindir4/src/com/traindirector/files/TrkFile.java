@@ -170,6 +170,7 @@ public class TrkFile {
 					break;
 					
 				case '2':		// SIGNAL
+					elements = line.split(",", 8);
 					sig = _simulator._signalFactory.newInstance(((dirval & 2)) != 0 ? 2 : 1);
 					_territory.add(sig);
 					sig._position = new TDPosition(x, y);
@@ -204,6 +205,8 @@ public class TrkFile {
 					if(elements.length > 6 && elements[6].charAt(0) == '@') {
 						sig._scriptFile = elements[6].substring(1);// name of script file
 						++i;
+					} else {
+						elements = line.split(",", 7);
 					}
 					if(elements.length > i)
 						sig._station = elements[i];	// name of itinerary

@@ -50,7 +50,7 @@ public class ReverseCommand extends SimulatorCommand {
 			}
 			_simulator.alert(String.format("Train %s: cannot reverse direction. Path is busy.", _train._name));
 			path = null;
-			++_simulator._performanceCounters .denied;
+			++_simulator._performanceCounters.denied;
 			return;
 		}
 		
@@ -118,7 +118,9 @@ public class ReverseCommand extends SimulatorCommand {
 				_train._outOf = null;
 			}
 		}
-		// TODO: tailAdvance(_train);  // compute and draw tail path
+		// TODO: _simulator._trainRunner.tailAdvance(_train, 0); // compute tail path?
+		_simulator._trainRunner.findSlowPoint(_train);
+		_simulator._trainRunner.findStopPoint(_train);
 		_train.onReverse();
 	}
 }

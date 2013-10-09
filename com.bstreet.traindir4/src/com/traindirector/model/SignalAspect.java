@@ -9,6 +9,7 @@ public class SignalAspect {
 	
 	public static final String RED = "red";
 	public static final String GREEN = "green";
+	public static final String GREEN_FLEETED = "greenFleeted";
 
 	public String _name;
 	public String _action;
@@ -49,5 +50,13 @@ public class SignalAspect {
 	
 	public String toString() {
 		return _name + "=" + _action;
+	}
+
+	public boolean canProceed() {
+		if (_action.equals(PROCEED))
+			return true;
+		if (_action.startsWith(SPEEDLIMIT))
+			return true;
+		return false;
 	}
 }

@@ -14,6 +14,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.bstreet.cg.events.CGEventDispatcher;
 import com.traindirector.Application;
 import com.traindirector.dialogs.ColorOption;
+import com.traindirector.editors.InfoContent;
 import com.traindirector.events.AlertEvent;
 import com.traindirector.events.ResetEvent;
 import com.traindirector.events.TimeSliceEvent;
@@ -27,12 +28,19 @@ import com.traindirector.model.SignalAspect;
 import com.traindirector.model.Switchboard;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Track;
+import com.traindirector.model.TrackStatus;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
 import com.traindirector.options.Option;
 import com.traindirector.options.OptionsManager;
 import com.traindirector.scripts.ScriptFactory;
+import com.traindirector.uicomponents.SoundPlayer;
 import com.traindirector.uicomponents.SwitchboardContent;
+import com.traindirector.views.TraceView;
+import com.traindirector.web.pages.PerformanceContent;
+import com.traindirector.web.pages.StationInfoContent;
+import com.traindirector.web.pages.StationsListContent;
+import com.traindirector.web.pages.TrainInfoContent;
 import com.traindirector.web.server.WebServer;
 
 public class Simulator {
@@ -53,6 +61,7 @@ public class Simulator {
 	public ColorFactory _colorFactory;
 	public ScriptFactory _scriptFactory;
 	public FileManager _fileManager;
+	public SoundPlayer _soundPlayer;
 	public OptionsManager _options;
 
 	public static int VGRID = 9;
@@ -79,8 +88,11 @@ public class Simulator {
 	public String _baseFileName;
 	public boolean _gMustBeClearPath;
 	public int[] _lateData = new int[24 * 60]; // how many late minutes we accumulated for each minute in the day
+
+	public int[] _startDelay = new int[Track.NSPEEDS];
 	
 	public PerformanceCounters _performanceCounters = new PerformanceCounters();
+	public PerformanceCounters _performanceMultipliers = new PerformanceCounters();
 	public int _runPoints;
 	public int _totalDelay;
 	public int _totalLate;
@@ -94,6 +106,10 @@ public class Simulator {
     private int _editorTrackType;
     private int _editorTrackDirection;
     public WebServer _webServer;
+	private String _lastSaved;
+	private String _simulationName;
+	private TraceView _traceView;
+	private String _traceExpr;
 	
 	public Simulator() {
 
@@ -104,13 +120,7 @@ public class Simulator {
 		_colorFactory = new ColorFactory(Application._display);
 		_scriptFactory = new ScriptFactory();
 		_options = new OptionsManager();
-
-		_webServer = new WebServer();
-		try {
-			_webServer.startServer();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		_soundPlayer = new SoundPlayer();
 
 		_commands = new LinkedList<SimulatorCommand>();
 		_alerts = new LinkedList<Alert>();
@@ -129,6 +139,8 @@ public class Simulator {
 		_timer.schedule(_timedExecutor, 500, 100);
 		_options._locale = "en";
 		
+		_performanceMultipliers.setAll(1); // hard vs. soft performance
+
 		_options.initOptions();
 		for(Option o : _options._colorOptions) {
 			ColorOption col = (ColorOption)o;
@@ -207,10 +219,38 @@ public class Simulator {
 		sb.append(TDTime.toString(_simulatedTime));
 		sb.append(" x");
 		sb.append(_simulatedSpeed);
+		_schedule.computeCounters();
+		sb.append("  R " + _schedule._nRunning + " / S " + _schedule._nStarting + " / r " + _schedule._nReady +
+				" / w " + _schedule._nWaiting + " / s " + _schedule._nStopped + " / a " + _schedule._nArrived);
+		
+		sb.append(" Pt: -");
+		sb.append(getPerformancePoints());
+		sb.append(" Del: ");
+		sb.append(_totalDelay);
+		sb.append(" Late: ");
+		sb.append(_totalLate);
+
 		return sb.toString();
 	}
 
-	public void setSimulationSpeed(int speed) {
+	public int getPerformancePoints() {
+		PerformanceCounters perf_tot = _performanceCounters;
+		PerformanceCounters perf_vals = _performanceMultipliers;
+		int tot;
+
+		tot = perf_tot.wrong_dest * perf_vals.wrong_dest;
+		tot += perf_tot.late_trains * perf_vals.late_trains;
+		tot += perf_tot.thrown_switch * perf_vals.thrown_switch;
+		tot += perf_tot.cleared_signal * perf_vals.cleared_signal;
+		tot += perf_tot.turned_train * perf_vals.turned_train;
+		tot += perf_tot.waiting_train * perf_vals.waiting_train;
+		tot += perf_tot.wrong_platform * perf_vals.wrong_platform;
+		tot += perf_tot.denied * perf_vals.denied;
+		return tot;
+	}
+
+	public void setSimulationSpeed(int index, int speed) {
+		_currentTimeMultiplier = index;
 		_simulatedSpeed = speed;		// 1 clock second = speed simulated seconds
 	}
 
@@ -221,6 +261,8 @@ public class Simulator {
 	public void alert(String text) {
 		Alert a = new Alert(_simulatedTime, text);
 		_alerts.add(a);
+		if (_options._beepOnAlert.isSet())
+			_soundPlayer.play(_options._alertSoundPath._value);
 		AlertEvent e = new AlertEvent(this);
 		CGEventDispatcher.getInstance().postEvent(e);
 	}
@@ -310,6 +352,7 @@ public class Simulator {
 			for(int i = 0; i < simulatedSpeed; ++i) {
 				++_simulatedTime;
 				_trainRunner.timeStep();
+				updateSignals(null); // to update fleeted signals
 			}
 		}
 	}
@@ -337,6 +380,16 @@ public class Simulator {
 	}
 
 	private void openAllFleeted() {
+		for(Signal signal : _territory.getAllSignals()) {
+		    if(!signal._fleeted) // it's not an automatic signal
+		    	continue;
+		    if(!signal.isFleeted() || signal.isClear()) // not in automatic mode or already green
+		    	continue;
+		    if(signal._controls == null || signal._controls._status == TrackStatus.BUSY)
+		    	continue;
+		    signal.toggle();
+		}
+
 	}
 
 	public void setBaseDirectory(String name) {
@@ -355,6 +408,10 @@ public class Simulator {
 
 	public void clearDelays() {
 		for (Train train : _schedule._trains) {
+			train._startDelay = 0;
+			if (train._myStartDelay == 0 && _startDelay[train._type] != 0) {
+				train._myStartDelay = _startDelay[train._type];
+			}
 			if (train._entryDelay != null)
 				train._entryDelay._nSeconds = 0;
 			for (TrainStop stop : train._stops) {
@@ -375,6 +432,11 @@ public class Simulator {
 			_fileManager = null;
 		}
 		_fileManager = new FileManager(this, fname);
+		_simulationName = fname;
+	}
+
+	public String getSimulationFileName() {
+		return _simulationName;
 	}
 
 	public BufferedReader getReaderFor(String extension) {
@@ -473,6 +535,7 @@ public class Simulator {
 		_alerts.clear();
 		_simulatedTime = 0;
 		_running = false;
+		_startDelay = new int[Track.NSPEEDS];
 		clearPoints();
 		CGEventDispatcher.getInstance().postEvent(new ResetEvent(this));
 	}
@@ -525,4 +588,47 @@ public class Simulator {
 		}
 	}
 
+	public void initWebServer() {
+    	// This must be here to use the options from the .ini file
+		_webServer = new WebServer();
+		try {
+			// Register with the server all the services that can handle web requests
+			// TODO: pass class instead of instance, so that each request can get its own instance
+			// 		 and operate in its own context
+			_webServer.addContent(new SwitchboardContent());
+			_webServer.addContent(new PerformanceContent());
+			_webServer.addContent(new StationInfoContent());
+			_webServer.addContent(new StationsListContent());
+			_webServer.addContent(new TrainInfoContent());
+			_webServer.addContent(new InfoContent());
+			_webServer.startServer();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setLastSaved(String name) {
+		_lastSaved = name;
+	}
+
+	public String getLastSaved() {
+		return _lastSaved;
+	}
+
+	public void setTraceView(TraceView view) {
+		_traceView = view;
+	}
+
+	public void setTraceExpr(String value) {
+		_traceExpr = value;
+	}
+
+	public String getTraceExpr() {
+		return _traceExpr;
+	}
+	
+	public void trace(String msg) {
+		if (_traceView != null)
+			_traceView.addTrace(msg);
+	}
 }

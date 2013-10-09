@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.swt.widgets.Display;
 
 import com.bstreet.cg.events.CGEventDispatcher;
@@ -20,6 +19,7 @@ import com.traindirector.model.Schedule;
 import com.traindirector.model.Territory;
 import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
+import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.SimulatorCommand;
 
 public class LoadCommand extends SimulatorCommand {
@@ -32,13 +32,18 @@ public class LoadCommand extends SimulatorCommand {
 		_fname = fname;
 	}
 	
+	public LoadCommand(Simulator sim, String fname) {
+		_simulator = sim;
+		_fname = fname;
+	}
+
 	public void handle() {
 		_simulator.stopRunning();
 		LoadStartEvent loadEvent = new LoadStartEvent(_simulator);
 		CGEventDispatcher.getInstance().postEvent(loadEvent);
 		_territory = _simulator._territory;
 		_territory.removeAllElements();
-		
+
 		_simulator.setNewProject(_fname);
 
 		File dir = new File(_fname);
@@ -107,15 +112,30 @@ public class LoadCommand extends SimulatorCommand {
 		_simulator._schedule.clear();
 		try {
 			BufferedReader input = _simulator._fileManager.getReaderFor(".sch");
-			SchFile schFile = new SchFile(_simulator);
-			schFile.readFile(input);
-			input.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
+			if (input != null) {
+				SchFile schFile = new SchFile(_simulator);
+				schFile.readFile(input);
+				input.close();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		int count = 0;
+		for (Train train : _simulator._schedule._trains) {
+			if (train._entrance == null || train._entrance.isEmpty()) {
+				++count;
+				train._entrance = "?";
+			}
+			if (train._exit == null || train._exit.isEmpty()) {
+				++count;
+				train._exit = "?";
+			}
+			if (train._script != null)
+				train._script.parse();
+		}
+		if (count > 0) {
+			_simulator.alert("Some train has unknown entry/exit point!");
 		}
 	}
 	

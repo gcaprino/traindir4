@@ -2,7 +2,6 @@ package com.traindirector.scripts;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +62,7 @@ public class Script {
 	}
 	
 	public int skipBlank(String s, int offset) {
-		while (offset < s.length() && (s.charAt(offset) == ' '))
+		while (offset < s.length() && (s.charAt(offset) == ' ' || s.charAt(offset) == '\t'))
 			++offset;
 		return offset;
 	}
@@ -103,15 +102,16 @@ public class Script {
 	
 	public Map<String, Statement> parseHandlers(int offset) {
 		Map<String, Statement> handlers = new HashMap<String, Statement>();
+		String body = _body.replace("\t", " ");
 		while(offset != -1 && offset < _body.length()) {
 			StringBuilder line = new StringBuilder();
 			String s;
-			offset = scanLine(_body, offset, line);
+			offset = scanLine(body, offset, line);
 			s = line.toString();
 			if(s.endsWith(":")) {
-				String handlerName = s.substring(0, s.length() - 1);	// remove end ':'
+				String handlerName = s.substring(0, s.length() - 1).trim();	// remove end ':'
 				Statement handlerBody = new Statement(_lineno);
-				offset = parse(_body, offset, handlerBody);
+				offset = parse(body, offset, handlerBody);
 				handlers.put(handlerName, handlerBody);
 			}
 		}
@@ -507,7 +507,7 @@ public class Script {
 			interpreter._track = track;
 		}
 		interpreter._train = train;
-		interpreter.Execute(stmt);
+		interpreter.Execute(stmt, key);
 		return true;
 	}
 }

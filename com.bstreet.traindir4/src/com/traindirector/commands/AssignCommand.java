@@ -77,8 +77,8 @@ public class AssignCommand extends SimulatorCommand {
 				_to._length = _from._length;
 				_to._tail = new Train("");
 				_to._tail._path = new TrackPath();
-				// TODO: check if standard icon? _to._eastCarIcon = _from._eastCarIcon;
-				// TODO: check if standard icon? _to._westCarIcon = _from._westCarIcon;
+				_to._eastCarIcon = _from._eastCarIcon;
+				_to._westCarIcon = _from._westCarIcon;
 			}
 			if(_from.isSet(Train.STRANDED) && _to._tail._path != null) {
 				// extend stranded train's tail path with incoming train's tail path
@@ -107,6 +107,7 @@ public class AssignCommand extends SimulatorCommand {
 			}
 			_to._tail._path = _from._tail._path;
 			_to._tail._position = _from._tail._position;
+			_to._tail._direction = _from._tail._direction;
 			_to._tail._trackDistance = _from._tail._trackDistance;
 			_to._fleet = _from._fleet;
 			_from._fleet = null;

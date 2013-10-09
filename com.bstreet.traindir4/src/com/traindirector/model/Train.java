@@ -55,8 +55,8 @@ public class Train {
 	public int  _minDel;
 	public int  _minLate;
 	public int  _inDelay;
-    public short   _startDelay;     // TODO: seconds to wait until starting after stop (runtime - set from train schedule or train type)
-    public short   _myStartDelay;   // TODO: seconds this train should wait (from schedule file)
+    public int  _startDelay;     // seconds to wait until starting after stop (runtime - set from train schedule or train type)
+    public int  _myStartDelay;   // seconds this train should wait (from schedule file)
     public boolean _gotDelay;	// we computed a delay upon entry in the territory
 	public boolean _shunting;
 	public TrackPath _path;
@@ -91,8 +91,8 @@ public class Train {
 	public boolean _needFindStop;
 	public Track _outOf;		// when shunting, we were stopped at this station.
 	public List<Track> _fleet;
-	public int  _tailEntry;	// distance of tail from entry po
-	public int  _tailExit;	// distance of tail from exit po
+	public int  _tailEntry;	// distance of tail from entry point
+	public int  _tailExit;	// distance of tail from exit point
 	public Train _merging;	// we are bound to merge with this train
 	public Script _script;
 
@@ -110,6 +110,8 @@ public class Train {
 		_waitFor = null;
 		_fleet = new ArrayList<Track>();
 		_isExternal = false;
+		_startDelay = 0;
+		_myStartDelay = 0;
 	}
 
 	public String getStatusAsString() {
@@ -224,11 +226,31 @@ public class Train {
 
 	public boolean stopsAt(Track track) {
 		for (TrainStop stop : _stops) {
-			if (stop._station.compareTo(track._station) == 0) {
+			if (stop._minstop != 0 && stop._station.equals(track._station)) {
 				return true;
 			}
 		}
-		return false;
+		return track._station.equals(_exit);
+	}
+
+	// TODO: what if our tail overlays multiple stations?
+	public Track getStoppedAt() {
+		if (_status != TrainStatus.STOPPED && _status != TrainStatus.ARRIVED)
+			return null;
+		if (_position == null)
+			return null;
+		if (_position._isStation)
+			return _position;
+		if (_tail == null || _tail._path == null)
+			return null;
+		int i = _tail._path.lastIndexOf(_position);
+		while (i >= 0) {
+			Track track = _tail._path.getTrackAt(i);
+			if (track._isStation)
+				return track;
+			--i;
+		}
+		return null;
 	}
 
 	public boolean isSet(int flag) {
@@ -249,8 +271,8 @@ public class Train {
 			sb.append(_position._position.toString());
 		}
 		sb.append(" ");
-		sb.append(_speed);
-		sb.append(" km/h, slow: ");
+		sb.append(_length);
+		sb.append(" m, slow: ");
 		sb.append(_distanceToSlow);
 		sb.append(" m, stop: ");
 		sb.append(_distanceToStop);
@@ -471,7 +493,6 @@ public class Train {
 			_tail._path.setStatus(TrackStatus.FREE, 0);
 			_tail._path = null;
 		}
-		_tail = null;
 		
 		_status = TrainStatus.READY;
 		
@@ -526,10 +547,46 @@ public class Train {
 	}
 
 	public void arrived() {
+		Simulator sim = Simulator.INSTANCE;
+		PerformanceCounters perf_tot = sim._performanceCounters;
+		
 		_status = TrainStatus.ARRIVED;
 		_speed = 0;
-		// TODO: penalty: check correct destination
-		// TODO: penalty: check late arrival
+		
+		// penalty: check late arrival
+		
+		int minlate;
+		int arrTime = _timeOut;
+		
+		if (arrTime < _timeIn)
+			arrTime += 24 * 60 * 60;
+		minlate = (sim._simulatedTime - arrTime) / 60;
+		if ((_flags & Train.SETLATEARRIVAL) != 0)	/* we stopped here before! */
+		    minlate = 0;
+		else
+		    _timeExited = sim._simulatedTime;
+		_flags |= SETLATEARRIVAL;
+		_arrived = 1;
+		if (minlate > 0) {
+		    _timeLate += minlate;
+		    // total_late += minlate;
+		    if(sim._options._hardCounters.isSet() || (_flags & ENTEREDLATE) == 0)
+		    	++perf_tot.late_trains;
+		} else for(TrainStop ts : _stops) {
+		    if(ts._late && (sim._options._hardCounters.isSet() || (_flags & ENTEREDLATE) == 0)) {
+		    	++perf_tot.late_trains;
+		    	break;
+		    }
+		}
+
+		// get entry delay
+		// penalty: check correct destination
+		
+		for (TrainStop ts : _stops) {
+		    if(sim._territory.findStation(ts._station) != null && !ts._stopped)
+		    	++perf_tot.nmissed_stops;
+		}
+
 		if (_position != null && _position instanceof TextTrack)
 			_position = null;	// remove it from the territory
 		onArrived();
@@ -540,6 +597,10 @@ public class Train {
 		_speed = 0;
 		_position = null;
 		_tail = null;
+	}
+
+	public void shunt() {
+		_shunting = true;
 	}
 
 	public void merge() {
@@ -559,6 +620,10 @@ public class Train {
 		_status = TrainStatus.STOPPED;
 		_speed = 0;
 		onStopped();
+	}
+
+	public void start() {
+		onStart();
 	}
 
 	public TrainStop findStop(Track station) {
@@ -594,15 +659,18 @@ public class Train {
 	}
 
 	private void onArrived() {
-		if (_script == null)
-			return;
-		_script.handle("OnArrived", null, this);
+		if (_script != null)
+			_script.handle("OnArrived", null, this);
 	}
 
 	private void onStopped() {
-		if (_script == null)
-			return;
-		_script.handle("OnStopped", null, this);
+		if (_script != null)
+			_script.handle("OnStop", null, this);
+	}
+
+	private void onStart() {
+		if(_script != null)
+			_script.handle("OnStart", null, this);
 	}
 
 	public void onWaiting(Signal signal) {
@@ -612,7 +680,7 @@ public class Train {
 
 	public void onEntry() {
 		if(_script != null)
-			_script.handle("OnExit", null, this);
+			_script.handle("OnEntry", null, this);
 	}
 
 	public void onExit() {
@@ -639,6 +707,15 @@ public class Train {
 		if(_days == 0)
 			return true;
 		return (_days & Simulator.INSTANCE._runDay) != 0;
+	}
+
+	public boolean isRunning() {
+		switch (_status) {
+		case RUNNING:
+		case STARTING:
+			return true;
+		}
+		return false;
 	}
 
 }

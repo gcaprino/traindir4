@@ -12,7 +12,7 @@ import com.traindirector.uiactions.OpenSimulationAction;
 public class HomeContent extends WebContent {
 
 	public HomeContent() {
-		
+		super("home");
 	}
 	
 	@Override

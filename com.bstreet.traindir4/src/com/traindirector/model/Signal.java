@@ -130,7 +130,7 @@ public class Signal extends Track {
 			return false;
 		}
 		
-		if(_fixedred) {
+		if (_fixedred) {
 			// TODO penalty always red
 			return false;
 		}
@@ -144,8 +144,18 @@ public class Signal extends Track {
 
 		// TODO: if shunting signal
 		
+		/*
+		if(_isShuntingSignal) {
+		    onClicked();
+		    updateSignals(this);
+		    return false;
+		}
+		*/
+		
 		if (isClear()) {
-			// TODO: penalty if !fleeted
+			// penalty if !fleeted
+			if (!isFleeted() && !_noClickPenalty)
+				++Simulator.INSTANCE._performanceCounters.cleared_signal;
 			unreserveIntermediateSignals(path);
 			setAspectFromName(SignalAspect.RED);
 			onUnclear();
@@ -166,31 +176,111 @@ public class Signal extends Track {
 			return false;
 		}
 
+		boolean set = false;
 		if (this._script != null && _script instanceof TDSScript) {
 			// try to set the signal's aspect using the associated script, if any
-			if (!_script.handle("OnCleared", this, null))
+			set = _script.handle("OnCleared", this, null);
+		}
+		if (!set) {
+			if (_nowfleeted)
+				setAspectFromName(SignalAspect.GREEN_FLEETED);
+			else
 				setAspectFromName(SignalAspect.GREEN);
-		} else
-			setAspectFromName(SignalAspect.GREEN);
+		}
 		finder.setAs(path, TrackStatus.BUSY);
 		return true;
 	}
 
 	@Override
 	public void onClick() {
-		toggle();
+		if (!toggle() && !isClear()) {
+			++Simulator.INSTANCE._performanceCounters.denied;
+		}
 	}
-	
+
+	@Override
+	public void onCtrlClick() {
+	    if(isClear())
+	    	return;
+	    if(_fixedred) {
+	    	++Simulator.INSTANCE._performanceCounters.denied;
+	    	return;
+	    }
+	    // we ignore true approach signals
+	    if((isApproach() && !isShuntingSignal()) || _intermediate)
+	    	return;
+
+	    // TODO: optimize using path cache
+		PathFinder finder = new PathFinder();
+		Direction dir = getDirectionFrom(_direction);
+		TrackPath path = finder.find(_controls._position, dir);
+
+	    if(path == null)
+	    	return;
+	    Track trk = path.getFirstTrack();
+	    if(trk._status == TrackStatus.BUSYSHUNTING) {
+			for(int i = 0; i < path.getTrackCount(0); ++i) {
+			    trk = path.getTrackAt(i);
+			    if(trk._status != TrackStatus.BUSYSHUNTING)
+			    	break;
+			    trk._status = TrackStatus.FREE;
+			}
+			onUnclear();	// set to red
+	    } else {
+			int i = setShuntingPath(path, _direction, null);
+			if(i < 0) {
+			    return;
+			}
+			path.setStatusToIndex(TrackStatus.BUSYSHUNTING, i);
+			onShunt();
+	    }
+	}
+
 	@Override
 	public void onRightClick() {
 		if(!isClear())
 			return;
-		_fleeted = !_fleeted;
-		_nowfleeted = _fleeted;
+		_nowfleeted = !_nowfleeted;
 		if(_fleeted)
 			setAspectFromName("greenFleeted");
 		else
 			setAspectFromName("green");
+	}
+
+	protected int setShuntingPath(TrackPath path, TrackDirection direction, Train shunting) {
+		Track	trk;
+		Train	trn;
+		int	i;
+
+		//i = path.isPartiallyFree(shunting);
+		//if(i >= 0) {
+		for (i = 0; i < path.getTrackCount(0); ++i) {
+		    trk = path.getTrackAt(i);
+		    if (trk._status != TrackStatus.FREE)
+		    	return -1; // could be a cleared path crossing this path 
+		    trn = Simulator.INSTANCE._schedule.findAnyTrainAt(trk._position);
+		    if (trn == null) {
+				//return -1;
+		    	continue;
+		    }
+		    switch (trn._status) {
+		    case STOPPED:
+		    case ARRIVED:
+		    case WAITING:
+				break;
+		    default:
+				if(trn._shunting)
+				    break;
+				return -1; // found a moving train, so we can't merge to it
+		    }
+		    if (shunting != null) {
+				shunting._merging = trn;
+				trn.setFlag(Train.WAITINGMERGE);
+		    }
+		    return i;
+		}
+		//} else
+		return i;
 	}
 
 	public void setAspectFromName(String action) {
@@ -406,28 +496,38 @@ public class Signal extends Track {
 
 	public void onUnclear() {
 		// set signal to red
+		if (_script != null)
+			_script.handle("OnUnclear", this, null);
 	}
 
 	public void onShunt() {
 		// set signal to clear for shunting
+		if (_script != null)
+			_script.handle("OnShunt", this, null);
 	}
 
 	public void onCross() {
 		// set signal to red when a train enters the controlled section
+		if (_script != null)
+			_script.handle("OnCross", this, null);
 	}
 
 	public void onUnlock() {
 		// set signal to green after path has become clear
+		if (_script != null)
+			_script.handle("OnUnlock", this, null);
 	}
 
 	public void onUnfleet() {
 		// set fleeted signal to green after path has become clear
+		if (_script != null)
+			_script.handle("OnUnfleet", this, null);
 	}
 
 	public void onUpdate() {
 		// some other signal changed, see if we need to change, too
-		if (_aspectChanged)
-			return;
+		//if (_aspectChanged) 3.8p: paths are expected to always go forward, never to loop!
+		//	return;
 		if (_script == null)
 			return;
 		_script.handle("OnUpdate", this, null);
@@ -436,17 +536,20 @@ public class Signal extends Track {
 	public void onInit() {
 		// initial setting (when load or restart)
 		// some other signal changed, see if we need to change, too
-		if (_script == null)
-			return;
-		_script.handle("OnInit", this, null);
+		if (_script != null)
+			_script.handle("OnInit", this, null);
 	}
 
 	public void onAuto() {
 		// automatic signal has been enabled/disabled
+		if (_script != null)
+			_script.handle("OnAuto", this, null);
 	}
 
 	public void onClicked() {
 		// for shunting signals
+		if (_script != null)
+			_script.handle("OnClick", this, null);
 	}
 
 	private TrackPath getNextPath() {
@@ -531,7 +634,20 @@ public class Signal extends Track {
 	}
 
 	public void unlock() {
-		// TODO Auto-generated method stub
+		if(_controls == null)
+		    return;
+		PathFinder finder = new PathFinder();
+		Direction dir = getDirectionFrom(_direction);
+		TrackPath path = finder.find(_controls._position, dir);
+
+		if (path == null)
+			return;
+		
+		if (path.isFree()) {
+		    onUnlock();
+//		    sig->status = ST_GREEN;
+		    path.setStatus(TrackStatus.BUSY, 0);
+		}
 	}
 
 	public void doUnclear() {
@@ -612,8 +728,12 @@ public class Signal extends Track {
         Track   trk;
         Signal  sig;
         Direction dir;
-        int size = path._tracks.size();
+        int		size;
         
+        if (path == null || path._tracks == null)
+        	return;
+        
+        size = path._tracks.size();
         if(size < 1)
             return;
         trk = path.getLastTrack();

@@ -16,7 +16,8 @@ import com.traindirector.simulator.Simulator;
 public class ItineraryAction extends Action {
 
 	IWorkbenchWindow _window;
-	
+	static ItineraryDialog dialog;
+
 	public ItineraryAction(IWorkbenchWindow window, String label) {
 		_window = window;
         setText(label);
@@ -27,14 +28,15 @@ public class ItineraryAction extends Action {
 		setImageDescriptor(Activator.getImageDescriptor("/icons/switch16x16black.png"));
 		setImageDescriptor(Activator.getImageDescriptor("/icons/direction30x30black.png"));
 	}
-	
+
 	public void run() {
 		String itinerary = null;
 		
-		ItineraryDialog dialog = new ItineraryDialog(_window.getShell());
+		dialog = new ItineraryDialog(_window.getShell());
+		dialog.create();
+		// TODO: keep old size and position
 		Simulator simulator = Application.getSimulator();
 		List<Itinerary> itineraries = simulator._territory._itineraries;
-		dialog.create();
 		dialog.fillTable(itineraries);
 		int result = dialog.open();
 		if (result == ItineraryDialog.CANCEL)

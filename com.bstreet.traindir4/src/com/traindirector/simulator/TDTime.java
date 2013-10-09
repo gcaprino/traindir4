@@ -1,7 +1,9 @@
 package com.traindirector.simulator;
 
 public class TDTime {
-	
+
+	public static String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+
 	public static String toString(int tim) {
 		StringBuilder sb = new StringBuilder();
 		sb.append((tim / 3600));
@@ -18,4 +20,14 @@ public class TDTime {
 		return sb.toString();
 	}
 
+	public static String getDayOfWeek(int day) {
+		int i;
+		int c = 0;
+		for(i = 1; c < days.length; i <<= 1, ++c) {
+		    if((day & i) != 0)
+		    	return days[c];
+	    }
+		return "?";
+	}
+	
 }

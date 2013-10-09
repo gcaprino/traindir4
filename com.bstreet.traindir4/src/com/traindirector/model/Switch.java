@@ -29,6 +29,7 @@ public class Switch extends Track {
 			Switch linkedSwitch = (Switch) linkedTrack;
 			if (linkedSwitch._status != TrackStatus.FREE || this._status != TrackStatus.FREE) {
 				// TODO: alert path is busy
+				++Simulator.INSTANCE._performanceCounters.denied;
 				return;
 			}
 			linkedSwitch._switched = !linkedSwitch._switched;
@@ -36,12 +37,15 @@ public class Switch extends Track {
 			linkedSwitch.setUpdated(Simulator.INSTANCE._updateCounter++);
 		} else if (this._status != TrackStatus.FREE) {
 			// TODO: alert path is busy
+			++Simulator.INSTANCE._performanceCounters.denied;
 			return;
 		}
 		Simulator.INSTANCE.clearCachedPaths();
 		_switched = !_switched;
 		
-		// TODO: if was thrown, count penalty
+		// if was thrown, count penalty
+		if (wasThrown())
+			Simulator.INSTANCE._performanceCounters.thrown_switch++;
 		setThrown();
 		setUpdated(Simulator.INSTANCE._updateCounter++);
 		Simulator.INSTANCE.updateAllIcons();
