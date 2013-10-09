@@ -109,6 +109,7 @@ public class Simulator {
 	private String _lastSaved;
 	private String _simulationName;
 	private TraceView _traceView;
+	private String _traceExpr;
 	
 	public Simulator() {
 
@@ -617,11 +618,13 @@ public class Simulator {
 	public void setTraceView(TraceView view) {
 		_traceView = view;
 	}
-	
+
+	public void setTraceExpr(String value) {
+		_traceExpr = value;
+	}
+
 	public String getTraceExpr() {
-		if (_traceView == null)
-			return null;
-		return _traceView.getExpr();
+		return _traceExpr;
 	}
 	
 	public void trace(String msg) {

@@ -226,7 +226,7 @@ public class Train {
 
 	public boolean stopsAt(Track track) {
 		for (TrainStop stop : _stops) {
-			if (stop._station.equals(track._station)) {
+			if (stop._minstop != 0 && stop._station.equals(track._station)) {
 				return true;
 			}
 		}

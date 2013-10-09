@@ -29,7 +29,6 @@ public class ShowTraceViewAction extends Action {
 		if(window != null) {	
 			try {
 				TraceView view = (TraceView)window.getActivePage().showView(TraceView.ID, Integer.toString(instanceNum++), IWorkbenchPage.VIEW_ACTIVATE);
-				Application.getSimulator().setTraceView(view);
 			} catch (PartInitException e) {
 				MessageDialog.openError(window.getShell(), "Error", "Error opening view:" + e.getMessage());
 			}

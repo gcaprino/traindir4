@@ -1,12 +1,8 @@
 package com.traindirector.views;
 
-import javax.xml.ws.Dispatch;
-
-import org.eclipse.jface.viewers.CellEditor.LayoutData;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -15,6 +11,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
 import com.traindirector.Application;
+import com.traindirector.simulator.Simulator;
 
 public class TraceView extends ViewPart {
 
@@ -39,6 +36,7 @@ public class TraceView extends ViewPart {
 			
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
+				Simulator.INSTANCE.setTraceExpr(_expr.getText());
 			}
 		});
 		GridData ld = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
@@ -47,6 +45,7 @@ public class TraceView extends ViewPart {
 		_text = new Text(parent, SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
 		ld = new GridData(SWT.FILL, SWT.FILL, true, true);
 		_text.setLayoutData(ld);
+		Simulator.INSTANCE.setTraceView(this);
 	}
 
 	@Override
