@@ -18,14 +18,22 @@ import com.traindirector.simulator.Simulator;
 
 public class Interpreter {
 
-	public static final int MAXNESTING = 10;
-
+	public class Frame {
+		List<Statement> _body;
+		int _index;
+		
+		public Frame(List<Statement> body) {
+			_body = body;
+			_index = 0;
+		}
+	}
 
 	boolean _forCond;
 	boolean _forAddr;
 	int _stackPtr;
-	Stack<List<Statement>> _scopes;
+	Stack<Frame> _frames;
 	int[] _scopesIndexes;
+	String _traceExpr;
 
 	// run-time environment
 
@@ -39,34 +47,30 @@ public class Interpreter {
 	public Interpreter() {
 		_forCond = _forAddr = false;
 		_stackPtr = 0;
-		_scopes = new Stack<List<Statement>>();
-		_scopesIndexes = new int[MAXNESTING];
+		_frames = new Stack<Frame>();
 		_track = null;
 		_train = null;
 		_signal = null;
 		expr_buff = new StringBuilder();
+		_traceExpr = Simulator.INSTANCE.getTraceExpr();
 	}
 
-	void Execute(Statement stmt) {
+	void Execute(Statement stmt, String name) {
 		ExprValue   result = new ExprValue(NodeOp.None);
 		boolean	    valid;
 
 		List<Statement> body = stmt._body;
-		int curStmt = 0;
-		_scopes.push(body);
-		_stackPtr = 0;
-		while(curStmt < body.size()) {
-			stmt = body.get(curStmt);
-			expr_buff = new StringBuilder("" + stmt._lineno);	// TODO: how to clear without creating a new object?
+		Frame frame = new Frame(body);
+		_frames.push(frame);
+		while(frame._index < frame._body.size()) {
+			stmt = frame._body.get(frame._index);
+			expr_buff = new StringBuilder(name + ":" + stmt._lineno);	// TODO: how to clear without creating a new object?
 			expr_buff.append(": ");
-		    _scopesIndexes[_stackPtr] = curStmt;
 
 		    switch(stmt._type) {
 		    case 'B':
-				++_stackPtr;
-				body = stmt._body;
-				_scopes.push(body);
-				curStmt = 0;
+		    	frame = new Frame(stmt._body);
+				_frames.push(frame);
 				continue;
 
 		    case 'I':
@@ -78,37 +82,31 @@ public class Interpreter {
 				    if(!valid) {
 						if(stmt._elseBody != null) {
 							expr_buff.append(" . else");
-						    Trace(expr_buff);
-						    ++_stackPtr;
-						    body = stmt._elseBody;
-						    _scopes.push(body);
-						    curStmt = 0;
+						    trace(expr_buff.toString());
+						    frame = new Frame(stmt._elseBody);
+						    _frames.push(frame);
 						    continue;
 						}
 						expr_buff.append(" . false");
 				    } else if(result._op == NodeOp.Number) {
 						if(result._val != 0) {
 							expr_buff.append(" . true");
-						    Trace(expr_buff);
-						    ++_stackPtr;
-						    body = stmt._body;
-						    _scopes.push(body);
-						    curStmt = 0;
+						    trace(expr_buff.toString());
+						    frame = new Frame(stmt._body);
+						    _frames.push(frame);
 						    continue;
 						}
 						if(stmt._elseBody != null) {
 							expr_buff.append(" . else");
-						    Trace(expr_buff);
-						    ++_stackPtr;
-						    body = stmt._elseBody;
-						    _scopes.push(body);
-						    curStmt = 0;
+						    trace(expr_buff.toString());
+						    frame = new Frame(stmt._elseBody);
+						    _frames.push(frame);
 						    continue;
 						}
 						expr_buff.append(" . false");
 				    } else
 				    	expr_buff.append(" * Result not a number");
-				    Trace(expr_buff);
+				    trace(expr_buff.toString());
 				} catch(Exception e) {
 				    //abort();
 					e.printStackTrace();
@@ -123,6 +121,7 @@ public class Interpreter {
 					String cmd = stmt._text.replace("@", _train != null ? _train._name : "@");
 					DoCommand dcmd = new DoCommand(cmd.trim());
 					Simulator.INSTANCE.addCommand(dcmd);
+				    trace(cmd);
 				} catch(Exception e) {
 				    e.printStackTrace();
 				}
@@ -134,24 +133,50 @@ public class Interpreter {
 				    _forCond = false;
 				    expr_buff = new StringBuilder();
 				    Evaluate(stmt._expr, result);
-				    Trace(expr_buff);
+				    trace(expr_buff.toString());
 				} catch(Exception e) {
 				    e.printStackTrace();
 				}
 		    }
-		    while(++curStmt >= body.size()) {
-		    	if(_stackPtr == 0)
-		    		return;
-		    	body = _scopes.pop();
-		    	curStmt = _scopesIndexes[--_stackPtr];
+		    while(++frame._index >= frame._body.size()) {
+		    	if (_frames.isEmpty())
+		    		break;
+		    	frame = _frames.pop();
 		    }
 		}
 
 	}
 
-	private void Trace(StringBuilder buff) {
+	private void trace(String string) {
 		// TODO: use preferences to enable/disable tracing
 		//System.out.println(buff.toString());
+		Simulator sim = Simulator.INSTANCE;
+		String expr = _traceExpr;
+		if (expr == null || expr.isEmpty())
+			return;
+		if (expr.equals("*")) {
+			sim.trace(string.toString());
+			return;
+		}
+		String[] conditions = expr.split("#");
+		for (String condition : conditions) {
+			if (_track != null && _track._position.toString().equals(condition)) {
+				sim.trace(string.toString());
+				return;
+			}
+			if (_track != null && _track._isStation && _track._station.contains(condition)) {
+				sim.trace(string.toString());
+				return;
+			}
+			if (_train != null && _train._name.contains(condition)) {
+				sim.trace(string.toString());
+				return;
+			}
+			if (_signal != null && _signal._position.toString().equals(condition)) {
+				sim.trace(string.toString());
+				return;
+			}
+		}
 	}
 
 	boolean Evaluate(ExprNode n, ExprValue result) {
@@ -610,6 +635,7 @@ public class Interpreter {
 		if(sig._controls == null)
 		    return null;
 
+		// TODO: getNextPath()
 		PathFinder finder = new PathFinder();
 		TDPosition position = signal._controls._position;
 		TrackPath path = finder.find(position, signal.getDirectionFrom(signal._direction));

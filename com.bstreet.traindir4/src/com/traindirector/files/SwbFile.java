@@ -3,7 +3,6 @@ package com.traindirector.files;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 
 import com.traindirector.model.Switchboard;
@@ -23,8 +22,10 @@ public class SwbFile extends TextFile {
 		try {
 			_switchboard = _simulator.createSwitchboard(fname);
 			input = _simulator._fileManager.getReaderForFile(fname + ".swb");
-			readFile(input);
-			input.close();
+			if (input != null) {
+				readFile(input);
+				input.close();
+			}
 		} catch (FileNotFoundException e) {
 		} catch (IOException e) {
 			e.printStackTrace();

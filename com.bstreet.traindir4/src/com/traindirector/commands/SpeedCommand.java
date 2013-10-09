@@ -23,7 +23,7 @@ public class SpeedCommand extends SimulatorCommand {
 					--j;
 				else if(j + 1 < speedMultipliers.length)
 					++j;
-				_simulator.setSimulationSpeed(speedMultipliers[j]);
+				_simulator.setSimulationSpeed(j, speedMultipliers[j]);
 				break;
 			}
 	}

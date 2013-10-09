@@ -37,6 +37,7 @@ public class SchFile extends TextFile {
 		eastIcon = new TDIcon[Track.NSPEEDS];
 		westCarIcon = new TDIcon[Track.NSPEEDS];
 		eastCarIcon = new TDIcon[Track.NSPEEDS];
+		_simulator._startDelay = new int[Track.NSPEEDS];
 	}
 
 	public void readFile(String fname) {
@@ -56,6 +57,8 @@ public class SchFile extends TextFile {
 		String originalLine;
 		TrainStop lastStop = null;
 		_simulator._simulatedTime = 0;
+		if (input == null)	// maybe only .trk is available
+			return;
 		try {
 			Train	train = null;
 			while((originalLine = input.readLine()) != null) {
@@ -147,6 +150,10 @@ public class SchFile extends TextFile {
 						_intValue = 0;
 					currentType = _intValue;
 					if(i < 0) continue;
+					if (line.charAt(i) == '+') {
+						i = scanInteger(line, i + 1);
+						_simulator._startDelay[currentType] = _intValue; 
+					}
 					i = scanString(line, i);
 					if(i < 0) continue;
 					westIcon[currentType] = createIcon(_stringValue, currentType, "wtrain");
@@ -194,6 +201,13 @@ public class SchFile extends TextFile {
 					train._maxspeed = parseSafeInteger(line, i);
 					continue;
 				}
+				if(line.startsWith("StartDelay:", i)) {
+					i = skipBlanks(line, i + 12);
+					if (i < 0)
+						continue;
+					train._myStartDelay = parseSafeInteger(line, i);
+					continue;
+				}
 				if(line.startsWith("Type:", i)) {
 					i = skipBlanks(line, 5);
 					i = scanInteger(line, i);
@@ -226,10 +240,11 @@ public class SchFile extends TextFile {
 					if(i < 0)
 						continue;
 					i = scanInteger(line, i);
-					train._entryLength = train._length;
-					train._length = _intValue;
 					if(_intValue <= 0)
 						continue;
+					train._length = _intValue;
+					train._entryLength = train._length;
+					train._tail = new Train(train._name + " tail");
 					if(i < 0) continue;
 					i = scanString(line, i);
 					if(!_stringValue.isEmpty()) {
@@ -244,7 +259,7 @@ public class SchFile extends TextFile {
 				if(line.startsWith("Enter:", i)) {
 					i = parseTime(line, i + 6);
 					train._timeIn = _time;
-					if(i >= line.length() && line.charAt(i) == DELAY_CHAR) {
+					if(i < line.length() && line.charAt(i) == DELAY_CHAR) {
 						train._entryDelay = new TDDelay();
 						i = parseDelay(line, i + 1, train._entryDelay);
 					}

@@ -8,9 +8,7 @@ import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 
@@ -117,7 +115,13 @@ public class WebPage extends EditorPart {
 		});
 		_content = getContentProvider();
 		if(_content != null) {
-			String body = _content.getHTML();
+			String body = null;
+			try {
+				body = _content.getHTML();
+			} catch (Exception e) {
+				e.printStackTrace();
+				body = "<html><body>An exception has occurred. See the log for details.</body></html>\n";
+			}
 			_browser.setText(body);
 		}
 		webUpdater.start();

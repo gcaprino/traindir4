@@ -42,6 +42,9 @@ public class ServerPage extends PreferencePage implements
 		_options = new ArrayList<Option>();
 		_map = new HashMap<Option, Widget>();
 		OptionsManager opt = Application.getSimulator()._options;
+		_options.add(opt._enableHttpServer);
+		_options.add(opt._serverPort);
+		_options.add(opt._userName);
 	}
 
 	@Override

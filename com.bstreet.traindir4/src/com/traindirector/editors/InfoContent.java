@@ -13,6 +13,10 @@ public class InfoContent extends WebContent {
 	String _name;
 	String _html = "";
 
+	public InfoContent() {
+		super("info");
+	}
+
     public void setName(String type) {
         _name = type;
     }

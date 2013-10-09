@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import com.traindirector.Activator;
+import com.traindirector.simulator.TDTime;
 
 public class DaysDialog extends BaseDialog {
 
@@ -21,7 +22,6 @@ public class DaysDialog extends BaseDialog {
 	}
 
 	private Button[] dayButton = new Button[7];
-	public String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 	private int _selectedDay;
 
 	@Override
@@ -49,7 +49,7 @@ public class DaysDialog extends BaseDialog {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// radio group behavior
-				for(int x = 0; x < days.length; ++x) {
+				for(int x = 0; x < TDTime.days.length; ++x) {
 					if(e.widget == dayButton[x])
 						_selectedDay = x;
 					dayButton[x].setSelection(e.widget == dayButton[x]);
@@ -61,9 +61,9 @@ public class DaysDialog extends BaseDialog {
 			}
 		};
 
-		for (int x = 0; x < days.length; ++x) {
+		for (int x = 0; x < TDTime.days.length; ++x) {
 			dayButton[x] = new Button(parent, SWT.RADIO);
-			dayButton[x].setText(days[x]);
+			dayButton[x].setText(TDTime.days[x]);
 			dayButton[x].addSelectionListener(listener);
 		}
 		_selectedDay = 0;

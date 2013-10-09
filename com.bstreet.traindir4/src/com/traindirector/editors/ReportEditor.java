@@ -9,11 +9,11 @@ import com.traindirector.uicomponents.WebContent;
 public class ReportEditor extends WebPage {
 
     public ReportEditor() {
-        // TODO Auto-generated constructor stub
+    	super();
     }
 
-    public WebContent getContentProvider() {
-        return new ReportContent();
+    public WebContent getContentProvider() {	// TODO: make abstract
+        return new ReportContent("?");
     }
 
     public static void openEditor(IWorkbenchWindow window, String fname) {
@@ -25,7 +25,6 @@ public class ReportEditor extends WebPage {
             report.showContent(fname);
             //report.setType(fname);
         } catch (PartInitException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

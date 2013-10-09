@@ -1,8 +1,6 @@
 package com.traindirector.model;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +66,15 @@ public class Switchboard {
         public String getText() {
         	return _text;
         }
-    }
+
+		public void setText(String text) {
+			_text = text;
+		}
+
+		public void setItinerary(String value) {
+			_itinerary = value;
+		}
+}
     
     public class SwitchboardAspect {
         String _name;
@@ -228,6 +234,7 @@ public class Switchboard {
 
         if(cell == null) {
             cell = new SwitchboardCell(new TDPosition(x, y));
+            _cells.add(cell);
         }
         cell._text = name;
         cell._itinerary = itinName;

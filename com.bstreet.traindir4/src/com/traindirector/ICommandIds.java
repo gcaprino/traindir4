@@ -56,4 +56,5 @@ public interface ICommandIds {
     
     // UNUSED
     public static final String CMD_OPEN_MESSAGE = "com.bstreet.cg.traindirector.openMessage";
+	public static final String CMD_SHOW_TRACE = "com.traindirector.showtrace";
 }

@@ -12,7 +12,9 @@ public class SwitchboardEditor extends WebPage {
 	}
 	
 	public WebContent getContentProvider() {
-		return new SwitchboardContent();
+		SwitchboardContent content = new SwitchboardContent();
+		content.setEditing(true);
+		return content;
 	}
 	
 	public static void openEditor(IWorkbenchWindow window, String fname) {

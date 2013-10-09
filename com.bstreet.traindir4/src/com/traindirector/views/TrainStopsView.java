@@ -33,6 +33,7 @@ import com.traindirector.model.Train;
 import com.traindirector.model.TrainStop;
 import com.traindirector.simulator.Simulator;
 import com.traindirector.simulator.TDTime;
+import com.traindirector.uicomponents.UIUtils;
 
 public class TrainStopsView extends ViewPart {
 
@@ -76,6 +77,9 @@ public class TrainStopsView extends ViewPart {
 		col.setWidth(30);
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(_table, "com.bstreet.traindirector.trainStopsView");
+		
+		UIUtils.restoreColumnSizes(_table, "TrainStops");
+
 		makeActions();
 		hookContextMenu();
 		contributeToActionBars();

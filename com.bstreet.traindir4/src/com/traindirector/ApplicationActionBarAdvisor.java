@@ -54,6 +54,7 @@ import com.traindirector.uiactions.ShowLayoutPageAction;
 import com.traindirector.uiactions.ShowMapAction;
 import com.traindirector.uiactions.ShowPerformanceAction;
 import com.traindirector.uiactions.ShowScheduleViewAction;
+import com.traindirector.uiactions.ShowTraceViewAction;
 import com.traindirector.uiactions.ShowTrainStopsViewAction;
 import com.traindirector.uiactions.ShowWelcomePageAction;
 import com.traindirector.uiactions.SkipAheadAction;
@@ -94,6 +95,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     RestartSimulationAction restartSimulationAction;
     ShowScheduleViewAction showScheduleViewAction;
     ShowAlertsViewAction showAlertsViewAction;
+    ShowTraceViewAction showTraceViewAction;
     ShowEditToolsAction showEditToolsAction;
     ShowTrainStopsViewAction showTrainStopsViewAction;
     ShowWelcomePageAction showWelcomePageAction;
@@ -151,6 +153,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(slowSimulationAction = new SlowSimulationAction(window, "Slower simulation"));
         register(restartSimulationAction = new RestartSimulationAction(window, "Restart simulation"));
         register(showAlertsViewAction = new ShowAlertsViewAction(window, "Show alerts"));
+        register(showTraceViewAction = new ShowTraceViewAction(window, "Show trace"));
         register(showScheduleViewAction = new ShowScheduleViewAction(window, "Show schedule"));
         register(showTrainStopsViewAction = new ShowTrainStopsViewAction(window, "Show train stops"));
         register(showEditToolsAction = new ShowEditToolsAction(window, "Show edit tools"));
@@ -256,6 +259,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         // Help
         helpMenu.add(aboutAction);
         helpMenu.add(changeLanguageAction);
+        helpMenu.add(showTraceViewAction);
         
         /*
         fileMenu.add(newWindowAction);

@@ -265,9 +265,10 @@ public class AssignDialog extends TitleAreaDialog {
 			item.setText(8, train.getStatusAsString());
 			item.setText(9, train.getNotesAsString());
 		}
-		if (trains.size() > 0)
+		if (trains.size() > 0) {
 			_table.setSelection(0);
-		else {
+			saveInput();
+		} else {
 			setMessage("There are no trains departing from this station");
 			assignButton.setEnabled(false);
 			assignAndShuntButton.setEnabled(false);

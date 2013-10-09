@@ -10,7 +10,7 @@
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.ajp_7.6.12.v20130726.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.annotations_7.6.12.v20130726.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.continuation_7.6.12.v20130726.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.jetty.deploy_7.6.12.v20130726.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.jetty.deploy_7.6.12.v20130726.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.http_7.6.12.v20130726.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.io_7.6.12.v20130726.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.jaspi_7.6.12.v20130726.jar"/>

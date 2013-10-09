@@ -10,6 +10,7 @@ public class Option {
 	public Option(String name) {
 		_name = name;
 		_description = name;
+		_value = "";
 	}
 	
 	public Option(String name, String descr) {

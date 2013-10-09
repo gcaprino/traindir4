@@ -45,6 +45,9 @@ public class Territory {
 	}
 
 	public void add(Track trk) {
+		Track oldTrack = findTrack(trk._position);
+		if (oldTrack != null)
+			remove(oldTrack);
 		_tracks.add(trk);
 	}
 
@@ -64,7 +67,11 @@ public class Territory {
 		}
 		return null;
 	}
-	
+
+	public Track findTrack(int x, int y) {
+		return findTrack(new TDPosition(x, y));
+	}
+
 	public void remove(Track track) {
 		_tracks.remove(track);
 	}
@@ -183,6 +190,8 @@ public class Territory {
 	}
 
 	public Track findStation(String name) {
+		if (name == null)
+			return null;
 		for (Track track : _tracks) {
 			if ((track instanceof TextTrack))
 				continue;
@@ -198,8 +207,24 @@ public class Territory {
 	// relative positions of the entry text and
 	// the linked entry track
 	public Direction findEntryDirection(Track text, Track track) {
+		Direction dir;
+		if (track == null)
+			return null;
+		if (text._elinkTrack == track)
+			dir = Direction.E;
+		else if (text._wlinkTrack == track)
+			dir = Direction.W;
+		else
+			return null;
 		TDPosition ptext = text._position;
 		TDPosition ptrack = track._position;
+		switch (track._direction) {
+		case N_S:
+		case S_N:
+		case TRK_N_S:
+			return (ptext._y < ptrack._y) ? Direction.S : Direction.N;
+		}
+		/*
 		switch (track._direction) {
 		case E_W:
 		case W_E:
@@ -257,6 +282,8 @@ public class Territory {
 			break;
 		}
 		return null;
+		*/
+		return dir;
 	}
 
 	public void loadSignalAspects(ScriptFactory scriptFactory) {
@@ -311,18 +338,19 @@ public class Territory {
 	}
 
 	public Signal findSignalNamed(String name) {
+		for (Signal track : _signals) {
+			if (track._station == null)
+				continue;
+			if (track._station.compareTo(name) == 0)
+				return (Signal) track;
+		}
 		if (name.charAt(0) == '(') {
 			TDPosition pos = new TDPosition(name);
-			for (Track track : _tracks) {
-				if ((track instanceof Signal) && track._position.sameAs(pos))
+			for (Signal track : _signals) {
+				if (track._position.sameAs(pos))
 					return (Signal) track;
 			}
 			return null;
-		}
-		for (Track track : _tracks) {
-			if ((track instanceof Signal) && track._station != null
-					&& track._station.compareTo(name) == 0)
-				return (Signal) track;
 		}
 		return null;
 	}
@@ -337,6 +365,8 @@ public class Territory {
 	public static boolean sameStation(String st1, String st2) {
 		int i = 0;
 		char ch = ' ';
+		if (st1 == null || st2 == null)
+			return false;
 		while (i < st1.length() && (ch = st1.charAt(i)) != PLATFORM_SEP
 				&& i < st2.length() && ch == st2.charAt(i))
 			++i;
@@ -348,6 +378,8 @@ public class Territory {
 	}
 
 	public Track findStationNamed(String name) {
+		if (name == null)
+			return null;
 		int index = name.indexOf(PLATFORM_SEP);
 		String station = name;
 		if (index >= 0) {
@@ -396,7 +428,6 @@ public class Territory {
 
 	public void removeTrains() {
 		Simulator simulator = Simulator.INSTANCE;
-		Territory territory = simulator._territory;
 		for (Train train : simulator._schedule._trains) {
 			train.reset();
 		}

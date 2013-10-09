@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.traindirector.options.BooleanOption;
-import com.traindirector.options.FileOption;
 import com.traindirector.options.IntegerOption;
 import com.traindirector.options.Option;
 import com.traindirector.simulator.Simulator;
@@ -88,7 +87,16 @@ public class IniFile extends TextFile {
 			} else if (option instanceof IntegerOption) {
 				((IntegerOption) option)._intValue = Integer.parseInt(_preferences.get(option._name));
 			} else {
-				option.set(_preferences.get(option._name));
+				String value = null;
+				value = _preferences.get(option._name);
+				if (value == null) {
+					value = _mainView.get(option._name);
+					if (value == null) {
+						value = _skinOptions.get(option._name);
+					}
+				}
+				if (value != null)
+					option.set(value);
 			}
 		}
 		_simulator._options._noTrainNamesColors.set(getBooleanPref("NoTrainNamesColors"));

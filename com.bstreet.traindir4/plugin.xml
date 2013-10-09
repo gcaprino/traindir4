@@ -98,6 +98,13 @@
             icon="icons/schedule16x16black.png"
             name="Schedule Editor">
       </view>
+      <view
+            allowMultiple="true"
+            class="com.traindirector.views.TraceView"
+            id="com.traindirector.views.trace"
+            name="Trace"
+            restorable="true">
+      </view>
    </extension>
    <extension point="org.eclipse.ui.commands">
       <category
@@ -345,6 +352,12 @@
             description="Zoom out to see a larger portion of the layout"
             id="com.traindirector.zoomout"
             name="ZoomOut">
+      </command>
+      <command
+            categoryId="com.bstreet.cg.traindirector.category"
+            description="Show the trace window to diagnose scripts problems"
+            id="com.traindirector.showtrace"
+            name="Show Trace">
       </command>
 
    </extension>

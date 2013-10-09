@@ -10,21 +10,17 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Widget;
 
 import com.traindirector.Application;
-import com.traindirector.options.BooleanOption;
-import com.traindirector.options.FileOption;
-import com.traindirector.options.IntegerOption;
 import com.traindirector.options.Option;
 
 public class PropertyDialog extends TitleAreaDialog {
@@ -146,5 +142,17 @@ public class PropertyDialog extends TitleAreaDialog {
 	protected void okPressed() {
 		saveInput();
 		super.okPressed();
+	}
+
+	public boolean openInDisplayThread() {
+		final int[] result = new int[1];
+		Display.getDefault().syncExec(new Runnable() {
+			
+			@Override
+			public void run() {
+				result[0] = open();
+			}
+		});
+		return result[0] != CANCEL;
 	}
 }
