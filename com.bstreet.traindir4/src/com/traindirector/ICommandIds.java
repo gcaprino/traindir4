@@ -53,8 +53,10 @@ public interface ICommandIds {
     public static final String CMD_SHOW_MAP = "com.traindirector.showmap";
 
 	public static final String CMD_HELP_LANGUAGE = "com.bstreet.cg.traindirector.help.language";
+	public static final String CMD_HELP_UPDATE = "com.bstreet.cg.traindirector.help.update";
     
     // UNUSED
     public static final String CMD_OPEN_MESSAGE = "com.bstreet.cg.traindirector.openMessage";
 	public static final String CMD_SHOW_TRACE = "com.traindirector.showtrace";
+	public static final String CMD_SHOW_ASSETS = "com.traindirector.show.assets";
 }

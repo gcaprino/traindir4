@@ -22,11 +22,7 @@ public class ItinerariesTable {
 	public void create(Composite parent) {
 		
 		// The text fields will grow with the size of the parent
-		GridData gridData = new GridData();
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.grabExcessVerticalSpace = true;
-		gridData.verticalAlignment = GridData.FILL;
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 
 		_table = new Table(parent, SWT.V_SCROLL | SWT.H_SCROLL);
 		_table.setLayoutData(gridData);

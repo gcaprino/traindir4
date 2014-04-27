@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.preference.ColorSelector;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -237,6 +239,38 @@ public class OptionsManager {
 		_enableHttpServer._intValue = 1;
 	}
 
+	public class MyColorSelector extends ColorSelector {
+		Text _text;
+		public MyColorSelector(Composite parent, Text text) {
+			super(parent);
+			_text = text;
+			Button button = getButton();
+			button.addSelectionListener(new SelectionListener() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					RGB rgb = getColorValue();
+					_text.setText("" + rgb.red + "," + rgb.green + "," + rgb.blue);
+				}
+				
+				@Override
+				public void widgetDefaultSelected(SelectionEvent e) {
+				}
+			});
+			RGB rgb = new RGB(0, 0, 0);
+			String[] cols = _text.getText().split(",");
+			if (cols.length == 3) {
+				try {
+					rgb.red = Integer.parseInt(cols[0].trim());
+					rgb.green = Integer.parseInt(cols[1].trim());
+					rgb.blue = Integer.parseInt(cols[2].trim());
+					setColorValue(rgb);
+				} catch (Exception e) {
+					
+				}
+			}
+		}
+	};
+	
 	public Map<Option, Widget> createOptionsWidgets(Composite parent, List<Option> fields) {
 		GridData ld;
 		Label lbl;
@@ -301,16 +335,7 @@ public class OptionsManager {
 				ld.horizontalAlignment = GridData.FILL;
 				txt.setLayoutData(ld);
 				widgets.put(o, txt);
-				Button browseColorButton = new Button(parent, SWT.PUSH);
-				browseColorButton.addSelectionListener(new SelectionListener() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-					}
-					
-					@Override
-					public void widgetDefaultSelected(SelectionEvent e) {
-					}
-				});
+				new MyColorSelector(parent, txt);
 			}
 		}
 		return widgets;

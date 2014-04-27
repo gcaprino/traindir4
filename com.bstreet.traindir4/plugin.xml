@@ -105,6 +105,13 @@
             name="Trace"
             restorable="true">
       </view>
+      <view
+            name="Assets"
+            allowMultiple="true"
+            icon="icons/switch16x16black.png"
+            class="com.traindirector.views.AssetsView"
+            id="com.traindirector.views.AssetsView">
+      </view>
    </extension>
    <extension point="org.eclipse.ui.commands">
       <category
@@ -184,6 +191,12 @@
             id="com.bstreet.cg.traindirector.show.alerts">
       </command>
       <command
+            name="Assets"
+            description="Shows the assets panel"
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.traindirector.show.assets">
+      </command>
+      <command
             name="Train Stops"
             description="Shows the train stops panel"
             categoryId="com.bstreet.cg.traindirector.category"
@@ -200,6 +213,12 @@
             description="Select the language"
             categoryId="com.bstreet.cg.traindirector.category"
             id="com.bstreet.cg.traindirector.help.language">
+      </command>
+      <command
+            name="Update..."
+            description="Change Train Director version."
+            categoryId="com.bstreet.cg.traindirector.category"
+            id="com.bstreet.cg.traindirector.help.update">
       </command>
       
       <!-- unused -->
@@ -429,7 +448,7 @@
             name="Train Director">
          <property name="aboutText" value="RCP Mail template created by PDE">
          </property>
-         <property name="windowImages" value="icons/sample2.gif">
+         <property name="windowImages" value="icons/sample2.gif,icons/train24x24black.png">
          </property>
          <property name="aboutImage" value="product_lg.gif">
          </property>
@@ -500,6 +519,13 @@
             icon="icons/question18x18black.png"
             id="com.traindirector.editor.map"
             name="Map">
+      </editor>
+      <editor
+            class="com.traindirector.editors.ScriptEditor"
+            default="false"
+            icon="icons/edit16x16black.png"
+            id="com.traindirector.edit.script"
+            name="Signal Script">
       </editor>
    </extension>
    <extension point="org.eclipse.help.contexts">

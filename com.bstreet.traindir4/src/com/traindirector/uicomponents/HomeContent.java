@@ -63,6 +63,8 @@ public class HomeContent extends WebContent {
 		} else if(location.startsWith("about:/read/")) {
 			OpenSimulationAction.openSimulation(location.substring(12));
 			return true;
+		} else if (location.startsWith("tdir:update")) {
+			//doUpdate();
 		}
 		return true;
 	}

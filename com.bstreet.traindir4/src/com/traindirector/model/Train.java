@@ -47,7 +47,7 @@ public class Train {
 	public Track _stopPoint;
 	public Track _slowPoint;
 	public long _etd;
-	public int  _speed; // in km/h
+	public double  _speed; // in km/h
 	public int  _curmaxspeed; // such as when shunting, i.e. less than _maxspeed
 	public int  _maxspeed; // as specified by the schedule (i.e. locomotive
 							// limit)
@@ -164,7 +164,7 @@ public class Train {
 			if (_shunting) {
 				sb.append(" (shunting)");
 			}
-			sb.append(" Speed: " + _speed);
+			sb.append(" Speed: " + (int)_speed);
 			sb.append(" km/h");
 			if (!finalStop) {
 				sb.append(" to ");
@@ -289,7 +289,7 @@ public class Train {
 		sb.append(" ");
 		sb.append(this.getStatusAsString());
 		sb.append(" ");
-		sb.append(_speed);
+		sb.append((int)_speed);
 		sb.append(" km/h, slow: ");
 		sb.append(_distanceToSlow);
 		sb.append(" m, stop: ");
@@ -350,7 +350,7 @@ public class Train {
 			return;
 		}
 		if (prop.equalsIgnoreCase("wait")) {
-			if (_status == TrainStatus.RUNNING || _speed != 0) {
+			if (_status == TrainStatus.RUNNING || _speed > 0) {
 				Simulator.INSTANCE.alert(String.format("Train %s: cannot set property %s. Train is not stopped.",
 						_name, prop));
 				return;
@@ -373,7 +373,7 @@ public class Train {
 		}
 		if (prop.equalsIgnoreCase("speed")) {
 			result._op = NodeOp.Number;
-			result._val = _speed;
+			result._val = (int) _speed;
 			return true;
 		}
 		if (prop.equalsIgnoreCase("length")) {

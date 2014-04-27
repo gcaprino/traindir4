@@ -155,18 +155,18 @@ public class SavFile extends TextFile {
 				// 3rd line
 				
 				line = in.readLine().trim();
-				values = readIntArray(line, 10);
-				train._timeExited = values[0];
-				train._wrongDest = values[1] != 0;
-				train._speed = values[2];
-				train._maxspeed = values[3];
-				train._curmaxspeed = values[4];
-				train._trackDistance = values[5];
-				train._timeLate = values[6];
-				train._timeDelay = values[7];
-				train._timeRed = values[8];
+				cols = line.split(",");
+				train._timeExited = Integer.parseInt(cols[0]);
+				train._wrongDest = Integer.parseInt(cols[1]) != 0;
+				train._speed = Double.parseDouble(cols[2]);
+				train._maxspeed = Integer.parseInt(cols[3]);
+				train._curmaxspeed = Integer.parseInt(cols[4]);
+				train._trackDistance = Integer.parseInt(cols[5]);
+				train._timeLate = Integer.parseInt(cols[6]);
+				train._timeDelay = Integer.parseInt(cols[7]);
+				train._timeRed = Integer.parseInt(cols[8]);
 				if (train._entryDelay != null) {// TODO: create new _entryDelay
-					train._entryDelay._nSeconds = values[9];
+					train._entryDelay._nSeconds = Integer.parseInt(cols[9]);
 				}
 				
 				// 4th line
@@ -710,7 +710,7 @@ public class SavFile extends TextFile {
 					train._exited != null ? train._exited : ""));
 				
 				// 3rd line
-				out.append(String.format("  %d,%d,%d,%d,%d,%d,%d,%d,%d", train._timeExited,
+				out.append(String.format("  %d,%d,%f,%d,%d,%d,%d,%d,%d", train._timeExited,
 						train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
 						train._curmaxspeed, train._trackDistance, train._timeLate,
 						train._timeDelay, train._timeRed));
@@ -909,7 +909,7 @@ public class SavFile extends TextFile {
 		}
 		return true;
 	}
-	
+
 	protected int[] readIntArray(String s, int n) {
 		String[] a = s.split(",");
 		int[] values = new int[n];
@@ -929,6 +929,7 @@ public class SavFile extends TextFile {
 
 	String key, value;
 	int ivalue;
+	double dvalue;
 	boolean bvalue;
 	TDPosition posValue = new TDPosition();
 	
@@ -940,14 +941,17 @@ public class SavFile extends TextFile {
 		key = in.substring(0, index).trim();
 		value = in.substring(index + 1).trim();
 		try {
+			dvalue = Double.parseDouble(value);
+		} catch (Exception e) {
+			dvalue = 0;
+		}
+		try {
 			ivalue = Integer.parseInt(value);
-			bvalue = ivalue != 0;
-			return true;
 		} catch (Exception e) {
 			ivalue = 0;
-			bvalue = false;
 		}
-		return false;
+		bvalue = ivalue != 0;
+		return true;
 	}
 	
 	private TDPosition getPosValue() {
@@ -1138,7 +1142,7 @@ public class SavFile extends TextFile {
 				continue;
 			}
 			if(key.equals("Speed")) {
-				train._speed = ivalue;
+				train._speed = dvalue;
 				continue;
 			}
 			if(key.equals("MaxSpeed")) {
@@ -1711,7 +1715,7 @@ public class SavFile extends TextFile {
 			out.append(String.format("Train:%s\n", train._name));
 			out.append(String.format("  Status:%d\n  Direction:%d\n  Exited:%s\n", train._status.ordinal(), train._direction.ordinal(),
 				train._exited != null ? train._exited : ""));
-			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%d\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackDistance:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
+			out.append(String.format("  TimeExited:%d\n  WrondDest:%d\n  Speed:%f\n  MaxSpeed:%d\n  CurMaxSpeed:%d\n  TrackDistance:%d\n  TimeLate:%d\n  TimeDelay:%d\n  TimeRed:%d\n",
 					train._timeExited, train._wrongDest ? 1 : 0, train._speed, train._maxspeed,
 					train._curmaxspeed, train._trackDistance, train._timeLate,
 					train._timeDelay, train._timeRed));

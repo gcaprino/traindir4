@@ -80,9 +80,9 @@ public class TrainStopsView extends ViewPart {
 		
 		UIUtils.restoreColumnSizes(_table, "TrainStops");
 
-		makeActions();
+//		makeActions();
 		hookContextMenu();
-		contributeToActionBars();
+//		contributeToActionBars();
 		hookDoubleClickAction();
 		CGEventDispatcher.getInstance().addListener(new CGEventListener(LoadEndEvent.class) {
 			public void handle(CGEvent event, Object target) {

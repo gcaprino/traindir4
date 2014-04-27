@@ -2,6 +2,7 @@ package com.traindirector.simulator;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -630,5 +631,44 @@ public class Simulator {
 	public void trace(String msg) {
 		if (_traceView != null)
 			_traceView.addTrace(msg);
+	}
+
+	public List<String> getAssets() {
+		List<String> result = new ArrayList<String>();
+		String paths[] = _options._scriptsPaths._value.split(";");
+		File f;
+		for (String p : paths) {
+			f = new File(p.trim());
+			if (!f.canExecute()) {
+				continue;
+			}
+			String[] files = f.list(new FilenameFilter() {
+				
+				@Override
+				public boolean accept(File dir, String fileName) {
+					return fileName.toLowerCase().endsWith(".tds");
+				}
+			});
+			for (int i = 0; i < files.length; ++i) {
+				result.add(p.trim() + File.separator + files[i]);
+			}
+		}
+		if (_baseDir != null && !_baseDir.isEmpty()) {
+			f = new File(_baseDir);
+			if (f.canExecute()) {
+				String[] files = f.list(new FilenameFilter() {
+					
+					@Override
+					public boolean accept(File dir, String fileName) {
+						String ext = fileName.toLowerCase();
+						return ext.endsWith(".pth") || ext.endsWith(".sch") || ext.endsWith(".xpm");
+					}
+				});
+				for (int i = 0; i < files.length; ++i) {
+					result.add(_baseDir.trim() + File.separator + files[i]);
+				}
+			}
+		}
+		return result;
 	}
 }

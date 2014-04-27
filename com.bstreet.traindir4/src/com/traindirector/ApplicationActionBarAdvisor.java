@@ -29,6 +29,7 @@ import com.bstreet.cg.events.CGEventListener;
 import com.traindirector.events.TimeSliceEvent;
 import com.traindirector.uiactions.AssignAction;
 import com.traindirector.uiactions.ChangeLanguageAction;
+import com.traindirector.uiactions.UpdateAction;
 import com.traindirector.uiactions.CloseSimulationAction;
 import com.traindirector.uiactions.CoordBarsAction;
 import com.traindirector.uiactions.EditAction;
@@ -48,6 +49,7 @@ import com.traindirector.uiactions.SaveLayoutChangesAction;
 import com.traindirector.uiactions.SaveSimulationAction;
 import com.traindirector.uiactions.SetSignalsToGreenAction;
 import com.traindirector.uiactions.ShowAlertsViewAction;
+import com.traindirector.uiactions.ShowAssetsViewAction;
 import com.traindirector.uiactions.ShowEditToolsAction;
 import com.traindirector.uiactions.ShowInfoPageAction;
 import com.traindirector.uiactions.ShowLayoutPageAction;
@@ -95,12 +97,14 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     RestartSimulationAction restartSimulationAction;
     ShowScheduleViewAction showScheduleViewAction;
     ShowAlertsViewAction showAlertsViewAction;
+    ShowAssetsViewAction showAssetsViewAction;
     ShowTraceViewAction showTraceViewAction;
     ShowEditToolsAction showEditToolsAction;
     ShowTrainStopsViewAction showTrainStopsViewAction;
     ShowWelcomePageAction showWelcomePageAction;
     ShowMapAction showMapAction;
     ChangeLanguageAction changeLanguageAction;
+    UpdateAction updateAction;
     PreferencesAction preferencesAction;
     ItineraryAction itineraryAction;
     AssignAction assignAction;
@@ -153,12 +157,14 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(slowSimulationAction = new SlowSimulationAction(window, "Slower simulation"));
         register(restartSimulationAction = new RestartSimulationAction(window, "Restart simulation"));
         register(showAlertsViewAction = new ShowAlertsViewAction(window, "Show alerts"));
+        register(showAssetsViewAction = new ShowAssetsViewAction(window, "Show assets"));
         register(showTraceViewAction = new ShowTraceViewAction(window, "Show trace"));
         register(showScheduleViewAction = new ShowScheduleViewAction(window, "Show schedule"));
         register(showTrainStopsViewAction = new ShowTrainStopsViewAction(window, "Show train stops"));
         register(showEditToolsAction = new ShowEditToolsAction(window, "Show edit tools"));
         register(showMapAction = new ShowMapAction(window, "Show Map"));
         register(changeLanguageAction = new ChangeLanguageAction(window, "Change language"));
+        register(updateAction = new UpdateAction(window, "Update"));
         register(preferencesAction = new PreferencesAction(window, "Edit preferences..."));
         register(itineraryAction = new ItineraryAction(window, "Itineraries..."));
         register(assignAction = new AssignAction(window, "Assign..."));
@@ -207,7 +213,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         menuBar.add(runMenu);
         menuBar.add(viewMenu);
         // Add a group marker indicating where action set menus will appear.
-        //menuBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+        menuBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
         menuBar.add(helpMenu);
 
         // File
@@ -225,6 +231,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         editMenu.add(preferencesAction);
         editMenu.add(newAction);
         editMenu.add(infoAction);
+        editMenu.add(showAssetsViewAction);
         editMenu.add(stationsListAction);
         
         runMenu.add(runSimulationAction);
@@ -249,17 +256,21 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         viewMenu.add(platformOccupancyAction);
         //viewMenu.add(showMapAction);
         //viewMenu.add(showEditToolsAction);
-        fileMenu.add(new Separator());
+        viewMenu.add(new Separator());
         viewMenu.add(zoomInAction);
         viewMenu.add(zoomOutAction);
-        fileMenu.add(new Separator());
+        viewMenu.add(new Separator());
         viewMenu.add(coordBarsAction);
         viewMenu.add(statusBarAction);
+        viewMenu.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+
         
         // Help
         helpMenu.add(aboutAction);
         helpMenu.add(changeLanguageAction);
         helpMenu.add(showTraceViewAction);
+        helpMenu.add(updateAction);
+        helpMenu.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
         
         /*
         fileMenu.add(newWindowAction);

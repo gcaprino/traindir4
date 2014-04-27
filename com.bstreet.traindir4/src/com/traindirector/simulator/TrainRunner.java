@@ -299,7 +299,7 @@ public class TrainRunner {
 
 		s = s * 2.0 * 0.6 + v0 * v0;
 		if (s < 0) /* should be impossible, but... */
-			return trn._speed;
+			return (int) trn._speed;
 		v = (int) (Math.sqrt(s) * 3.6);
 
 		return v;

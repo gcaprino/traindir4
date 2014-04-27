@@ -626,7 +626,7 @@ public class Interpreter {
 		return false;
 	}
 	
-	private Signal getNextSignal(Signal signal) {
+	public static Signal getNextSignal(Signal signal) {
 		Signal	sig = signal;
 		Track	t;
 		Track t1;

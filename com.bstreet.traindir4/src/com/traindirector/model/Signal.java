@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.traindirector.commands.ClickCommand;
 import com.traindirector.scripts.ExprValue;
+import com.traindirector.scripts.Interpreter;
 import com.traindirector.scripts.NodeOp;
 import com.traindirector.scripts.TDSScript;
 import com.traindirector.simulator.PathFinder;
@@ -464,6 +465,32 @@ public class Signal extends Track {
 			// wxSnprintf(expr_buff + wxStrlen(expr_buff),
 			// sizeof(expr_buff)/sizeof(wxChar) - wxStrlen(expr_buff),
 			// wxT("{%s}"), result._txt);
+			return true;
+		}
+		if(prop.equalsIgnoreCase("redDistance")) {
+		    result._op = NodeOp.Number;
+		    result._val = 50000;
+            int distance = 0;
+            Signal nextSig = this;
+            if(!nextSig.isClear())
+                return true;
+            do {
+                path = nextSig.getNextPath(); // TODO if next path not valid
+		        if(path == null)
+		        	return true;
+                distance += path.getDistance(0);
+                nextSig = Interpreter.getNextSignal(nextSig);
+                if(nextSig == null)
+                    return true;
+            } while(nextSig.isClear());
+            result._val = distance;
+		    //wxSnprintf(expr_buff + wxStrlen(expr_buff), sizeof(expr_buff)/sizeof(wxChar) - wxStrlen(expr_buff),
+	        //        wxT("{%d}"), result._val);
+		    return true;
+		}
+		if (prop.equalsIgnoreCase("script")) {
+			result._op = NodeOp.String;
+			result._txt = _scriptFile != null ? _scriptFile : "None";
 			return true;
 		}
 		/*

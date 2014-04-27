@@ -259,7 +259,7 @@ public class AssignDialog extends TitleAreaDialog {
 			tim = TDTime.toString(train._timeOut);
 			item.setText(3, tim);
 			item.setText(4, train._name);
-			item.setText(5, "" + train._speed);
+			item.setText(5, "" + (int)train._speed);
 			item.setText(6, "" + train._minDel);
 			item.setText(7, "" + train._minLate);
 			item.setText(8, train.getStatusAsString());

@@ -437,7 +437,7 @@ public class LayoutCanvas {
 					_editor = new LayoutEditor(_simulator, this);
 				}
 				_editor._pos = pos;
-				_editor.handle(e.button != 1);
+				_editor.handle(e.button != 1, (e.stateMask & SWT.CONTROL) != 0);
 				return;
 			}
         	ClickCommand cmd = new ClickCommand(pos);
@@ -717,6 +717,8 @@ public class LayoutCanvas {
 							_display.syncExec(new Runnable() {
 								@Override
 								public void run() {
+									if(_canvas.isDisposed())
+										return;
 									_canvas.redraw();
 									_canvas.update();
 								}

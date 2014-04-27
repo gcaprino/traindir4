@@ -8,6 +8,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.traindirector.Application;
 import com.traindirector.dialogs.PropertyDialog;
+import com.traindirector.dialogs.ScriptDialog;
 import com.traindirector.dialogs.TextOption;
 import com.traindirector.dialogs.TriggerPropertiesDialog;
 import com.traindirector.files.TrkFile;
@@ -48,7 +49,7 @@ public class LayoutEditor {
 		_canvas = canvas;
 	}
 
-	public void handle(boolean isRightClick) {
+	public void handle(boolean isRightClick, boolean isCtrl) {
 	    Track track;
 	    Switch sw;
 	    Signal signal;
@@ -71,7 +72,7 @@ public class LayoutEditor {
 	        } else if(track instanceof ItineraryButton) {
 	        	editItineraryButton((ItineraryButton)track);
 	        } else {
-	        	editTrackProperties(track);
+	        	editTrackProperties(track, isCtrl);
 	        }
 	    } else {
 	        int type = _simulator.getEditorTrackType();
@@ -507,7 +508,13 @@ public class LayoutEditor {
     	}
 	}
 
-	private void editTrackProperties(Track track) {
+	private void editTrackProperties(Track track, boolean isCtrl) {
+		
+		if (isCtrl) {
+			ScriptDialog script = new ScriptDialog(null, track);
+			script.open();
+			return;
+		}
     	_options = new ArrayList<Option>();
     	Option o = new TextOption("length", "Track length (m) :");
     	o._value = "" + track._length;
@@ -539,18 +546,8 @@ public class LayoutEditor {
     	o._intValue = (track._flags & Track.DONTSTOPSHUNTERS) != 0 ? 1 : 0;
     	_options.add(o); // 7
 
-    	// TODO: add script button
-    	
-    	final int[] result = new int[1];
     	final PropertyDialog dialog = new PropertyDialog(null, _options);
-    	Display.getDefault().syncExec(new Runnable() {
-			
-			@Override
-			public void run() {
-				result[0] = dialog.open();
-			}
-		});
-    	if(result[0] == PropertyDialog.CANCEL)
+    	if (!dialog.openInDisplayThread())
     		return;
     	
     	track._length = Integer.parseInt(_options.get(0)._value);

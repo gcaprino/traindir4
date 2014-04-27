@@ -215,7 +215,7 @@ public class ScheduleView extends ViewPart {
 				tim = TDTime.toString(train._timeOut);
 				item.setText(3, tim);
 				item.setText(4, train._name);
-				item.setText(5, "" + train._speed);
+				item.setText(5, "" + (int)train._speed);
 				item.setText(6, "" + train._minDel);
 				item.setText(7, "" + train._minLate);
 				item.setText(8, train._length > 0 ? "" + train._length : "");
@@ -244,7 +244,7 @@ public class ScheduleView extends ViewPart {
 					--i;
 					continue;
 				}
-				item.setText(5, "" + train._speed);
+				item.setText(5, "" + (int)train._speed);
 				item.setText(6, "" + train._minDel);
 				item.setText(7, "" + train._minLate);
 				item.setText(9, train.isRunning() ? "" + train._distanceToStop : "");
